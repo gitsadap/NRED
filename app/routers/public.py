@@ -79,7 +79,11 @@ async def home(request: Request, db: AsyncSession = Depends(get_db)):
     context["awards"] = awards
     context["stats"] = stats
     
-    return templates.TemplateResponse("home.html", context)
+    return templates.TemplateResponse(
+        request=request, 
+        name="home.html", 
+        context={"news": news_res.scalars().all()} # ตัวอย่างการส่งค่า
+    )
 
 
 @router.get("/links", response_class=HTMLResponse)
