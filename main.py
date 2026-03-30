@@ -21,14 +21,17 @@ static_dirs = [
 ]
 
 for mount_point, directory in static_dirs:
-    if os.path.exists(directory):
-        app.mount(f"/{mount_point}", StaticFiles(directory=directory), name=mount_point)
-        logger.info(f"Mounted static directory: {directory} -> /{mount_point}")
+    abs_dir = BASE_DIR / directory
+    if abs_dir.exists():
+        app.mount(f"/{mount_point}", StaticFiles(directory=str(abs_dir)), name=mount_point)
+        logger.info(f"Mounted static directory: {abs_dir} -> /{mount_point}")
     else:
         logger.warning(f"Static directory not found: {directory}")
 
 # Templates
-templates = Jinja2Templates(directory="templates")
+from pathlib import Path
+BASE_DIR = Path(__file__).resolve().parent
+templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 # Import routers
 from app.routers import public, appeals, admin, api #, chatbot

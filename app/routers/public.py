@@ -10,7 +10,9 @@ from app.dependencies import get_global_context
 from app.models import Page, News, Activity, Staff
 
 router = APIRouter()
-templates = Jinja2Templates(directory="templates")
+from pathlib import Path
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 @router.get("/", response_class=HTMLResponse)
 async def home(request: Request, db: AsyncSession = Depends(get_db)):

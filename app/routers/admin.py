@@ -127,7 +127,9 @@ router = APIRouter(
     tags=["admin"],
 )
 
-templates = Jinja2Templates(directory="templates")
+from pathlib import Path
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 @router.get("/")
 async def admin_dashboard(request: Request):
