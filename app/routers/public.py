@@ -80,11 +80,12 @@ async def home(request: Request, db: AsyncSession = Depends(get_db)):
     context["courses"] = courses
     context["awards"] = awards
     context["stats"] = stats
-    
+    context["news"] = news_items
+
     return templates.TemplateResponse(
         request=request, 
         name="home.html", 
-        context={"news": news_res.scalars().all()} # ตัวอย่างการส่งค่า
+        context=context
     )
 
 
