@@ -30024,3 +30024,11 @@ WHERE api.faculty.scholar_data IS NOT NULL ORDER BY api.faculty.id
 2026-03-30 15:55:20,654 - app - INFO -  - /{slug} [show_page]
 2026-03-30 15:55:20,654 - app - INFO -  - /api/curriculum-stats-proxy [get_curriculum_stats_proxy]
 2026-03-30 15:55:20,709 - watchfiles.main - INFO - 1 change detected
+2026-03-30 16:15:32,136 - watchfiles.main - INFO - 11 changes detected
+2026-03-30 16:15:37,222 - watchfiles.main - INFO - 33 changes detected
+2026-03-30 16:15:44,799 - watchfiles.main - INFO - 4 changes detected
+2026-03-30 16:17:32,013 - watchfiles.main - INFO - 1 change detected
+2026-03-30 16:17:37,730 - watchfiles.main - INFO - 1 change detected
+2026-03-30 16:18:14,442 - watchfiles.main - INFO - 1 change detected
+2026-03-30 16:18:25,670 - watchfiles.main - INFO - 1 change detected
+2026-03-30 16:18:35,622 - watchfiles.main - INFO - 2 changes detected
