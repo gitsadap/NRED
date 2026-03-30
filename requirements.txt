@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+aiosqlite
+jinja2
+python-multipart
+greenlet
+httpx
+asyncpg
+pydantic-settings
+python-dotenv
+celery
+redis
+python-multipart
