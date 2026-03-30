@@ -133,7 +133,7 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 @router.get("/")
 async def admin_dashboard(request: Request):
-    return templates.TemplateResponse("admin/dashboard.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="admin/dashboard.html", context={"request": request})
 
 # API Endpoints used by Dashboard
 

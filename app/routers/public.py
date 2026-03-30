@@ -94,7 +94,7 @@ async def show_links_directory(request: Request, db: AsyncSession = Depends(get_
     context = await get_global_context(db)
     context["request"] = request
     context["title"] = "รวมลิงก์เว็บไซต์ - " + context["site_title"]
-    return templates.TemplateResponse("links.html", context)
+    return templates.TemplateResponse(request=request, name="links.html", context=context)
 
 @router.get("/structure", response_class=HTMLResponse)
 async def structure_page(request: Request, db: AsyncSession = Depends(get_db)):
@@ -130,7 +130,7 @@ async def structure_page(request: Request, db: AsyncSession = Depends(get_db)):
     
     context["executives"] = executives
     
-    return templates.TemplateResponse("structure.html", context)
+    return templates.TemplateResponse(request=request, name="structure.html", context=context)
 
 @router.get("/appeals", response_class=HTMLResponse)
 async def appeals_page(request: Request, db: AsyncSession = Depends(get_db)):
@@ -138,7 +138,7 @@ async def appeals_page(request: Request, db: AsyncSession = Depends(get_db)):
     context["request"] = request
     context["title"] = "ร้องเรียน/อุทธรณ์ - " + context["site_title"]
     # We will need appeals.html
-    return templates.TemplateResponse("appeals.html", context)
+    return templates.TemplateResponse(request=request, name="appeals.html", context=context)
 
 
 
@@ -157,7 +157,7 @@ async def show_news(request: Request, category: str = None,  db: AsyncSession = 
     context["title"] = "ข่าวสารและกิจกรรม - " + context["site_title"]
     context["news_list"] = news_list
     context["current_category"] = category
-    return templates.TemplateResponse("news.html", context)
+    return templates.TemplateResponse(request=request, name="news.html", context=context)
 
 @router.get("/news/{id}", response_class=HTMLResponse)
 async def show_news_detail(id: int, request: Request, db: AsyncSession = Depends(get_db)):
@@ -170,7 +170,7 @@ async def show_news_detail(id: int, request: Request, db: AsyncSession = Depends
     context["request"] = request
     context["title"] = news_item.title + " - " + context["site_title"]
     context["news"] = news_item
-    return templates.TemplateResponse("news_single.html", context)
+    return templates.TemplateResponse(request=request, name="news_single.html", context=context)
 
 @router.get("/activities", response_class=HTMLResponse)
 async def show_activities(request: Request, db: AsyncSession = Depends(get_db)):
@@ -181,7 +181,7 @@ async def show_activities(request: Request, db: AsyncSession = Depends(get_db)):
     context["request"] = request
     context["title"] = "กิจกรรมและโครงการ - " + context["site_title"]
     context["activities"] = activities_list
-    return templates.TemplateResponse("activities.html", context)
+    return templates.TemplateResponse(request=request, name="activities.html", context=context)
 
 @router.get("/activities/{id}", response_class=HTMLResponse)
 async def show_activity_detail(id: int, request: Request, db: AsyncSession = Depends(get_db)):
@@ -194,7 +194,7 @@ async def show_activity_detail(id: int, request: Request, db: AsyncSession = Dep
     context["request"] = request
     context["title"] = activity.title + " - " + context["site_title"]
     context["activity"] = activity
-    return templates.TemplateResponse("activity_single.html", context)
+    return templates.TemplateResponse(request=request, name="activity_single.html", context=context)
 
 from app.models import Staff
 
@@ -372,7 +372,7 @@ async def show_faculty(request: Request, db: AsyncSession = Depends(get_db)):
     context["heading"] = "คณาจารย์"
     context["description"] = "บุคลากรผู้ทรงคุณวุฒิแห่งภาควิชาทรัพยากรธรรมชาติและสิ่งแวดล้อม"
     context["faculty_groups"] = faculty_groups
-    return templates.TemplateResponse("faculty.html", context)
+    return templates.TemplateResponse(request=request, name="faculty.html", context=context)
 
 
 @router.get("/teacher-portal", response_class=HTMLResponse)
@@ -399,7 +399,7 @@ async def teacher_portal(request: Request, db: AsyncSession = Depends(get_db)):
     context["request"] = request
     context["faculty"] = faculty_list
     context["title"] = "Teacher Portal - Upload CV"
-    return templates.TemplateResponse("teacher_portal.html", context)
+    return templates.TemplateResponse(request=request, name="teacher_portal.html", context=context)
 
 from fastapi import UploadFile, File, Form
 import shutil
@@ -490,7 +490,7 @@ async def show_executives(request: Request, db: AsyncSession = Depends(get_db)):
     context["description"] = "คณะผู้บริหารภาควิชาฯ"
     # To use the same faculty.html, we pass them as a group
     context["faculty_groups"] = [{"name": "ผู้บริหาร", "members": faculty_list}]
-    return templates.TemplateResponse("faculty.html", context)
+    return templates.TemplateResponse(request=request, name="faculty.html", context=context)
 
 @router.get("/support-staff", response_class=HTMLResponse)
 async def show_support_staff(request: Request, db: AsyncSession = Depends(get_db)):
@@ -523,14 +523,14 @@ async def show_support_staff(request: Request, db: AsyncSession = Depends(get_db
     context["heading"] = "บุคลากรสายสนับสนุน"
     context["description"] = "ทีมงานสนับสนุนการเรียนการสอนและการบริหาร"
     context["faculty_groups"] = [{"name": "บุคลากรสายสนับสนุน", "members": faculty_list}]
-    return templates.TemplateResponse("faculty.html", context)
+    return templates.TemplateResponse(request=request, name="faculty.html", context=context)
 
 @router.get("/curriculum", response_class=HTMLResponse)
 async def curriculum_page(request: Request, db: AsyncSession = Depends(get_db)):
     context = await get_global_context(db)
     context["request"] = request
     context["title"] = "หลักสูตรทั้งหมด - " + context["site_title"]
-    return templates.TemplateResponse("curriculum.html", context)
+    return templates.TemplateResponse(request=request, name="curriculum.html", context=context)
 
 @router.get("/research", response_class=HTMLResponse)
 async def research_page(request: Request, db: AsyncSession = Depends(get_db)):
@@ -539,7 +539,7 @@ async def research_page(request: Request, db: AsyncSession = Depends(get_db)):
     context["title"] = "ผลงานวิจัย - " + context["site_title"]
     context["heading"] = "ผลงานวิจัย"
     context["description"] = "ผลงานตีพิมพ์ทางวิชาการและงานวิจัยของคณาจารย์จากฐานข้อมูล Google Scholar"
-    return templates.TemplateResponse("research.html", context)
+    return templates.TemplateResponse(request=request, name="research.html", context=context)
 
 @router.get("/current-students", response_class=HTMLResponse)
 async def current_students_page(request: Request, db: AsyncSession = Depends(get_db)):
@@ -548,7 +548,7 @@ async def current_students_page(request: Request, db: AsyncSession = Depends(get
     context["title"] = "นิสิตปัจจุบัน - " + context["site_title"]
     context["heading"] = "นิสิตปัจจุบัน"
     context["description"] = "ข้อมูลและบริการสำหรับนิสิตภาควิชาทรัพยากรธรรมชาติและสิ่งแวดล้อม"
-    return templates.TemplateResponse("current_students.html", context)
+    return templates.TemplateResponse(request=request, name="current_students.html", context=context)
 
 
 @router.get("/services", response_class=HTMLResponse)
@@ -558,7 +558,7 @@ async def services_page(request: Request, db: AsyncSession = Depends(get_db)):
     context["title"] = "บริการออนไลน์ (E-Services) - " + context["site_title"]
     context["heading"] = "บริการและระบบสารสนเทศ (E-Services)"
     context["description"] = "รวมระบบสารสนเทศ เมนูลัด และบริการออนไลน์สำหรับนิสิต บุคลากร และบุคคลทั่วไป"
-    return templates.TemplateResponse("services.html", context)
+    return templates.TemplateResponse(request=request, name="services.html", context=context)
 
 
 @router.get("/coop", response_class=HTMLResponse)
@@ -568,7 +568,7 @@ async def coop_education_page(request: Request, db: AsyncSession = Depends(get_d
     context["title"] = "สหกิจศึกษา - " + context["site_title"]
     context["heading"] = "สหกิจศึกษา"
     context["description"] = "ข้อมูลเกี่ยวกับการปฏิบัติงานสหกิจศึกษา และการฝึกประสบการณ์วิชาชีพ"
-    return templates.TemplateResponse("coop.html", context)
+    return templates.TemplateResponse(request=request, name="coop.html", context=context)
 
 
 @router.get("/page-raw/{slug}", response_class=HTMLResponse)
@@ -648,7 +648,7 @@ async def show_page(slug: str, request: Request, db: AsyncSession = Depends(get_
          # For now default to page.html
          pass
 
-    return templates.TemplateResponse(template_name, context)
+    return templates.TemplateResponse(request=request, name=template_name, context=context)
 
 @router.get("/api/curriculum-stats-proxy")
 async def get_curriculum_stats_proxy():

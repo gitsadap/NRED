@@ -12,3 +12,4 @@ python-dotenv
 celery
 redis
 python-multipart
+pymssql
