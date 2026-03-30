@@ -29,7 +29,7 @@ engine = create_async_engine(
     pool_recycle=1800,
     # บังคับใช้ SSL เพื่อความปลอดภัย (Supabase บังคับใช้ในบางกรณี)
     connect_args={
-        "ssl": ssl_ctx,
+        "prepared_statement_cache_size": 0,
         "server_settings": {
             "application_name": "nred_fastapi"
         }
