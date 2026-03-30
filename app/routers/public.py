@@ -410,7 +410,9 @@ async def upload_cv_endpoint(
         
         # 1. Save File
         UPLOAD_DIR = "public/uploads"
-        if not os.path.exists(UPLOAD_DIR):
+        if os.environ.get("VERCEL"):
+            UPLOAD_DIR = "/tmp"
+        elif not os.path.exists(UPLOAD_DIR):
             os.makedirs(UPLOAD_DIR)
         
         # Safe filename: user_id_filename.pdf

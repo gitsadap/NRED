@@ -499,9 +499,12 @@ import os
 from app.tasks import process_document_to_blob
 
 UPLOAD_DIR = "public/uploads"
-if not os.path.exists(UPLOAD_DIR):
-    os.makedirs(UPLOAD_DIR)
-
+if not os.environ.get("VERCEL"):
+    if not os.path.exists(UPLOAD_DIR):
+        os.makedirs(UPLOAD_DIR)
+else:
+    # ถ้าอยู่บน Vercel ให้ใช้โฟลเดอร์ /tmp แทน (เป็นที่เดียวที่ Vercel ยอมให้เขียนไฟล์ชั่วคราวได้)
+    UPLOAD_DIR = "/tmp"
 @router.post("/api/upload")
 async def upload_file(file: UploadFile = File(...)):
     try:

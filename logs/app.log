@@ -30037,3 +30037,373 @@ WHERE api.faculty.scholar_data IS NOT NULL ORDER BY api.faculty.id
 2026-03-30 16:19:01,004 - watchfiles.main - INFO - 4 changes detected
 2026-03-30 16:28:43,394 - watchfiles.main - INFO - 2 changes detected
 2026-03-30 16:29:30,871 - watchfiles.main - INFO - 1 change detected
+2026-03-30 16:29:41,084 - watchfiles.main - INFO - 11 changes detected
+2026-03-30 16:29:46,960 - watchfiles.main - INFO - 29 changes detected
+2026-03-30 16:29:48,449 - watchfiles.main - INFO - 4 changes detected
+2026-03-30 16:32:01,086 - watchfiles.main - INFO - 1 change detected
+2026-03-30 16:32:01,234 - app - INFO - Application shutting down...
+2026-03-30 16:32:01,605 - app - INFO - Mounted static directory: public/assets -> /assets
+2026-03-30 16:32:01,605 - app - INFO - Mounted static directory: public/uploads -> /uploads
+2026-03-30 16:32:01,605 - app - INFO - Mounted static directory: static -> /static
+2026-03-30 16:32:01,605 - app - INFO - Mounted static directory: docs -> /docs
+2026-03-30 16:32:01,692 - watchfiles.main - INFO - 1 change detected
+2026-03-30 16:32:02,057 - watchfiles.main - INFO - 3 changes detected
+2026-03-30 16:32:06,289 - app - INFO - Mounted static directory: public/assets -> /assets
+2026-03-30 16:32:06,289 - app - INFO - Mounted static directory: public/uploads -> /uploads
+2026-03-30 16:32:06,289 - app - INFO - Mounted static directory: static -> /static
+2026-03-30 16:32:06,289 - app - INFO - Mounted static directory: docs -> /docs
+2026-03-30 16:32:06,301 - app - INFO - Application starting up...
+2026-03-30 16:32:06,301 - app - INFO - Routes initialized:
+2026-03-30 16:32:06,301 - app - INFO -  - /openapi.json [openapi]
+2026-03-30 16:32:06,301 - app - INFO -  - /api/docs [swagger_ui_html]
+2026-03-30 16:32:06,301 - app - INFO -  - /docs/oauth2-redirect [swagger_ui_redirect]
+2026-03-30 16:32:06,301 - app - INFO -  - /api/redoc [redoc_html]
+2026-03-30 16:32:06,301 - app - INFO -  - /assets [assets]
+2026-03-30 16:32:06,301 - app - INFO -  - /uploads [uploads]
+2026-03-30 16:32:06,301 - app - INFO -  - /static [static]
+2026-03-30 16:32:06,301 - app - INFO -  - /docs [docs]
+2026-03-30 16:32:06,301 - app - INFO -  - /admin [redirect_admin]
+2026-03-30 16:32:06,301 - app - INFO -  - /admin/ [admin_dashboard]
+2026-03-30 16:32:06,301 - app - INFO -  - /admin/api/pages [get_admin_pages]
+2026-03-30 16:32:06,301 - app - INFO -  - /admin/api/news [get_admin_news]
+2026-03-30 16:32:06,301 - app - INFO -  - /admin/api/activities [get_admin_activities]
+2026-03-30 16:32:06,301 - app - INFO -  - /admin/api/appeals [get_admin_appeals]
+2026-03-30 16:32:06,301 - app - INFO -  - /admin/api/appeals/delete [delete_appeal]
+2026-03-30 16:32:06,301 - app - INFO -  - /admin/api/pages [save_page]
+2026-03-30 16:32:06,301 - app - INFO -  - /admin/api/pages/delete [delete_page]
+2026-03-30 16:32:06,301 - app - INFO -  - /admin/api/news [save_news]
+2026-03-30 16:32:06,301 - app - INFO -  - /admin/api/news/delete [delete_news]
+2026-03-30 16:32:06,301 - app - INFO -  - /admin/api/activities [save_activity]
+2026-03-30 16:32:06,301 - app - INFO -  - /admin/api/activities/delete [delete_activity]
+2026-03-30 16:32:06,301 - app - INFO -  - /admin/api/content/all [get_all_content]
+2026-03-30 16:32:06,301 - app - INFO -  - /admin/api/content/save [save_unified_content]
+2026-03-30 16:32:06,301 - app - INFO -  - /admin/api/content/delete [delete_unified_content]
+2026-03-30 16:32:06,301 - app - INFO -  - /admin/api/tags [get_tags]
+2026-03-30 16:32:06,301 - app - INFO -  - /admin/api/tags [save_tag]
+2026-03-30 16:32:06,301 - app - INFO -  - /admin/api/tags/delete [delete_tag]
+2026-03-30 16:32:06,301 - app - INFO -  - /admin/api/staff [get_admin_staff]
+2026-03-30 16:32:06,301 - app - INFO -  - /admin/api/staff [save_staff]
+2026-03-30 16:32:06,301 - app - INFO -  - /admin/api/staff/delete [delete_staff]
+2026-03-30 16:32:06,301 - app - INFO -  - /admin/api/upload [upload_file]
+2026-03-30 16:32:06,301 - app - INFO -  - /admin/api/media [get_media_files]
+2026-03-30 16:32:06,301 - app - INFO -  - /admin/api/media/delete [delete_media_file]
+2026-03-30 16:32:06,301 - app - INFO -  - /admin/api/settings [get_settings]
+2026-03-30 16:32:06,301 - app - INFO -  - /admin/api/settings [update_settings]
+2026-03-30 16:32:06,301 - app - INFO -  - /admin/api/menus [get_menus]
+2026-03-30 16:32:06,301 - app - INFO -  - /admin/api/menus [save_menu]
+2026-03-30 16:32:06,301 - app - INFO -  - /admin/api/menus/delete [delete_menu]
+2026-03-30 16:32:06,301 - app - INFO -  - /admin/api/banners [get_banners]
+2026-03-30 16:32:06,301 - app - INFO -  - /admin/api/banners [save_banner]
+2026-03-30 16:32:06,301 - app - INFO -  - /admin/api/banners/delete [delete_banner]
+2026-03-30 16:32:06,301 - app - INFO -  - /admin/api/missions [get_missions]
+2026-03-30 16:32:06,301 - app - INFO -  - /admin/api/missions [save_mission]
+2026-03-30 16:32:06,302 - app - INFO -  - /admin/api/courses [get_courses]
+2026-03-30 16:32:06,302 - app - INFO -  - /admin/api/courses [save_course]
+2026-03-30 16:32:06,302 - app - INFO -  - /admin/api/stats [get_stats]
+2026-03-30 16:32:06,302 - app - INFO -  - /admin/api/stats [save_stat]
+2026-03-30 16:32:06,302 - app - INFO -  - /admin/api/awards [get_awards]
+2026-03-30 16:32:06,302 - app - INFO -  - /admin/api/awards [save_award]
+2026-03-30 16:32:06,302 - app - INFO -  - /admin/api/faculty [get_admin_faculty]
+2026-03-30 16:32:06,302 - app - INFO -  - /admin/api/faculty [save_faculty]
+2026-03-30 16:32:06,302 - app - INFO -  - /admin/api/faculty/delete [delete_faculty]
+2026-03-30 16:32:06,302 - app - INFO -  - /admin/api/contact [get_contact_info]
+2026-03-30 16:32:06,302 - app - INFO -  - /admin/api/contact [save_contact_info]
+2026-03-30 16:32:06,302 - app - INFO -  - /admin/api/contact/delete [delete_contact_info]
+2026-03-30 16:32:06,302 - app - INFO -  - /admin/api/generic/delete [generic_delete]
+2026-03-30 16:32:06,302 - app - INFO -  - /api/appeals/submit [submit_appeal]
+2026-03-30 16:32:06,302 - app - INFO -  - /api/v1/context [api_global_context]
+2026-03-30 16:32:06,302 - app - INFO -  - /api/v1/home [api_home]
+2026-03-30 16:32:06,302 - app - INFO -  - /api/v1/news [api_news_list]
+2026-03-30 16:32:06,302 - app - INFO -  - /api/v1/news/{id} [api_news_detail]
+2026-03-30 16:32:06,302 - app - INFO -  - /api/v1/activities [api_activities_list]
+2026-03-30 16:32:06,302 - app - INFO -  - /api/v1/activities/{id} [api_activity_detail]
+2026-03-30 16:32:06,302 - app - INFO -  - /api/v1/faculty [api_faculty_list]
+2026-03-30 16:32:06,302 - app - INFO -  - /api/v1/staff/{type} [api_staff]
+2026-03-30 16:32:06,302 - app - INFO -  - /api/v1/pages/{slug} [api_page]
+2026-03-30 16:32:06,302 - app - INFO -  - /api/v1/external-stats [api_external_stats]
+2026-03-30 16:32:06,302 - app - INFO -  - /api/v1/research [api_research_list]
+2026-03-30 16:32:06,302 - app - INFO -  - /api/v1/coop-stats [get_coop_stats]
+2026-03-30 16:32:06,302 - app - INFO -  - /api/v1/chatbot [get_chatbot_response]
+2026-03-30 16:32:06,302 - app - INFO -  - /api/v1/chatbot [get_chatbot_response]
+2026-03-30 16:32:06,302 - app - INFO -  - / [home]
+2026-03-30 16:32:06,302 - app - INFO -  - /links [show_links_directory]
+2026-03-30 16:32:06,302 - app - INFO -  - /structure [structure_page]
+2026-03-30 16:32:06,302 - app - INFO -  - /appeals [appeals_page]
+2026-03-30 16:32:06,302 - app - INFO -  - /news [show_news]
+2026-03-30 16:32:06,302 - app - INFO -  - /news/{id} [show_news_detail]
+2026-03-30 16:32:06,302 - app - INFO -  - /activities [show_activities]
+2026-03-30 16:32:06,302 - app - INFO -  - /activities/{id} [show_activity_detail]
+2026-03-30 16:32:06,302 - app - INFO -  - /faculty [show_faculty]
+2026-03-30 16:32:06,302 - app - INFO -  - /teacher-portal [teacher_portal]
+2026-03-30 16:32:06,302 - app - INFO -  - /api/faculty/upload-cv [upload_cv_endpoint]
+2026-03-30 16:32:06,302 - app - INFO -  - /executives [show_executives]
+2026-03-30 16:32:06,302 - app - INFO -  - /support-staff [show_support_staff]
+2026-03-30 16:32:06,302 - app - INFO -  - /curriculum [curriculum_page]
+2026-03-30 16:32:06,302 - app - INFO -  - /research [research_page]
+2026-03-30 16:32:06,302 - app - INFO -  - /current-students [current_students_page]
+2026-03-30 16:32:06,302 - app - INFO -  - /services [services_page]
+2026-03-30 16:32:06,302 - app - INFO -  - /coop [coop_education_page]
+2026-03-30 16:32:06,302 - app - INFO -  - /page-raw/{slug} [show_page_raw]
+2026-03-30 16:32:06,302 - app - INFO -  - /{slug} [show_page]
+2026-03-30 16:32:06,302 - app - INFO -  - /api/curriculum-stats-proxy [get_curriculum_stats_proxy]
+2026-03-30 16:32:06,359 - watchfiles.main - INFO - 1 change detected
+2026-03-30 16:32:26,058 - app - ERROR - Error in get_global_context: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.DuplicatePreparedStatementError'>: prepared statement "__asyncpg_stmt_1__" already exists
+HINT:  
+NOTE: pgbouncer with pool_mode set to "transaction" or
+"statement" does not support prepared statements properly.
+You have two options:
+
+* if you are using pgbouncer for connection pooling to a
+  single server, switch to the connection pool functionality
+  provided by asyncpg, it is a much better option for this
+  purpose;
+
+* if you have no option of avoiding the use of pgbouncer,
+  then you can set statement_cache_size to 0 when creating
+  the asyncpg connection object.
+
+[SQL: select pg_catalog.version()]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+2026-03-30 16:32:27,516 - app - ERROR - Error in get_global_context: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.DuplicatePreparedStatementError'>: prepared statement "__asyncpg_stmt_2__" already exists
+HINT:  
+NOTE: pgbouncer with pool_mode set to "transaction" or
+"statement" does not support prepared statements properly.
+You have two options:
+
+* if you are using pgbouncer for connection pooling to a
+  single server, switch to the connection pool functionality
+  provided by asyncpg, it is a much better option for this
+  purpose;
+
+* if you have no option of avoiding the use of pgbouncer,
+  then you can set statement_cache_size to 0 when creating
+  the asyncpg connection object.
+
+[SQL: select pg_catalog.version()]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+2026-03-30 16:32:28,647 - app - ERROR - Database transaction error: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.DuplicatePreparedStatementError'>: prepared statement "__asyncpg_stmt_3__" already exists
+HINT:  
+NOTE: pgbouncer with pool_mode set to "transaction" or
+"statement" does not support prepared statements properly.
+You have two options:
+
+* if you are using pgbouncer for connection pooling to a
+  single server, switch to the connection pool functionality
+  provided by asyncpg, it is a much better option for this
+  purpose;
+
+* if you have no option of avoiding the use of pgbouncer,
+  then you can set statement_cache_size to 0 when creating
+  the asyncpg connection object.
+
+[SQL: select pg_catalog.version()]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+2026-03-30 16:32:32,183 - app - ERROR - Database transaction error: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.DuplicatePreparedStatementError'>: prepared statement "__asyncpg_stmt_4__" already exists
+HINT:  
+NOTE: pgbouncer with pool_mode set to "transaction" or
+"statement" does not support prepared statements properly.
+You have two options:
+
+* if you are using pgbouncer for connection pooling to a
+  single server, switch to the connection pool functionality
+  provided by asyncpg, it is a much better option for this
+  purpose;
+
+* if you have no option of avoiding the use of pgbouncer,
+  then you can set statement_cache_size to 0 when creating
+  the asyncpg connection object.
+
+[SQL: select pg_catalog.version()]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+2026-03-30 16:32:37,979 - app - ERROR - Database transaction error: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.DuplicatePreparedStatementError'>: prepared statement "__asyncpg_stmt_5__" already exists
+HINT:  
+NOTE: pgbouncer with pool_mode set to "transaction" or
+"statement" does not support prepared statements properly.
+You have two options:
+
+* if you are using pgbouncer for connection pooling to a
+  single server, switch to the connection pool functionality
+  provided by asyncpg, it is a much better option for this
+  purpose;
+
+* if you have no option of avoiding the use of pgbouncer,
+  then you can set statement_cache_size to 0 when creating
+  the asyncpg connection object.
+
+[SQL: select pg_catalog.version()]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+2026-03-30 16:32:59,302 - app - ERROR - Database transaction error: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.DuplicatePreparedStatementError'>: prepared statement "__asyncpg_stmt_6__" already exists
+HINT:  
+NOTE: pgbouncer with pool_mode set to "transaction" or
+"statement" does not support prepared statements properly.
+You have two options:
+
+* if you are using pgbouncer for connection pooling to a
+  single server, switch to the connection pool functionality
+  provided by asyncpg, it is a much better option for this
+  purpose;
+
+* if you have no option of avoiding the use of pgbouncer,
+  then you can set statement_cache_size to 0 when creating
+  the asyncpg connection object.
+
+[SQL: select pg_catalog.version()]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+2026-03-30 16:33:02,842 - app - ERROR - Database transaction error: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.DuplicatePreparedStatementError'>: prepared statement "__asyncpg_stmt_7__" already exists
+HINT:  
+NOTE: pgbouncer with pool_mode set to "transaction" or
+"statement" does not support prepared statements properly.
+You have two options:
+
+* if you are using pgbouncer for connection pooling to a
+  single server, switch to the connection pool functionality
+  provided by asyncpg, it is a much better option for this
+  purpose;
+
+* if you have no option of avoiding the use of pgbouncer,
+  then you can set statement_cache_size to 0 when creating
+  the asyncpg connection object.
+
+[SQL: select pg_catalog.version()]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+2026-03-30 16:33:06,531 - app - ERROR - Database transaction error: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.DuplicatePreparedStatementError'>: prepared statement "__asyncpg_stmt_8__" already exists
+HINT:  
+NOTE: pgbouncer with pool_mode set to "transaction" or
+"statement" does not support prepared statements properly.
+You have two options:
+
+* if you are using pgbouncer for connection pooling to a
+  single server, switch to the connection pool functionality
+  provided by asyncpg, it is a much better option for this
+  purpose;
+
+* if you have no option of avoiding the use of pgbouncer,
+  then you can set statement_cache_size to 0 when creating
+  the asyncpg connection object.
+
+[SQL: select pg_catalog.version()]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+2026-03-30 16:33:07,280 - app - ERROR - Database transaction error: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.DuplicatePreparedStatementError'>: prepared statement "__asyncpg_stmt_9__" already exists
+HINT:  
+NOTE: pgbouncer with pool_mode set to "transaction" or
+"statement" does not support prepared statements properly.
+You have two options:
+
+* if you are using pgbouncer for connection pooling to a
+  single server, switch to the connection pool functionality
+  provided by asyncpg, it is a much better option for this
+  purpose;
+
+* if you have no option of avoiding the use of pgbouncer,
+  then you can set statement_cache_size to 0 when creating
+  the asyncpg connection object.
+
+[SQL: select pg_catalog.version()]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+2026-03-30 16:33:53,440 - watchfiles.main - INFO - 2 changes detected
+2026-03-30 16:34:21,367 - watchfiles.main - INFO - 1 change detected
+2026-03-30 16:34:21,513 - app - INFO - Application shutting down...
+2026-03-30 16:34:21,845 - app - INFO - Mounted static directory: public/assets -> /assets
+2026-03-30 16:34:21,845 - app - INFO - Mounted static directory: public/uploads -> /uploads
+2026-03-30 16:34:21,845 - app - INFO - Mounted static directory: static -> /static
+2026-03-30 16:34:21,845 - app - INFO - Mounted static directory: docs -> /docs
+2026-03-30 16:34:21,936 - watchfiles.main - INFO - 4 changes detected
+2026-03-30 16:34:26,263 - app - INFO - Mounted static directory: public/assets -> /assets
+2026-03-30 16:34:26,263 - app - INFO - Mounted static directory: public/uploads -> /uploads
+2026-03-30 16:34:26,263 - app - INFO - Mounted static directory: static -> /static
+2026-03-30 16:34:26,263 - app - INFO - Mounted static directory: docs -> /docs
+2026-03-30 16:34:26,274 - app - INFO - Application starting up...
+2026-03-30 16:34:26,274 - app - INFO - Routes initialized:
+2026-03-30 16:34:26,274 - app - INFO -  - /openapi.json [openapi]
+2026-03-30 16:34:26,274 - app - INFO -  - /api/docs [swagger_ui_html]
+2026-03-30 16:34:26,274 - app - INFO -  - /docs/oauth2-redirect [swagger_ui_redirect]
+2026-03-30 16:34:26,274 - app - INFO -  - /api/redoc [redoc_html]
+2026-03-30 16:34:26,274 - app - INFO -  - /assets [assets]
+2026-03-30 16:34:26,274 - app - INFO -  - /uploads [uploads]
+2026-03-30 16:34:26,274 - app - INFO -  - /static [static]
+2026-03-30 16:34:26,274 - app - INFO -  - /docs [docs]
+2026-03-30 16:34:26,274 - app - INFO -  - /admin [redirect_admin]
+2026-03-30 16:34:26,274 - app - INFO -  - /admin/ [admin_dashboard]
+2026-03-30 16:34:26,274 - app - INFO -  - /admin/api/pages [get_admin_pages]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/news [get_admin_news]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/activities [get_admin_activities]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/appeals [get_admin_appeals]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/appeals/delete [delete_appeal]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/pages [save_page]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/pages/delete [delete_page]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/news [save_news]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/news/delete [delete_news]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/activities [save_activity]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/activities/delete [delete_activity]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/content/all [get_all_content]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/content/save [save_unified_content]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/content/delete [delete_unified_content]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/tags [get_tags]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/tags [save_tag]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/tags/delete [delete_tag]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/staff [get_admin_staff]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/staff [save_staff]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/staff/delete [delete_staff]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/upload [upload_file]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/media [get_media_files]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/media/delete [delete_media_file]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/settings [get_settings]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/settings [update_settings]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/menus [get_menus]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/menus [save_menu]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/menus/delete [delete_menu]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/banners [get_banners]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/banners [save_banner]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/banners/delete [delete_banner]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/missions [get_missions]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/missions [save_mission]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/courses [get_courses]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/courses [save_course]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/stats [get_stats]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/stats [save_stat]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/awards [get_awards]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/awards [save_award]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/faculty [get_admin_faculty]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/faculty [save_faculty]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/faculty/delete [delete_faculty]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/contact [get_contact_info]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/contact [save_contact_info]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/contact/delete [delete_contact_info]
+2026-03-30 16:34:26,275 - app - INFO -  - /admin/api/generic/delete [generic_delete]
+2026-03-30 16:34:26,275 - app - INFO -  - /api/appeals/submit [submit_appeal]
+2026-03-30 16:34:26,275 - app - INFO -  - /api/v1/context [api_global_context]
+2026-03-30 16:34:26,275 - app - INFO -  - /api/v1/home [api_home]
+2026-03-30 16:34:26,275 - app - INFO -  - /api/v1/news [api_news_list]
+2026-03-30 16:34:26,275 - app - INFO -  - /api/v1/news/{id} [api_news_detail]
+2026-03-30 16:34:26,275 - app - INFO -  - /api/v1/activities [api_activities_list]
+2026-03-30 16:34:26,276 - app - INFO -  - /api/v1/activities/{id} [api_activity_detail]
+2026-03-30 16:34:26,276 - app - INFO -  - /api/v1/faculty [api_faculty_list]
+2026-03-30 16:34:26,276 - app - INFO -  - /api/v1/staff/{type} [api_staff]
+2026-03-30 16:34:26,276 - app - INFO -  - /api/v1/pages/{slug} [api_page]
+2026-03-30 16:34:26,276 - app - INFO -  - /api/v1/external-stats [api_external_stats]
+2026-03-30 16:34:26,277 - app - INFO -  - /api/v1/research [api_research_list]
+2026-03-30 16:34:26,277 - app - INFO -  - /api/v1/coop-stats [get_coop_stats]
+2026-03-30 16:34:26,277 - app - INFO -  - /api/v1/chatbot [get_chatbot_response]
+2026-03-30 16:34:26,277 - app - INFO -  - /api/v1/chatbot [get_chatbot_response]
+2026-03-30 16:34:26,277 - app - INFO -  - / [home]
+2026-03-30 16:34:26,277 - app - INFO -  - /links [show_links_directory]
+2026-03-30 16:34:26,277 - app - INFO -  - /structure [structure_page]
+2026-03-30 16:34:26,277 - app - INFO -  - /appeals [appeals_page]
+2026-03-30 16:34:26,277 - app - INFO -  - /news [show_news]
+2026-03-30 16:34:26,277 - app - INFO -  - /news/{id} [show_news_detail]
+2026-03-30 16:34:26,277 - app - INFO -  - /activities [show_activities]
+2026-03-30 16:34:26,277 - app - INFO -  - /activities/{id} [show_activity_detail]
+2026-03-30 16:34:26,277 - app - INFO -  - /faculty [show_faculty]
+2026-03-30 16:34:26,277 - app - INFO -  - /teacher-portal [teacher_portal]
+2026-03-30 16:34:26,277 - app - INFO -  - /api/faculty/upload-cv [upload_cv_endpoint]
+2026-03-30 16:34:26,277 - app - INFO -  - /executives [show_executives]
+2026-03-30 16:34:26,277 - app - INFO -  - /support-staff [show_support_staff]
+2026-03-30 16:34:26,277 - app - INFO -  - /curriculum [curriculum_page]
+2026-03-30 16:34:26,277 - app - INFO -  - /research [research_page]
+2026-03-30 16:34:26,277 - app - INFO -  - /current-students [current_students_page]
+2026-03-30 16:34:26,277 - app - INFO -  - /services [services_page]
+2026-03-30 16:34:26,277 - app - INFO -  - /coop [coop_education_page]
+2026-03-30 16:34:26,277 - app - INFO -  - /page-raw/{slug} [show_page_raw]
+2026-03-30 16:34:26,277 - app - INFO -  - /{slug} [show_page]
+2026-03-30 16:34:26,277 - app - INFO -  - /api/curriculum-stats-proxy [get_curriculum_stats_proxy]
+2026-03-30 16:34:26,329 - watchfiles.main - INFO - 1 change detected
