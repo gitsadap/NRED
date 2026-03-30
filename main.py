@@ -31,7 +31,7 @@ for mount_point, directory in static_dirs:
 templates = Jinja2Templates(directory="templates")
 
 # Import routers
-from app.routers import public, appeals, admin, api, chatbot
+from app.routers import public, appeals, admin, api #, chatbot
 # Redirect routes
 from fastapi.responses import RedirectResponse
 
@@ -42,7 +42,7 @@ async def redirect_admin():
 app.include_router(admin.router)
 app.include_router(appeals.router)
 app.include_router(api.router)
-app.include_router(chatbot.router)
+# app.include_router(chatbot.router)
 app.include_router(public.router)  # Public router has catch-all, so it MUST be last
 
 @app.on_event("startup")
