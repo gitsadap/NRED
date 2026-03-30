@@ -12,6 +12,9 @@ app = FastAPI(
     redoc_url="/api/redoc"
 )
 
+from pathlib import Path
+BASE_DIR = Path(__file__).resolve().parent
+
 # Mount Static Files with proper error handling
 static_dirs = [
     ("assets", "public/assets"),
@@ -29,8 +32,6 @@ for mount_point, directory in static_dirs:
         logger.warning(f"Static directory not found: {directory}")
 
 # Templates
-from pathlib import Path
-BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 # Import routers
