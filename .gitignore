@@ -1,0 +1,15 @@
+# Python
+venv/
+__pycache__/
+*.py[cod]
+
+# AI & Data (ตัวหนัก)
+hf_cache/
+*.sql
+*.json
+*.html
+*.mp4
+
+# Secrets
+.env
+.env.*

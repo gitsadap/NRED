@@ -1,0 +1,286 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<!-- Swiper CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+
+{% set hero_mode = settings.get('hero_mode', 'video') %}
+{% set hero_title = settings.get('hero_title', 'Innovation in Agriculture & Environment') %}
+{% set hero_subtitle = settings.get('hero_subtitle', 'Empowering the future through sustainable practices, advanced
+research, and world-class education.') %}
+{% set hero_btn_text = settings.get('hero_btn_text', 'Discover More') %}
+{% set hero_btn_url = settings.get('hero_btn_url', '/about') %}
+{% set hero_video = settings.get('hero_video_url', '/assets/videos/hero.mp4') %}
+
+<!-- 1. Hero Section -->
+<section
+    class="relative min-h-[90vh] flex items-center justify-center text-center text-white overflow-hidden bg-gray-900">
+
+    <!-- Background Media -->
+    <div class="absolute inset-0 z-0 select-none">
+        {% if hero_mode == 'video' %}
+        <video autoplay loop muted playsinline class="w-full h-full object-cover opacity-60 scale-105">
+            <source src="{{ hero_video }}" type="video/mp4">
+        </video>
+        {% else %}
+        <!-- Swiper Slider -->
+        <div class="swiper mySwiper h-full w-full">
+            <div class="swiper-wrapper">
+                {% for img in hero_slider_images %}
+                <div class="swiper-slide">
+                    <div class="w-full h-full bg-cover bg-center transition-transform duration-[10000ms] ease-linear transform scale-100 hover:scale-110"
+                        style="background-image: url('{{ img }}');"></div>
+                </div>
+                {% endfor %}
+            </div>
+            <!-- Optional Pagination -->
+            <div class="swiper-pagination"></div>
+        </div>
+        {% endif %}
+        <!-- Gradient Overlay -->
+        <div class="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-black/30 z-10"></div>
+    </div>
+
+    <!-- Content -->
+    <div class="container mx-auto px-4 relative z-20 flex flex-col items-center justify-center mt-20">
+        <h1 data-aos="fade-up" data-aos-duration="1000"
+            class="text-4xl md:text-6xl lg:text-7xl font-bold font-serif mb-6 leading-tight drop-shadow-lg max-w-5xl">
+            {{ hero_title }}
+        </h1>
+        <p data-aos="fade-up" data-aos-delay="200"
+            class="text-lg md:text-2xl font-light text-gray-100 mb-10 max-w-3xl opacity-90 leading-relaxed">
+            {{ hero_subtitle }}
+        </p>
+        <div data-aos="fade-up" data-aos-delay="400">
+            <a href="{{ hero_btn_url }}"
+                class="group relative px-8 py-3 bg-accent text-gray-900 font-bold rounded-full overflow-hidden shadow-[0_0_20px_rgba(234,179,8,0.5)] hover:shadow-[0_0_30px_rgba(234,179,8,0.7)] transition-all duration-300 transform hover:-translate-y-1">
+                <span class="relative z-10">{{ hero_btn_text }}</span>
+                <div
+                    class="absolute inset-0 bg-white/20 transform -translate-x-full skew-x-12 group-hover:animate-shine">
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Scroll Down Indicator -->
+    <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-20 animate-bounce text-white/50">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7-7-7"></path>
+        </svg>
+    </div>
+</section>
+
+<!-- 2. Quick Access Buttons -->
+<section class="relative z-30 -mt-16 pb-16">
+    <div class="container mx-auto px-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {% set colors = {'green': 'bg-green-800', 'teal': 'bg-teal-800', 'blue': 'bg-blue-800', 'indigo':
+            'bg-indigo-800', 'red': 'bg-red-800', 'orange': 'bg-orange-800'} %}
+
+            {% for btn in quick_buttons %}
+            {% set bg_class = colors[btn.color] if btn.color in colors else 'bg-gray-800' %}
+            <a href="{{ btn.url }}" data-aos="fade-up" data-aos-delay="{{ loop.index * 100 }}"
+                class="relative group h-40 rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+                <!-- BG Image -->
+                {% if btn.image %}
+                <div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
+                    style="background-image: url('{{ btn.image }}');"></div>
+                {% endif %}
+                <!-- Overlay -->
+                <div
+                    class="absolute inset-0 {{ bg_class }}/90 group-hover:{{ bg_class }}/80 transition-colors duration-300">
+                </div>
+                <!-- Text -->
+                <div class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
+                    <h3
+                        class="text-xl font-bold text-white drop-shadow-md group-hover:scale-105 transition-transform duration-300">
+                        {{ btn.title }}</h3>
+                    <span
+                        class="mt-2 text-xs font-medium text-white/60 uppercase tracking-wider opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">Explore
+                        &rarr;</span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- 3. Features -->
+<section class="py-20 bg-surface">
+    <div class="container mx-auto px-4">
+        <div class="text-center mb-16" data-aos="fade-up">
+            <h2 class="text-3xl md:text-4xl font-serif font-bold text-primary mb-4">หน่วยงานภายใน</h2>
+            <div class="w-24 h-1 bg-accent mx-auto rounded-full"></div>
+            <p class="mt-4 text-gray-600 max-w-2xl mx-auto">
+                โครงสร้างหน่วยงานที่ครอบคลุมทุกมิติของการศึกษาและวิจัยเพื่อความยั่งยืน</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {% for feat in home_features %}
+            {% set color_cls = feat.color or 'text-primary' %}
+            <div data-aos="fade-up" data-aos-delay="{{ loop.index * 100 }}"
+                class="group bg-white p-8 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-accent/30 relative overflow-hidden">
+                <div
+                    class="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-primary to-green-400 transform -translate-x-full group-hover:translate-x-0 transition-transform duration-300">
+                </div>
+
+                <div
+                    class="w-14 h-14 rounded-2xl bg-gray-50 group-hover:bg-primary/5 flex items-center justify-center mb-6 transition-colors">
+                    <svg class="w-8 h-8 {{ color_cls }} transition-transform duration-300 group-hover:-rotate-12"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ feat.icon }}">
+                        </path>
+                    </svg>
+                </div>
+
+                <h3 class="text-xl font-bold text-gray-800 mb-3 group-hover:text-primary transition-colors">{{
+                    feat.title }}</h3>
+                <p class="text-gray-600 text-sm leading-relaxed mb-6">{{ feat.desc }}</p>
+                <a href="{{ feat.url }}"
+                    class="inline-flex items-center text-sm font-semibold {{ color_cls }} hover:underline">
+                    อ่านเพิ่มเติม <svg class="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                    </svg>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- 4. Unified News & Activities -->
+<section class="py-20 bg-white relative">
+    <!-- Decorative Blob -->
+    <div
+        class="absolute top-0 left-0 w-[500px] h-[500px] bg-green-50 rounded-full blur-3xl opacity-50 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+    </div>
+
+    <div class="container mx-auto px-4 relative z-10">
+        <div class="flex flex-col md:flex-row justify-between items-end mb-12 gap-6" data-aos="fade-up">
+            <div>
+                <h2 class="text-3xl md:text-4xl font-serif font-bold text-gray-900 mb-2">ข่าวสารและกิจกรรมล่าสุด</h2>
+                <div class="w-20 h-1 bg-primary rounded-full"></div>
+            </div>
+            <div class="flex gap-3">
+                <a href="/news"
+                    class="px-5 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-full hover:bg-primary hover:text-white transition-colors">ข่าวทั้งหมด</a>
+                <a href="/activities"
+                    class="px-5 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-full hover:bg-primary hover:text-white transition-colors">กิจกรรมทั้งหมด</a>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {% for item in unified_updates %}
+            {% set is_news = item.display_type == 'News' %}
+            <div data-aos="fade-up" data-aos-delay="{{ loop.index * 100 }}"
+                class="group flex flex-col bg-white rounded-2xl shadow-sm hover:shadow-2xl transition-all duration-300 border border-gray-100 overflow-hidden h-full">
+                <!-- Image -->
+                <div class="h-60 relative overflow-hidden bg-gray-200">
+                    {% if item.image_url %}
+                    <img src="{{ item.image_url }}"
+                        class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                    {% else %}
+                    <div class="w-full h-full flex items-center justify-center text-gray-300 text-5xl bg-gray-100">
+                        {{ '📰' if is_news else '📅' }}
+                    </div>
+                    {% endif %}
+
+                    <div class="absolute top-4 left-4">
+                        <span
+                            class="px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wide text-white shadow-sm {{ 'bg-primary' if is_news else 'bg-blue-600' }}">
+                            {{ item.category or ('ข่าว' if is_news else 'กิจกรรม') }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Content -->
+                <div class="p-6 flex flex-col flex-1">
+                    <div class="flex items-center gap-2 text-xs text-gray-400 mb-3 font-medium">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                            </path>
+                        </svg>
+                        {{ item.created_at.strftime('%d %b %Y') if item.created_at else '-' }}
+                    </div>
+
+                    <h3
+                        class="text-xl font-bold text-gray-800 mb-3 line-clamp-2 group-hover:text-primary transition-colors">
+                        <a href="/{{ 'news' if is_news else 'activities' }}/{{ item.id }}" class="stretched-link">
+                            {{ item.title }}
+                        </a>
+                    </h3>
+
+                    <p class="text-gray-600 text-sm line-clamp-2 mb-6 opacity-80 flex-1">
+                        {{ item.content | striptags }}
+                    </p>
+
+                    <!-- Footer -->
+                    <div class="pt-4 border-t border-gray-50 flex items-center justify-between">
+                        <span class="text-xs font-bold text-gray-400">{{ item.display_type }}</span>
+                        <span
+                            class="text-sm font-semibold {{ 'text-primary' if is_news else 'text-blue-600' }} group-hover:underline flex items-center">
+                            Read More &rarr;
+                        </span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- 5. Stats -->
+<section class="py-20 bg-gray-900 relative overflow-hidden text-white">
+    <div class="absolute inset-0 z-0">
+        <div
+            class="absolute top-0 right-0 w-[600px] h-[600px] bg-green-900/30 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2">
+        </div>
+        <div
+            class="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-900/20 rounded-full blur-3xl transform -translate-x-1/3 translate-y-1/3">
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 relative z-10">
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8">
+            {% for stat in stats %}
+            <div data-aos="zoom-in" data-aos-delay="{{ loop.index * 100 }}" class="text-center group">
+                <div
+                    class="text-4xl md:text-5xl font-bold font-serif mb-2 text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400 group-hover:from-accent group-hover:to-yellow-300 transition-all duration-300">
+                    {{ stat.number }}
+                </div>
+                <div
+                    class="h-0.5 w-10 bg-white/20 mx-auto mb-3 group-hover:w-full group-hover:bg-accent transition-all duration-500">
+                </div>
+                <div class="text-sm font-light tracking-widest text-gray-400 uppercase">{{ stat.label }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Swiper JS Init -->
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        if (document.querySelector('.mySwiper')) {
+            var swiper = new Swiper(".mySwiper", {
+                spaceBetween: 0,
+                effect: "fade",
+                speed: 1000,
+                autoplay: {
+                    delay: 6000,
+                    disableOnInteraction: false,
+                },
+                pagination: {
+                    el: ".swiper-pagination",
+                    clickable: true,
+                },
+                loop: true
+            });
+        }
+    });
+</script>
+{% endblock %}
