@@ -1,39 +1,32 @@
 import logging
-import sys
+import os
 from pathlib import Path
-from app.config import settings
 
 def setup_logging():
-    """Setup logging configuration"""
-    
-    # Create logs directory if it doesn't exist
-    log_dir = Path("logs")
-    log_dir.mkdir(exist_ok=True)
-    
-    # Configure logging format
+    logger = logging.getLogger("app")
+    logger.setLevel(logging.INFO)
+
+    # สร้าง StreamHandler เพื่อพ่น Log ออกหน้าจอ (Console)
+    # วิธีนี้จะใช้ได้ทั้ง Local และบน Vercel
+    stream_handler = logging.StreamHandler()
     formatter = logging.Formatter(
         '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
-    
-    # Setup file handler
-    file_handler = logging.FileHandler(log_dir / "app.log")
-    file_handler.setFormatter(formatter)
-    
-    # Setup console handler
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setFormatter(formatter)
-    
-    # Configure root logger
-    root_logger = logging.getLogger()
-    root_logger.setLevel(getattr(logging, settings.log_level.upper()))
-    root_logger.addHandler(file_handler)
-    root_logger.addHandler(console_handler)
-    
-    # Configure specific loggers
-    logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
-    logging.getLogger("httpx").setLevel(logging.WARNING)
-    
-    return root_logger
+    stream_handler.setFormatter(formatter)
+    logger.addHandler(stream_handler)
 
-# Initialize logging
+    # ตรวจสอบว่าถ้าไม่ได้รันบน Vercel (เช่นรัน Local) ถึงจะอนุญาตให้เขียนไฟล์
+    if not os.environ.get("VERCEL"):
+        try:
+            log_dir = Path("logs")
+            log_dir.mkdir(exist_ok=True)
+            file_handler = logging.FileHandler(log_dir / "app.log")
+            file_handler.setFormatter(formatter)
+            logger.addHandler(file_handler)
+        except Exception as e:
+            print(f"Cannot setup file logging: {e}")
+
+    return logger
+
+# Initialize the global logger instance
 logger = setup_logging()
