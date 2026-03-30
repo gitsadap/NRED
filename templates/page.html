@@ -1,0 +1,52 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-12">
+
+    {# Detect if content contains HTML structure (partial or full doc) #}
+    {% set content_trimmed = page.content.strip() if page.content else '' %}
+    {% set has_html_tags = '<div' in content_trimmed or '<table' in content_trimmed or '<section' in content_trimmed or
+        content_trimmed.lower().startswith('<!doctype') or content_trimmed.lower().startswith('<html') %} {% if
+        has_html_tags %} {# ── HTML Content: render in isolated iframe via /page-raw/{slug} ── #} <div class="w-full">
+        <iframe id="pageIframe" src="/page-raw/{{ page.slug }}" class="w-full border-0 rounded-lg shadow-sm"
+            style="min-height: 85vh; display: block;" scrolling="no" onload="autoResizeIframe(this)">
+        </iframe>
+</div>
+<script>
+    function autoResizeIframe(iframe) {
+        try {
+            var h = iframe.contentWindow.document.body.scrollHeight;
+            if (h > 0) iframe.style.height = (h + 40) + 'px';
+        } catch (e) { }
+    }
+    // Retry resize after fonts/images load
+    window.addEventListener('load', function () {
+        var iframe = document.getElementById('pageIframe');
+        if (iframe) {
+            setTimeout(function () { autoResizeIframe(iframe); }, 800);
+            setTimeout(function () { autoResizeIframe(iframe); }, 2000);
+        }
+    });
+</script>
+
+{% else %}
+{# ── Plain/Rich-text content ── #}
+<div class="max-w-4xl mx-auto bg-white rounded-lg shadow-sm p-8 min-h-[400px]">
+    <h1 class="text-3xl font-bold text-green-800 font-serif mb-6 border-b pb-4">{{ page.title }}</h1>
+
+    <div class="prose prose-lg text-gray-700 max-w-none">
+        {% if page.content %}
+        {{ page.content | safe }}
+        {% else %}
+        <p class="text-gray-500 italic">เนื้อหาอยู่ระหว่างการปรับปรุง...</p>
+        {% endif %}
+    </div>
+
+    <div class="mt-12 text-gray-400 text-sm border-t pt-4">
+        แก้ไขล่าสุด: {{ page.updated_at.strftime('%d/%m/%Y %H:%M') if page.updated_at else '-' }}
+    </div>
+</div>
+{% endif %}
+
+</div>
+{% endblock %}

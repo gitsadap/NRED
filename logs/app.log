@@ -31369,3 +31369,7 @@ You have two options:
 2026-03-30 17:00:47,524 - app - INFO -  - /{slug} [show_page]
 2026-03-30 17:00:47,524 - app - INFO -  - /api/curriculum-stats-proxy [get_curriculum_stats_proxy]
 2026-03-30 17:00:47,601 - watchfiles.main - INFO - 4 changes detected
+2026-03-30 17:01:27,844 - watchfiles.main - INFO - 11 changes detected
+2026-03-30 17:01:29,977 - watchfiles.main - INFO - 29 changes detected
+2026-03-30 17:01:34,331 - watchfiles.main - INFO - 4 changes detected
+2026-03-30 17:06:41,681 - watchfiles.main - INFO - 1 change detected

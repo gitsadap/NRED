@@ -1,0 +1,387 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<!-- Swiper CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+
+{% set hero_mode = settings.get('hero_mode', 'video') %}
+{% set hero_title = settings.get('hero_title', 'Innovation in Agriculture & Environment') %}
+{% set hero_subtitle = settings.get('hero_subtitle', 'Empowering the future through sustainable practices, advanced
+research, and world-class education.') %}
+{% set hero_btn_text = settings.get('hero_btn_text', 'Discover More') %}
+{% set hero_btn_url = settings.get('hero_btn_url', '/about') %}
+{% set hero_video = settings.get('hero_video_url', '/assets/videos/hero.mp4') %}
+
+<!-- Hero Section -->
+<section
+    class="hero relative flex items-center justify-center text-center text-white min-h-[85vh] overflow-hidden bg-gray-900">
+
+    <!-- Background Media -->
+    <div class="absolute inset-0 z-0">
+        {% if hero_mode == 'video' %}
+        <video autoplay loop muted playsinline class="w-full h-full object-cover opacity-60">
+            <source src="{{ hero_video }}" type="video/mp4">
+        </video>
+        {% else %}
+        <!-- Swiper -->
+        <div class="swiper mySwiper h-full w-full">
+            <div class="swiper-wrapper">
+                {% for img in hero_slider_images %}
+                <div class="swiper-slide">
+                    <div class="w-full h-full bg-cover bg-center" style="background-image: url('{{ img }}');"></div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        <!-- Overlay Gradient -->
+        <div class="absolute inset-0 bg-black/50 z-10"></div>
+    </div>
+
+    <!-- Content -->
+    <div class="container mx-auto px-4 relative z-20 h-full flex flex-col justify-center items-center">
+        <h1 data-aos="fade-up"
+            class="text-3xl md:text-5xl lg:text-7xl font-bold mb-6 font-serif drop-shadow-lg leading-tight max-w-4xl">
+            {{ hero_title }}
+        </h1>
+        <p data-aos="fade-up" data-aos-delay="100"
+            class="text-xl md:text-2xl mb-8 font-light max-w-3xl mx-auto opacity-90">
+            {{ hero_subtitle }}
+        </p>
+        <div data-aos="fade-up" data-aos-delay="200" class="flex gap-4 justify-center">
+            <a href="{{ hero_btn_url }}"
+                class="px-8 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-full shadow-lg hover:shadow-xl transition transform hover:-translate-y-1">
+                {{ hero_btn_text }}
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Swiper JS -->
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+<script>
+    var swiper = new Swiper(".mySwiper", {
+        spaceBetween: 0,
+        effect: "fade",
+        autoplay: {
+            delay: 5000,
+            disableOnInteraction: false,
+        },
+        loop: true
+    });
+</script>
+
+<!-- Curriculum Quick Buttons Section -->
+<section class="section py-0 relative -mt-16 z-30 mb-12">
+    <div class="container mx-auto px-4 sm:px-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {% set colors = {
+            'green': 'bg-green-900', 'teal': 'bg-teal-900', 'blue': 'bg-blue-900',
+            'indigo': 'bg-indigo-900', 'red': 'bg-red-900', 'orange': 'bg-orange-900'
+            } %}
+
+            {% for btn in quick_buttons %}
+            {% set bg_class = colors[btn.color] if btn.color in colors else 'bg-gray-900' %}
+            <a href="{{ btn.url }}" data-aos="flip-left" data-aos-delay="{{ loop.index * 100 }}"
+                class="relative block h-40 rounded-xl overflow-hidden shadow-xl hover:-translate-y-1 transition duration-300 group">
+                <!-- Background Image (if set) -->
+                {% if btn.image %}
+                <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('{{ btn.image }}');">
+                </div>
+                {% endif %}
+
+                <!-- Overlay Color -->
+                <div class="absolute inset-0 {{ bg_class }}/90 group-hover:{{ bg_class }}/80 transition"></div>
+
+                <!-- Content -->
+                <div class="absolute inset-0 flex items-center justify-center p-6 text-center">
+                    <h3
+                        class="text-xl font-bold text-white drop-shadow-md leading-tight group-hover:scale-105 transition">
+                        {{ btn.title }}
+                    </h3>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Features Grid -->
+<section class="section py-20 bg-gray-50">
+    <div class="container mx-auto px-4 sm:px-6">
+        <div class="text-center mb-16">
+            <h2 data-aos="fade-right"
+                class="text-3xl md:text-4xl font-serif font-bold text-green-900 mb-4 relative inline-block">
+                หน่วยงานภายใน
+                <span class="block h-1 w-24 bg-yellow-500 mx-auto mt-4 rounded-full"></span>
+            </h2>
+            <p data-aos="fade-up" data-aos-delay="200" class="text-gray-600 max-w-2xl mx-auto text-lg">
+                มุ่งเน้นการเรียนการสอนและวิจัยด้านทรัพยากรธรรมชาติและสิ่งแวดล้อม และสิ่งอำนวยความสะดวกอันทันสมัย</p>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {% for feat in home_features %}
+            {% set color_class = feat.color or 'text-green-600' %}
+            {% set border_class = 'border-yellow-500' if 'yellow' in color_class else 'border-green-600' %}
+            {% set bg_class = 'bg-yellow-100' if 'yellow' in color_class else 'bg-green-100' %}
+            {% set hover_bg_class = 'group-hover:bg-yellow-500' if 'yellow' in color_class else
+            'group-hover:bg-green-600' %}
+
+            <div data-aos="fade-up" data-aos-delay="{{ loop.index * 100 }}"
+                class="bg-white p-8 rounded-xl shadow-md hover:shadow-2xl transition duration-300 border-t-4 {{ border_class }} group">
+                <div
+                    class="w-14 h-14 {{ bg_class }} rounded-full flex items-center justify-center mb-6 {{ hover_bg_class }} transition">
+                    <svg class="w-8 h-8 {{ color_class }} group-hover:text-white transition" fill="none"
+                        stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ feat.icon }}">
+                        </path>
+                    </svg>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-800 mb-3 group-hover:text-gray-900 transition">{{ feat.title }}
+                </h3>
+                <p class="text-gray-600 mb-6 leading-relaxed">{{ feat.desc }}</p>
+                <a href="{{ feat.url }}"
+                    class="{{ color_class }} font-semibold hover:underline flex items-center gap-2 group-hover:gap-3 transition-all">อ่านต่อ
+                    &rarr;</a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Unified Updates Section -->
+<section class="section py-20 bg-white">
+    <div class="container mx-auto px-4">
+        <div class="text-center mb-16">
+            <h2 data-aos="fade-up" class="text-3xl font-serif font-bold text-gray-800 mb-2">ข่าวสารและกิจกรรม (Updates)
+            </h2>
+            <div data-aos="fade-up" data-aos-delay="100" class="w-20 h-1 bg-green-500 mx-auto rounded-full"></div>
+            <p data-aos="fade-up" data-aos-delay="200" class="mt-4 text-gray-500">
+                รวมข่าวสารประชาสัมพันธ์และกิจกรรมล่าสุดของภาควิชา</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {% for item in unified_updates %}
+            {% set has_image = item.image_url %}
+            {% set is_news = item.display_type == 'News' %}
+            <div data-aos="fade-up" data-aos-delay="{{ loop.index * 100 }}"
+                class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-2xl transition duration-300 border border-gray-100 flex flex-col h-full group">
+
+                <!-- Image Wrapper -->
+                <div class="h-56 bg-gray-200 relative overflow-hidden">
+                    {% if has_image %}
+                    <img src="{{ item.image_url }}"
+                        class="w-full h-full object-cover transition duration-700 group-hover:scale-110">
+                    {% else %}
+                    <div class="w-full h-full flex items-center justify-center text-4xl text-gray-300 bg-gray-100">
+                        {{ '📰' if is_news else '📅' }}
+                    </div>
+                    {% endif %}
+
+                    <!-- Type Badge -->
+                    <div class="absolute top-4 left-4">
+                        <span class="px-3 py-1 rounded-full text-xs font-bold shadow-sm uppercase tracking-wider items-center flex gap-2
+                            {{ 'bg-green-600 text-white' if is_news else 'bg-blue-600 text-white' }}">
+                            <span>{{ item.category or ('ข่าว' if is_news else 'กิจกรรม') }}</span>
+                        </span>
+                    </div>
+
+                    <!-- Date Badge -->
+                    {% if item.created_at %}
+                    <div
+                        class="absolute top-4 right-4 bg-white/90 backdrop-blur text-gray-800 px-3 py-1 rounded-full text-xs font-bold shadow-sm border border-gray-100">
+                        {{ item.created_at.strftime('%d %b %Y') }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Content -->
+                <div class="p-6 flex flex-col flex-1 relative">
+                    <!-- Tags -->
+                    {% if item.tags %}
+                    <div class="flex flex-wrap gap-2 mb-3">
+                        {% for tag in item.tags.split(',') %}
+                        {% if tag.strip() %}
+                        <span
+                            class="text-[10px] uppercase font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded hover:bg-gray-200 transition cursor-default">#{{
+                            tag.strip() }}</span>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <h3
+                        class="text-xl font-bold mb-3 text-gray-800 line-clamp-2 group-hover:text-green-700 transition leading-tight">
+                        <a href="/{{ 'news' if is_news else 'activities' }}/{{ item.id }}">
+                            {{ item.title }}
+                        </a>
+                    </h3>
+
+                    <p class="text-gray-600 mb-6 line-clamp-3 text-sm flex-1 leading-relaxed opacity-80">
+                        {{ item.content | striptags }}
+                    </p>
+
+                    <div class="pt-4 border-t border-gray-100 flex justify-between items-center mt-auto">
+                        <a href="/{{ 'news' if is_news else 'activities' }}/{{ item.id }}"
+                            class="text-sm font-bold {{ 'text-green-700' if is_news else 'text-blue-600' }} hover:underline flex items-center gap-1">
+                            อ่านต่อ <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                            </svg>
+                        </a>
+                        <span class="text-xs text-gray-400 font-medium">{{ item.display_type }}</span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="text-center mt-12 flex justify-center gap-4">
+            <a href="/news"
+                class="px-6 py-2 border border-gray-300 text-gray-600 rounded-full hover:border-green-600 hover:text-green-600 transition">ดูข่าวทั้งหมด</a>
+            <a href="/activities"
+                class="px-6 py-2 border border-gray-300 text-gray-600 rounded-full hover:border-blue-600 hover:text-blue-600 transition">ดูกิจกรรมทั้งหมด</a>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+{% set stats_bg = settings.get('stats_bg_image',
+'https://images.unsplash.com/photo-1451187580459-43490279c0fa?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80') %}
+{% set stats_side = settings.get('stats_side_image', '') %}
+
+<section class="section py-16 bg-gray-900 text-white relative overflow-hidden">
+    <!-- Background -->
+    <div class="absolute inset-0 bg-cover bg-center opacity-20" style="background-image: url('{{ stats_bg }}');"></div>
+    <div class="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/90 to-transparent z-10"></div>
+
+    <div class="container mx-auto px-4 relative z-20">
+        <div class="flex flex-col lg:flex-row items-center gap-12">
+            <!-- Stats Grid -->
+            <div class="flex-1 w-full">
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                    {% for stat in stats %}
+                    {# Simplify Icon Logic or use generic mapping #}
+                    {% set icon_path = '' %}
+                    {% if stat.icon == 'graduation-cap' %}
+                    {% set icon_path = '
+                    <path d="M12 14l9-5-9-5-9 5 9 5z" />
+                    <path
+                        d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+                    ' %}
+                    {% elif stat.icon == 'id-card' %}
+                    {% set icon_path = '
+                    <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" />' %}
+                    {% elif stat.icon == 'users' %}
+                    {% set icon_path = '
+                    <path
+                        d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                    ' %}
+                    {% elif stat.icon == 'user-circle' %}
+                    {% set icon_path = '
+                    <path fill-rule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z"
+                        clip-rule="evenodd" />' %}
+                    {% elif stat.icon == 'building' %}
+                    {% set icon_path = '
+                    <path fill-rule="evenodd"
+                        d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z"
+                        clip-rule="evenodd" />' %}
+                    {% else %}
+                    <!-- Default Chart Line -->
+                    {% set icon_path = '
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />' %}
+                    {% endif %}
+
+                    {% set is_stroke = stat.icon == 'chart-line' %}
+
+                    <div data-aos="zoom-in" data-aos-delay="{{ loop.index * 100 }}"
+                        data-aos-anchor-placement="center-bottom"
+                        class="bg-gray-800/50 backdrop-blur-sm p-4 rounded-lg border border-gray-700 hover:border-yellow-500 transition group text-center">
+                        <div
+                            class="w-12 h-12 mx-auto mb-3 text-gray-400 group-hover:text-yellow-400 transition-colors flex items-center justify-center">
+                            <svg class="w-full h-full" fill="{{ 'none' if is_stroke else 'currentColor' }}"
+                                stroke="{{ 'currentColor' if is_stroke else 'none' }}" viewBox="0 0 24 24">
+                                {{ icon_path | safe }}
+                            </svg>
+                        </div>
+                        <div class="text-3xl font-bold text-white mb-1 drop-shadow-md font-serif">{{ stat.number }}
+                        </div>
+                        <div class="text-xs text-gray-300 uppercase tracking-wider font-light">{{ stat.label }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Graphic Side -->
+            {% if stats_side %}
+            <div class="hidden lg:block w-1/3 relative z-20" data-aos="fade-left" data-aos-duration="1000">
+                <img src="{{ stats_side }}" class="w-full h-auto object-contain drop-shadow-2xl">
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Quick Access Links (Modern "Sidebar" Alternative) -->
+<section class="section py-16 bg-gray-900 text-white border-t border-gray-800">
+    <div class="container mx-auto px-4">
+        <div class="text-center mb-12">
+            <h2 data-aos="fade-down" class="text-2xl font-bold mb-2 text-gray-100">เมนูลัดและแหล่งข้อมูล</h2>
+            <div data-aos="zoom-in" data-aos-delay="200" class="w-12 h-1 bg-green-500 mx-auto rounded-full"></div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
+
+            <!-- Banner Links (Rendered as Buttons) -->
+            {# Note: Use a default dict for settings.quick_access if missing, or handle safe access #}
+            <div class="space-y-4" data-aos="fade-up" data-aos-delay="100">
+                <h4 class="font-bold text-green-400 uppercase tracking-wide text-sm mb-4 border-b border-gray-700 pb-2">
+                    {{ settings.get('quick_access_1_title', 'Featured Links') }}
+                </h4>
+
+                {# We assume sidebar_top is not available via simple context yet unless we parsed all menus.
+                For now, we'll placeholder or skip if complex.
+                Wait, user wants EXACT match. The sidebar menus were in 'menus' table.
+                In dependencies.py we only parsed 'main' menu.
+                We should ideally parse 'sidebar_top', 'sidebar_links', etc. if we want 100%.
+                For now let's put a placeholder that says 'Configure in Admin' or check if we can genericize it.
+                Actually, let's keep it empty gracefully if not found. #}
+
+                <p class="text-gray-500 text-sm italic">Links configuration requires full menu parsing.</p>
+            </div>
+
+            <!-- Link List 1 -->
+            <div data-aos="fade-up" data-aos-delay="200">
+                <h4 class="font-bold text-sky-400 uppercase tracking-wide text-sm mb-4 border-b border-gray-700 pb-2">
+                    {{ settings.get('quick_access_2_title', 'Internal Systems') }}
+                </h4>
+                <ul class="space-y-2 text-sm text-gray-300">
+                    <li><span class="text-gray-600">No links configured</span></li>
+                </ul>
+            </div>
+
+            <!-- Link List 2 -->
+            <div data-aos="fade-up" data-aos-delay="300">
+                <h4 class="font-bold text-teal-400 uppercase tracking-wide text-sm mb-4 border-b border-gray-700 pb-2">
+                    {{ settings.get('quick_access_3_title', 'Student Resources') }}
+                </h4>
+                <ul class="space-y-2 text-sm text-gray-300">
+                    <li><span class="text-gray-600">No links configured</span></li>
+                </ul>
+
+                <!-- Social Icons -->
+                <div class="mt-8 pt-6 border-t border-gray-800 flex gap-4 justify-center md:justify-start">
+                    <a href="#"
+                        class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-blue-600 hover:text-white transition shadow-lg">f</a>
+                    <a href="#"
+                        class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-sky-500 hover:text-white transition shadow-lg">t</a>
+                    <a href="#"
+                        class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-red-600 hover:text-white transition shadow-lg">y</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,130 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="bg-green-900 text-white py-12">
+    <div class="container mx-auto px-4 text-center">
+        <h1 class="text-4xl font-serif font-bold mb-6">ข่าวสารและกิจกรรม (News & Activities)</h1>
+
+        <!-- Category Filter -->
+        <div class="flex flex-wrap justify-center gap-3">
+            <a href="/news"
+                class="px-4 py-1.5 rounded-full border border-white/30 hover:bg-white hover:text-green-900 transition {{ 'bg-white text-green-900 font-bold' if not current_category else 'bg-transparent text-white' }}">
+                ทั้งหมด (All)
+            </a>
+            {% for cat in news_categories %}
+            {% set is_active = current_category == cat.name %}
+            <a href="/news?category={{ cat.name }}"
+                class="px-4 py-1.5 rounded-full border border-white/30 hover:bg-white hover:text-green-900 transition {{ 'bg-white text-green-900 font-bold' if is_active else 'bg-transparent text-white' }}">
+                {{ cat.name }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- News List -->
+<section class="py-16 bg-gray-50">
+    <div class="container mx-auto px-4">
+
+        {% if not news_list %}
+        <div class="text-center py-20">
+            <p class="text-gray-500 text-lg">No news found.</p>
+        </div>
+        {% else %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {% for news in news_list %}
+            <div
+                class="news-card bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition duration-300 flex flex-col h-full opacity-0 translate-y-8">
+                <a href="/news/{{ news.id }}" class="block h-56 overflow-hidden bg-gray-200">
+                    {% if news.image_url %}
+                    <img src="{{ news.image_url }}" alt="{{ news.title }}"
+                        class="w-full h-full object-cover hover:scale-105 transition duration-500">
+                    {% else %}
+                    <div class="w-full h-full flex items-center justify-center text-gray-400">
+                        <span class="text-5xl">📰</span>
+                    </div>
+                    {% endif %}
+                </a>
+                <div class="p-6 flex-1 flex flex-col">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="text-xs text-gray-400 font-bold uppercase">
+                            {{ news.created_at.strftime('%d %b %Y') if news.created_at else '' }}
+                        </div>
+                        <!-- Tag Badge logic -->
+                        {% set cat_obj = {} %}
+                        {% for c in news_categories %}
+                        {% if c.name == news.category %} {% set _ = cat_obj.update(c) %} {% endif %}
+                        {% endfor %}
+
+                        {% set colors = {
+                        'red': 'bg-red-100 text-red-800',
+                        'blue': 'bg-blue-100 text-blue-800',
+                        'green': 'bg-green-100 text-green-800',
+                        'indigo': 'bg-indigo-100 text-indigo-800',
+                        'orange': 'bg-orange-100 text-orange-800',
+                        'purple': 'bg-purple-100 text-purple-800'
+                        } %}
+                        {% set badge_class = colors[cat_obj.color] if cat_obj.color in colors else 'bg-gray-100
+                        text-gray-800' %}
+
+                        <span class="px-2 py-1 rounded text-xs font-bold {{ badge_class }}">
+                            {{ news.category or 'General' }}
+                        </span>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-800 mb-3 hover:text-green-700 transition leading-tight">
+                        <a href="/news/{{ news.id }}">{{ news.title }}</a>
+                    </h2>
+                    <p class="text-gray-600 mb-4 line-clamp-3">
+                        {{ news.content | striptags | truncate(150) }}
+                    </p>
+                    <div class="mt-auto">
+                        <a href="/news/{{ news.id }}"
+                            class="inline-block text-green-700 font-semibold hover:underline">Read Full Story &rarr;</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", (event) => {
+        gsap.registerPlugin(ScrollTrigger);
+
+        // Hero Text
+        gsap.from("h1", { duration: 1, y: -30, opacity: 0, ease: "power3.out" });
+
+        // Category Buttons
+        gsap.from(".gap-3 > a", {
+            y: 20,
+            opacity: 0,
+            duration: 0.6,
+            stagger: 0.05,
+            delay: 0.3,
+            ease: "back.out(1.7)"
+        });
+
+        // News Cards
+        gsap.to(".news-card", {
+            scrollTrigger: {
+                trigger: ".news-card",
+                start: "top 90%",
+                toggleActions: "play none none none"
+            },
+            y: 0,
+            opacity: 1,
+            duration: 0.8,
+            stagger: 0.1,
+            ease: "power2.out"
+        });
+    });
+</script>
+{% endblock %}

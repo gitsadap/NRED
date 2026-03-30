@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Dept. Natural Resources & Environment</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Prompt', 'sans-serif'] },
+                    colors: {
+                        primary: '#0f172a', // slate-900
+                        secondary: '#1e293b', // slate-800
+                        accent: '#3b82f6', // blue-500
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js" referrerpolicy="origin"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
+    <!-- Custom Assets -->
+    <link rel="stylesheet" href="/assets/css/style.css">
+
+    <style>
+        .section-view {
+            display: none;
+        }
+
+        .section-view.active {
+            display: block;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 font-sans h-screen flex overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-primary text-white flex flex-col shadow-xl z-20 transition-all duration-300">
+        <div class="p-6 text-center border-b border-slate-700/50">
+            <h3 class="text-xl font-bold tracking-wide text-white">CMS System</h3>
+            <p class="text-xs text-slate-400 mt-1">Admin Panel</p>
+        </div>
+
+        <nav class="flex-1 py-4 overflow-y-auto custom-scrollbar">
+            <a onclick="showSection('dashboard')" id="nav-dashboard"
+                class="block py-3 px-6 hover:bg-secondary cursor-pointer transition-colors border-l-4 border-transparent hover:border-accent">
+                <span class="mr-2">📊</span> แดชบอร์ด
+            </a>
+            <a onclick="showSection('pages')" id="nav-pages"
+                class="block py-3 px-6 hover:bg-secondary cursor-pointer transition-colors border-l-4 border-transparent hover:border-accent">
+                <span class="mr-2">📄</span> หน้าเพจ (Pages)
+            </a>
+            <a onclick="showSection('unified')" id="nav-unified"
+                class="block py-3 px-6 hover:bg-secondary cursor-pointer transition-colors border-l-4 border-transparent hover:border-accent">
+                <span class="mr-2">📰</span> ข่าว & กิจกรรม
+            </a>
+            <a onclick="showSection('faculty')" id="nav-faculty"
+                class="block py-3 px-6 hover:bg-secondary cursor-pointer transition-colors border-l-4 border-transparent hover:border-accent">
+                <span class="mr-2">👨‍🏫</span> คณาจารย์ & บุคลากร
+            </a>
+            <a onclick="showSection('home_sections')" id="nav-home_sections"
+                class="block py-3 px-6 hover:bg-secondary cursor-pointer transition-colors border-l-4 border-transparent hover:border-accent">
+                <span class="mr-2">🏠</span> จัดการหน้าแรก
+            </a>
+            <a onclick="showSection('media')" id="nav-media"
+                class="block py-3 px-6 hover:bg-secondary cursor-pointer transition-colors border-l-4 border-transparent hover:border-accent">
+                <span class="mr-2">📁</span> คลังสื่อ (Media)
+            </a>
+            <a onclick="showSection('settings')" id="nav-settings"
+                class="block py-3 px-6 hover:bg-secondary cursor-pointer transition-colors border-l-4 border-transparent hover:border-accent">
+                <span class="mr-2">⚙️</span> ตั้งค่า / เมนู
+            </a>
+            <a onclick="showSection('appeals')" id="nav-appeals"
+                class="block py-3 px-6 hover:bg-secondary cursor-pointer transition-colors border-l-4 border-transparent hover:border-accent">
+                <span class="mr-2">📢</span> ร้องเรียน (Appeals)
+            </a>
+        </nav>
+
+        <a href="/"
+            class="block py-4 px-6 bg-slate-950 text-gray-400 hover:text-white transition-colors text-center text-sm border-t border-slate-900">
+            ← กลับหน้าหลัก
+        </a>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col overflow-hidden bg-gray-50">
+        <!-- Header -->
+        <header class="bg-white shadow-sm flex justify-between items-center py-4 px-8 z-10 border-b border-gray-200">
+            <h1 class="text-2xl font-bold text-gray-800" id="headerTitle">แดชบอร์ด</h1>
+            <div class="flex items-center gap-4">
+                <span class="text-sm text-gray-600">Admin User</span>
+                <div
+                    class="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold border border-blue-200">
+                    A</div>
+            </div>
+        </header>
+
+        <!-- Scrollable Area -->
+        <div class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+
+            <!-- 1. Dashboard Home -->
+            <div id="dashboard" class="section-view active">
+                <div class="bg-white rounded-xl shadow-sm p-8 border border-gray-100">
+                    <h2 class="text-xl font-bold mb-4 text-gray-800">ภาพรวมระบบ</h2>
+                    <p class="text-gray-600 mb-6">ยินดีต้อนรับสู่ระบบจัดการเนื้อหา (CMS)
+                        เลือกเมนูจากแถบด้านซ้ายเพื่อจัดการส่วนต่างๆ</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div onclick="showSection('pages')"
+                            class="cursor-pointer bg-blue-50 p-6 rounded-xl border border-blue-100 hover:shadow-lg transition">
+                            <h3 class="text-blue-800 font-bold text-lg mb-2">หน้าเพจ</h3>
+                            <p class="text-blue-600 text-sm">จัดการข้อมูลหน้าเว็บหลัก</p>
+                        </div>
+                        <div onclick="showSection('unified')"
+                            class="cursor-pointer bg-slate-50 p-6 rounded-xl border border-slate-100 hover:shadow-lg transition">
+                            <h3 class="text-slate-800 font-bold text-lg mb-2">ข่าวสาร/กิจกรรม</h3>
+                            <p class="text-slate-600 text-sm">อัปเดตความเคลื่อนไหว</p>
+                        </div>
+                        <div onclick="showSection('settings')"
+                            class="cursor-pointer bg-blue-50 p-6 rounded-xl border border-blue-100 hover:shadow-lg transition">
+                            <h3 class="text-blue-800 font-bold text-lg mb-2">ตั้งค่าระบบ</h3>
+                            <p class="text-blue-600 text-sm">จัดการเมนูและหน้าแรก</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Pages Management -->
+            <div id="pages" class="section-view">
+                <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                    <!-- List View -->
+                    <div id="pageListView">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-xl font-bold text-gray-800">หน้าเพจทั้งหมด</h2>
+                            <button onclick="editPage(null)"
+                                class="px-5 py-2.5 bg-primary text-white rounded-lg hover:bg-secondary font-medium shadow transition">
+                                + สร้างหน้าใหม่
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto rounded-lg border">
+                            <table class="w-full text-left border-collapse">
+                                <thead class="bg-gray-50 text-gray-600 text-sm uppercase">
+                                    <tr>
+                                        <th class="py-3 px-4 font-semibold">หัวข้อ</th>
+                                        <th class="py-3 px-4 font-semibold">Slug</th>
+                                        <th class="py-3 px-4 font-semibold">อัปเดตล่าสุด</th>
+                                        <th class="py-3 px-4 text-right font-semibold">จัดการ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pagesTableBody" class="divide-y divide-gray-100 bg-white">
+                                    <!-- JS Populated -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Editor View -->
+                    <div id="pageEditorView" class="hidden">
+                        <div class="flex justify-between items-center mb-6 border-b pb-4">
+                            <h2 class="text-xl font-bold text-gray-800" id="editorTitle">จัดการหน้าเพจ</h2>
+                            <button onclick="closePageEditor()"
+                                class="text-gray-500 hover:text-gray-800 px-3 py-1 rounded hover:bg-gray-100">ยกเลิก</button>
+                        </div>
+                        <form id="pageForm" onsubmit="savePage(event)" class="space-y-6 max-w-5xl mx-auto">
+                            <input type="hidden" id="pageId">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">หัวข้อหน้า
+                                        (Title)</label>
+                                    <input type="text" id="title" required
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">URL Slug</label>
+                                    <input type="text" id="slug" required
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition"
+                                        placeholder="example-page">
+                                </div>
+                            </div>
+
+                            <!-- Editor Mode Toggle -->
+                            <div>
+                                <div class="flex items-center justify-between mb-2">
+                                    <label class="block text-sm font-medium text-gray-700">เนื้อหา (Content)</label>
+                                    <div class="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+                                        <button type="button" id="btnWysiwyg" onclick="switchEditorMode('wysiwyg')"
+                                            class="px-3 py-1.5 rounded-md text-xs font-bold transition bg-white text-gray-800 shadow">
+                                            🖊 WYSIWYG
+                                        </button>
+                                        <button type="button" id="btnHtmlMode" onclick="switchEditorMode('html')"
+                                            class="px-3 py-1.5 rounded-md text-xs font-bold transition text-gray-500 hover:text-gray-700">
+                                            &lt;/&gt; วาง HTML
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- TinyMCE mode -->
+                                <div id="wysiwygEditorWrapper">
+                                    <textarea id="content" class="w-full min-h-[400px]"></textarea>
+                                </div>
+
+                                <!-- Raw HTML Paste mode -->
+                                <div id="htmlEditorWrapper" class="hidden">
+                                    <div
+                                        class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3 text-sm text-amber-800">
+                                        <strong>📋 โหมดวาง HTML:</strong> วางโค้ด HTML ทั้งหน้า (รวม &lt;!DOCTYPE
+                                        html&gt;) ได้เลย
+                                        ระบบจะดึงเฉพาะ &lt;body&gt; และ &lt;style&gt; มาแสดงผล
+                                    </div>
+                                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                        <!-- Raw HTML Textarea -->
+                                        <div>
+                                            <div class="flex items-center justify-between mb-1">
+                                                <span
+                                                    class="text-xs font-semibold text-gray-500 uppercase tracking-wide">โค้ด
+                                                    HTML</span>
+                                                <button type="button" onclick="clearHtmlEditor()"
+                                                    class="text-xs text-red-500 hover:text-red-700">ล้าง</button>
+                                            </div>
+                                            <textarea id="rawHtmlContent"
+                                                class="w-full h-[500px] font-mono text-sm border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none resize-none bg-gray-900 text-green-300"
+                                                placeholder="วางโค้ด HTML ที่นี่ เช่น <!DOCTYPE html><html>...</html>"
+                                                oninput="updateHtmlPreview()"></textarea>
+                                        </div>
+                                        <!-- Live Preview iframe -->
+                                        <div>
+                                            <div class="flex items-center justify-between mb-1">
+                                                <span
+                                                    class="text-xs font-semibold text-gray-500 uppercase tracking-wide">ตัวอย่างการแสดงผล</span>
+                                                <button type="button" onclick="updateHtmlPreview()"
+                                                    class="text-xs text-blue-500 hover:text-blue-700">🔄 รีเฟรช</button>
+                                            </div>
+                                            <iframe id="htmlPreviewFrame"
+                                                class="w-full h-[500px] border border-gray-300 rounded-lg bg-white"
+                                                sandbox="allow-same-origin allow-scripts"></iframe>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="pt-4 border-t flex justify-end">
+                                <button type="submit"
+                                    class="px-8 py-3 bg-primary text-white font-bold rounded-lg shadow hover:bg-secondary hover:shadow-lg transition transform hover:-translate-y-0.5">
+                                    บันทึกข้อมูล
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Unified Content (News/Activities) -->
+            <div id="unified" class="section-view">
+                <!-- Inner Tabs -->
+                <div class="flex gap-1 mb-6 border-b border-gray-200">
+                    <button onclick="switchUnifiedTab('content')" id="tab-u-content"
+                        class="unified-tab-btn px-6 py-3 font-bold text-gray-600 rounded-t-lg hover:bg-gray-50 transition border-b-2 border-transparent">
+                        ข่าวสารและกิจกรรม
+                    </button>
+                    <button onclick="switchUnifiedTab('tags')" id="tab-u-tags"
+                        class="unified-tab-btn px-6 py-3 font-bold text-gray-600 rounded-t-lg hover:bg-gray-50 transition border-b-2 border-transparent">
+                        จัดการแท็ก (Tags)
+                    </button>
+                </div>
+
+                <!-- Unified: Content List -->
+                <div id="unified-content" class="unified-content">
+                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                        <div id="contentListView">
+                            <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                                <h2 class="text-xl font-bold text-gray-800">รายการทั้งหมด</h2>
+                                <div class="flex items-center gap-3">
+                                    <select id="filterType" onchange="filterContent()"
+                                        class="px-3 py-2 border rounded-lg text-sm bg-gray-50 hover:bg-white transition">
+                                        <option value="all">ทั้งหมด (All)</option>
+                                        <option value="news">ข่าวสาร (News)</option>
+                                        <option value="activity">กิจกรรม (Activity)</option>
+                                    </select>
+                                    <button onclick="openUnifiedEditor()"
+                                        class="px-5 py-2 bg-primary text-white rounded-lg hover:bg-secondary font-medium shadow text-sm">
+                                        + เพิ่มโพสต์ใหม่
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="overflow-x-auto rounded-lg border">
+                                <table class="w-full text-left border-collapse">
+                                    <thead class="bg-gray-50 text-gray-600 text-sm uppercase">
+                                        <tr>
+                                            <th class="py-3 px-4 w-24">Type</th>
+                                            <th class="py-3 px-4">Title</th>
+                                            <th class="py-3 px-4 w-48 text-center">Category</th>
+                                            <th class="py-3 px-4 w-32">Date</th>
+                                            <th class="py-3 px-4 text-right w-32">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="contentTableBody" class="divide-y divide-gray-100"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Unified: Editor -->
+                        <div id="contentEditorView" class="hidden">
+                            <div class="flex justify-between items-center mb-6 border-b pb-4">
+                                <h2 class="text-xl font-bold text-gray-800">เพิ่ม/แก้ไข โพสต์</h2>
+                                <button onclick="closeUnifiedEditor()"
+                                    class="text-gray-500 hover:text-gray-800">ยกเลิก</button>
+                            </div>
+                            <form id="unifiedForm" onsubmit="saveUnifiedContent(event)"
+                                class="space-y-6 max-w-5xl mx-auto">
+                                <input type="hidden" id="postId">
+
+                                <div
+                                    class="bg-blue-50/50 p-4 rounded-xl border border-blue-100 flex gap-6 items-center">
+                                    <span class="text-sm font-bold text-blue-800">ประเภทโพสต์:</span>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="radio" name="postType" value="news" checked
+                                            class="text-primary focus:ring-primary" onchange="toggleFormFields()">
+                                        <span class="text-sm font-medium">ข่าวสาร (News)</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="radio" name="postType" value="activity"
+                                            class="text-primary focus:ring-primary" onchange="toggleFormFields()">
+                                        <span class="text-sm font-medium">กิจกรรม (Activity)</span>
+                                    </label>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="md:col-span-2">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">หัวข้อ
+                                            (Title)</label>
+                                        <input type="text" id="postTitle" required
+                                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">ภาพปก (Image
+                                            URL)</label>
+                                        <div class="relative">
+                                            <input type="text" id="postImage"
+                                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none pr-16">
+                                            <button type="button"
+                                                onclick="openMediaSelector((url) => document.getElementById('postImage').value = url)"
+                                                class="absolute right-1 top-1 bottom-1 px-3 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded text-xs font-bold">เลือก</button>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">หมวดหมู่ &
+                                            วันที่</label>
+                                        <div class="flex gap-2">
+                                            <select id="postCategory"
+                                                class="flex-1 px-4 py-2 border border-gray-300 rounded-lg outline-none">
+                                                <option value="General">General</option>
+                                                <option value="Research">Research</option>
+                                                <option value="Academic">Academic</option>
+                                            </select>
+                                            <input type="date" id="postEventDate"
+                                                class="w-40 px-4 py-2 border border-gray-300 rounded-lg outline-none text-sm">
+                                        </div>
+                                    </div>
+                                    <div class="md:col-span-2">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">แท็ก (Tags)</label>
+                                        <input type="text" id="postTags"
+                                            placeholder="เช่น research, award (คั่นด้วยลูกน้ำ)"
+                                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label
+                                        class="block text-sm font-medium text-gray-700 mb-1">รายละเอียดเนื้อหา</label>
+                                    <textarea id="postContent" class="w-full"></textarea>
+                                </div>
+
+                                <div class="pt-4 border-t flex justify-end">
+                                    <button type="submit"
+                                        class="px-8 py-3 bg-primary text-white font-bold rounded-lg shadow hover:bg-secondary transition">บันทึกโพสต์</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Unified: Tags -->
+                <div id="unified-tags" class="unified-content hidden">
+                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-xl font-bold text-gray-800">จัดการแท็ก</h2>
+                            <div class="flex gap-2">
+                                <input type="text" id="newTagName" placeholder="ชื่อแท็กใหม่"
+                                    class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                                <button onclick="addTag()"
+                                    class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-secondary font-medium">เพิ่ม</button>
+                            </div>
+                        </div>
+                        <div id="tagsContainer" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                            <!-- JS Populated -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. Media Library -->
+            <div id="media" class="section-view">
+                <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 min-h-[500px]">
+                    <div class="flex justify-between items-center mb-6 border-b pb-4">
+                        <h2 class="text-xl font-bold text-gray-800">คลังสื่อ Multimedia</h2>
+                        <div>
+                            <input type="file" id="mediaUploadInput" class="hidden" onchange="uploadFile(this)">
+                            <button onclick="document.getElementById('mediaUploadInput').click()"
+                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow font-medium">
+                                + อัปโหลดไฟล์
+                            </button>
+                        </div>
+                    </div>
+                    <div id="mediaGallery" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+                        <!-- JS Populated -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. Settings -->
+            <div id="settings" class="section-view">
+                <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                    <div class="flex border-b border-gray-200 mb-6">
+                        <button onclick="switchSettingsTab('general')" id="tab-general"
+                            class="px-6 py-2 border-b-2 border-green-600 text-green-700 font-bold bg-white transition">General</button>
+                        <button onclick="switchSettingsTab('home')" id="tab-home"
+                            class="px-6 py-2 border-b-2 border-transparent text-gray-500 hover:text-green-600 font-medium transition">Home
+                            Layout</button>
+                        <button onclick="switchSettingsTab('menu')" id="tab-menu"
+                            class="px-6 py-2 border-b-2 border-transparent text-gray-500 hover:text-green-600 font-medium transition">Menu
+                            System</button>
+                        <button onclick="switchSettingsTab('contact')" id="tab-contact"
+                            class="px-6 py-2 border-b-2 border-transparent text-gray-500 hover:text-green-600 font-medium transition">Contact
+                            Info</button>
+                    </div>
+
+                    <!-- General Settings -->
+                    <div id="settings-general" class="settings-tab-content">
+                        <form id="settingsGeneralForm"
+                            onsubmit="event.preventDefault(); saveSettings('settingsGeneralForm')"
+                            class="space-y-4 max-w-2xl">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อเว็บไซต์ (Site
+                                    Title)</label>
+                                <input type="text" name="site_title" id="setting_site_title"
+                                    class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">ข้อความ Footer</label>
+                                <input type="text" name="footer_text" id="setting_footer_text"
+                                    class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <button type="submit"
+                                class="px-6 py-2 bg-primary text-white rounded-lg shadow hover:bg-secondary">บันทึก</button>
+                        </form>
+                    </div>
+
+                    <!-- Home Layout -->
+                    <div id="settings-home" class="settings-tab-content hidden">
+                        <form id="settingsHomeForm" onsubmit="event.preventDefault(); saveSettings('settingsHomeForm')"
+                            class="space-y-8">
+                            <!-- Hero Section Config -->
+                            <div class="p-6 bg-gray-50 rounded-xl border border-gray-200">
+                                <h3 class="font-bold text-gray-800 mb-4">Hero Slider Images</h3>
+                                <input type="hidden" name="hero_slider_images" id="setting_hero_slider_images">
+                                <div id="hero-slider-container"></div>
+                                <button type="button" onclick="heroImages.push(''); renderHomeEditors()"
+                                    class="text-sm text-blue-600 hover:underline mt-2">+ Add Image URL</button>
+                            </div>
+
+                            <!-- Other configs hidden for brevity but logic exists in JS -->
+                            <input type="hidden" name="quick_buttons_json" id="setting_quick_buttons_json">
+                            <input type="hidden" name="home_features_json" id="setting_home_features_json">
+                            <input type="hidden" name="stats_json" id="setting_stats_json">
+
+                            <div class="p-4 bg-yellow-50 text-yellow-800 rounded text-sm">
+                                * Advanced Home Configuration (Features, Stats, Buttons) is currently managed via JSON
+                                in the backend or expanded UI.
+                                (UI reduced for this file, can be expanded).
+                            </div>
+
+                            <button type="submit"
+                                class="px-6 py-2 bg-primary text-white rounded-lg shadow hover:bg-secondary">บันทึกหน้าแรก</button>
+                        </form>
+                    </div>
+
+                    <!-- Menu Settings -->
+                    <div id="settings-menu" class="settings-tab-content hidden">
+                        <div class="flex gap-4 mb-6">
+                            <select id="menuGroupSelector" onchange="loadSelectedMenu()"
+                                class="flex-1 px-4 py-2 border rounded-lg">
+                                <option value="" disabled selected>-- Select Menu --</option>
+                            </select>
+                            <button onclick="createNewMenu()"
+                                class="px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 font-medium">+
+                                New Menu</button>
+                        </div>
+                        <div id="menuEditorContainer" class="p-4 border rounded-lg bg-gray-50 min-h-[200px]">
+                            <p class="text-gray-500 text-center pt-8">Select a menu to edit logic</p>
+                        </div>
+                    </div>
+
+                    <!-- Contact Info Settings -->
+                    <div id="settings-contact" class="settings-tab-content hidden">
+                        <div id="contactInfoContainer" class="space-y-4 max-w-3xl">
+                            <!-- JS Populated -->
+                        </div>
+                        <button onclick="addContactRow()"
+                            class="mt-4 px-4 py-2 border rounded text-sm hover:bg-gray-50">+ Add Contact Item</button>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- 6. Appeals -->
+            <div id="appeals" class="section-view">
+                <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                    <h2 class="text-xl font-bold text-gray-800 mb-6">รายการร้องเรียน</h2>
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-50 text-gray-600 text-sm">
+                            <tr>
+                                <th class="py-3 px-4">Date</th>
+                                <th class="py-3 px-4">Topic</th>
+                                <th class="py-3 px-4">Sender</th>
+                                <th class="py-3 px-4">Status</th>
+                                <th class="py-3 px-4 text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="appealsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 7. Faculty & Staff -->
+            <div id="faculty" class="section-view">
+                <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                    <div id="facultyListView">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-xl font-bold text-gray-800">จัดการบุคลากร (คณาจารย์)</h2>
+                            <button onclick="editFaculty(null)"
+                                class="px-5 py-2.5 bg-primary text-white rounded-lg hover:bg-secondary font-medium">
+                                + เพิ่มคณาจารย์
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto rounded-lg border">
+                            <table class="w-full text-left">
+                                <thead class="bg-gray-50 text-gray-600 text-sm uppercase">
+                                    <tr>
+                                        <th class="py-3 px-4">ชื่อ-นามสกุล</th>
+                                        <th class="py-3 px-4">ตำแหน่ง/สังกัด</th>
+                                        <th class="py-3 px-4">E-mail</th>
+                                        <th class="py-3 px-4 text-right">จัดการ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="facultyTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 8. Home Sections (Dynamic) -->
+            <div id="home_sections" class="section-view">
+                <div class="flex flex-wrap gap-2 mb-6">
+                    <button onclick="switchHomeTab('banners')" id="h-tab-banners"
+                        class="h-tab px-4 py-2 rounded-lg bg-gray-200 text-gray-600 font-bold">สไลด์แบนเนอร์</button>
+                    <button onclick="switchHomeTab('missions')" id="h-tab-missions"
+                        class="h-tab px-4 py-2 rounded-lg bg-gray-200 text-gray-600 font-bold">พันธกิจ</button>
+                    <button onclick="switchHomeTab('stats')" id="h-tab-stats"
+                        class="h-tab px-4 py-2 rounded-lg bg-gray-200 text-gray-600 font-bold">สถิติ</button>
+                    <button onclick="switchHomeTab('awards')" id="h-tab-awards"
+                        class="h-tab px-4 py-2 rounded-lg bg-gray-200 text-gray-600 font-bold">รางวัล/ประกาศ</button>
+                    <button onclick="switchHomeTab('courses')" id="h-tab-courses"
+                        class="h-tab px-4 py-2 rounded-lg bg-gray-200 text-gray-600 font-bold">วิดีโอหลักสูตร</button>
+                </div>
+
+                <!-- Content Containers for Home Tabs -->
+                <div id="home_tab_content"
+                    class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 min-h-[400px]">
+                    <div id="home_list_view">
+                        <!-- Dynamic List based on tab -->
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 id="home_section_title" class="text-lg font-bold"></h3>
+                            <button id="add_home_item_btn"
+                                class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-secondary text-sm font-medium">+
+                                เพิ่มรายการ</button>
+                        </div>
+                        <div class="overflow-x-auto rounded-lg border">
+                            <table class="w-full text-left">
+                                <thead class="bg-gray-50 text-gray-600 text-sm uppercase" id="home_table_head"></thead>
+                                <tbody id="home_table_body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Generic Form for Home Items (Popup or Inline) -->
+                    <!-- We'll use SweetAlert for small forms to save space, but a hidden form container is safer for complex ones -->
+                    <div id="home_editor_view" class="hidden">
+                        <h3 id="home_editor_title" class="text-lg font-bold mb-4 border-b pb-2">แก้ไขข้อมูล</h3>
+                        <form id="genericHomeForm" onsubmit="saveHomeItem(event)" class="space-y-4">
+                            <input type="hidden" id="home_item_id">
+                            <div id="home_form_fields" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                            <div class="pt-4 border-t flex justify-end gap-2">
+                                <button type="button" onclick="cancelHomeEdit()"
+                                    class="px-4 py-2 text-gray-500">ยกเลิก</button>
+                                <button type="submit" class="px-6 py-2 bg-primary text-white rounded-lg">บันทึก</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Media Selector Modal -->
+    <div id="mediaSelectorModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-6">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl h-[80vh] flex flex-col">
+            <div class="flex justify-between items-center p-4 border-b">
+                <h3 class="font-bold text-lg">Select Image</h3>
+                <button onclick="closeMediaSelector()" class="text-2xl text-gray-500">&times;</button>
+            </div>
+            <div id="mediaSelectorGrid" class="flex-1 overflow-y-auto p-4 grid grid-cols-4 gap-4"></div>
+        </div>
+    </div>
+
+    <!-- Custom Admin Dashboard Logic -->
+    <script src="/assets/js/admin.js?v=2.0.0"></script>
+
+</body>
+
+</html>

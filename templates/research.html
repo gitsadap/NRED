@@ -1,0 +1,578 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<!-- Page Header -->
+<section class="relative pt-24 pb-12 lg:pt-32 lg:pb-20 bg-emerald-900 border-b border-emerald-800/30 overflow-hidden">
+    <!-- Background Pattern -->
+    <div class="absolute inset-0 opacity-10"
+        style="background-image: url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'1\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');">
+    </div>
+
+    <!-- Content -->
+    <div class="container mx-auto px-4 relative z-10 text-center">
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-4 tracking-tight" data-aos="fade-up">
+            Research Intersect
+        </h1>
+        <p class="text-lg md:text-xl text-emerald-100 max-w-3xl mx-auto font-light" data-aos="fade-up"
+            data-aos-delay="100">
+            วิเคราะห์ ทิศทาง และค้นพบองค์ความรู้ใหม่จากงานวิจัยของคณาจารย์ในคณะฯ
+        </p>
+    </div>
+</section>
+
+<!-- Outer shield to hide inner Vue app from layout.html's global Vue compiler -->
+<div v-pre>
+    <!-- Main App Container -->
+    <div id="research-app" class="bg-gray-50 min-h-screen pb-12" v-cloak>
+
+        <!-- Universal Hero Search -->
+        <div class="bg-white border-b border-gray-200 shadow-sm sticky top-[72px] z-40">
+            <div class="container mx-auto px-4 py-4 md:py-6">
+                <div class="relative max-w-4xl mx-auto">
+                    <div class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                        <i class="fas fa-search text-emerald-500 text-xl"></i>
+                    </div>
+                    <input type="text" v-model="searchQuery"
+                        class="w-full pl-14 pr-12 py-4 bg-gray-50 border-2 border-transparent hover:border-gray-200 focus:bg-white focus:border-emerald-500 rounded-2xl text-lg shadow-inner outline-none transition-all placeholder-gray-400"
+                        placeholder="Search Research, Authors, Keywords, or Domains...">
+                    <button v-if="searchQuery" @click="searchQuery = ''"
+                        class="absolute inset-y-0 right-0 pr-5 flex items-center text-gray-400 hover:text-red-500 transition-colors">
+                        <i class="fas fa-times-circle text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="container mx-auto px-4 pt-10">
+
+            <!-- Loading State -->
+            <div v-if="loading" class="flex flex-col items-center justify-center py-32">
+                <svg class="animate-spin h-12 w-12 text-emerald-600 mb-6" xmlns="http://www.w3.org/2000/svg" fill="none"
+                    viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                    </path>
+                </svg>
+                <p class="text-emerald-700 font-medium text-lg animate-pulse">Initializing Research Analytics Engine...
+                </p>
+            </div>
+
+            <!-- Error State -->
+            <div v-else-if="error"
+                class="bg-red-50 text-red-600 p-8 rounded-2xl text-center max-w-2xl mx-auto border border-red-200 shadow-sm mt-10">
+                <i class="fas fa-exclamation-triangle text-4xl mb-4 text-red-400"></i>
+                <h3 class="text-xl font-bold mb-2">System Error</h3>
+                <p class="text-lg mb-6">${ error }</p>
+                <button @click="fetchResearch"
+                    class="px-8 py-3 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl transition-colors shadow-md hover:shadow-lg">
+                    Reboot Engine
+                </button>
+            </div>
+
+            <!-- Dashboard Ready -->
+            <div v-else>
+
+                <!-- KPI Headers -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div
+                        class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex items-center gap-5 hover:-translate-y-1 transition-transform">
+                        <div
+                            class="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-2xl flex-shrink-0">
+                            <i class="fas fa-book"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Total
+                                Publications</p>
+                            <h3 class="text-3xl font-black text-gray-800">${ totalFilteredPublications }</h3>
+                        </div>
+                    </div>
+
+                    <div
+                        class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex items-center gap-5 hover:-translate-y-1 transition-transform">
+                        <div
+                            class="w-14 h-14 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-2xl flex-shrink-0">
+                            <i class="fas fa-quote-right"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Global
+                                Citations</p>
+                            <h3 class="text-3xl font-black text-gray-800">${ globalCitations }</h3>
+                        </div>
+                    </div>
+
+                    <div
+                        class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex items-center gap-5 hover:-translate-y-1 transition-transform">
+                        <div
+                            class="w-14 h-14 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-2xl flex-shrink-0">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Active Authors
+                            </p>
+                            <h3 class="text-3xl font-black text-gray-800">${ filteredFaculty.length }</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analytics Grid (Charts) -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+
+                    <!-- Yearly Publications Chart -->
+                    <div class="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-gray-100">
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">Publication output over time</h3>
+                        <p class="text-sm text-gray-500 mb-6">Volume of research items published historically</p>
+                        <div id="chart-publications" class="w-full min-h-[300px]"></div>
+                    </div>
+
+                    <!-- Domain Distribution Chart (Donut) -->
+                    <div class="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-gray-100">
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">Research Domains</h3>
+                        <p class="text-sm text-gray-500 mb-6">Categorization based on keyword clustering algorithm</p>
+                        <div id="chart-domains" class="w-full min-h-[300px] flex items-center justify-center"></div>
+                    </div>
+                </div>
+
+                <!-- Text Cloud NLP Section -->
+                <div
+                    class="bg-gradient-to-br from-emerald-900 to-teal-900 rounded-3xl p-8 shadow-lg mb-16 relative overflow-hidden">
+                    <!-- Decor -->
+                    <div class="absolute -top-24 -right-24 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl"></div>
+
+                    <div class="relative z-10 flex flex-col md:flex-row gap-8 items-center">
+                        <div class="md:w-1/3 text-center md:text-left">
+                            <h3 class="text-2xl font-black text-white mb-3">Topic Constellation</h3>
+                            <p class="text-emerald-100 text-sm leading-relaxed mb-6 font-light">
+                                Our Natural Language Processing engine extracted and ranked the most frequent
+                                terminologies across all ${ totalFilteredPublications } publications.
+                                Click any tag to instantly filter the dataset.
+                            </p>
+                            <button v-if="searchQuery" @click="searchQuery = ''"
+                                class="px-5 py-2 rounded-full border border-emerald-400 text-emerald-300 hover:bg-emerald-800 hover:text-white transition-colors text-sm font-medium">
+                                <i class="fas fa-undo mr-2"></i> Reset Filter
+                            </button>
+                        </div>
+                        <div class="md:w-2/3">
+                            <div class="flex flex-wrap justify-center md:justify-start gap-2 md:gap-3 items-center">
+                                <span v-for="(kw, idx) in topKeywords" :key="idx" @click="searchQuery = kw.word"
+                                    :class="['inline-block cursor-pointer transition-all hover:-translate-y-1 hover:shadow-lg', 
+                                               kw.size === 'text-3xl' ? 'bg-white text-emerald-900 px-4 py-2 rounded-xl font-black shadow-md' :
+                                               kw.size === 'text-2xl' ? 'bg-emerald-100 text-emerald-800 px-3 py-1.5 rounded-lg font-bold' :
+                                               kw.size === 'text-xl' ? 'bg-emerald-800/80 text-emerald-100 px-3 py-1 rounded-md font-semibold border border-emerald-700' :
+                                               'bg-emerald-900/50 text-emerald-200 px-2 py-1 rounded text-sm font-medium border border-emerald-800/50']">
+                                    ${ kw.word }
+                                    <span class="opacity-50 text-[0.65em] font-normal ml-1">x${kw.count}</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Empty Search Results -->
+                <div v-if="filteredFaculty.length === 0"
+                    class="text-center py-20 bg-white rounded-3xl border border-gray-100 border-dashed">
+                    <div
+                        class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gray-50 mb-6 text-gray-300">
+                        <i class="fas fa-search text-4xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-2">No Matching Data</h3>
+                    <p class="text-gray-500 mb-6">Our engines couldn't find any publications matching your query.</p>
+                    <button @click="searchQuery = ''"
+                        class="text-emerald-600 font-bold hover:text-white bg-emerald-50 hover:bg-emerald-600 border border-emerald-200 hover:border-emerald-600 px-8 py-3 rounded-xl transition-all shadow-sm">
+                        Clear Search Parameters
+                    </button>
+                </div>
+
+                <!-- Faculty Feed -->
+                <div class="space-y-16">
+                    <div v-for="faculty in filteredFaculty" :key="faculty.faculty_id">
+
+                        <!-- Faculty Mini-Profile Header -->
+                        <div class="flex items-center gap-4 mb-6 border-b border-gray-200 pb-3">
+                            <div
+                                class="w-16 h-16 rounded-full overflow-hidden shadow-sm flex-shrink-0 bg-white border-2 border-emerald-100">
+                                <img v-if="faculty.image" :src="faculty.image" :alt="faculty.name_th"
+                                    class="w-full h-full object-cover">
+                                <div v-else
+                                    class="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
+                                    <i class="fas fa-user text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="flex-1">
+                                <h2 class="text-2xl font-extrabold text-gray-800 tracking-tight">${ faculty.name_th }
+                                </h2>
+                                <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1">
+                                    <p class="text-gray-500 font-medium text-sm">${ faculty.name_en }</p>
+                                    <span
+                                        class="text-emerald-600 text-xs font-bold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
+                                        ${ filteredPublications(faculty).length } Papers
+                                    </span>
+                                </div>
+                            </div>
+
+                            <a v-if="faculty.scholar_id"
+                                :href="'https://scholar.google.com/citations?user=' + encodeURIComponent(faculty.scholar_id)"
+                                target="_blank"
+                                class="hidden md:flex flex-col items-center justify-center w-12 h-12 rounded-xl bg-gray-50 border border-gray-200 hover:border-blue-400 hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-all cursor-pointer"
+                                title="View Google Scholar">
+                                <i class="fab fa-google text-lg"></i>
+                            </a>
+                        </div>
+
+                        <!-- Publications Masonry / Grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+
+                            <a v-for="(pub, idx) in filteredPublications(faculty)" :key="idx" :href="pub.link"
+                                target="_blank" rel="noopener noreferrer"
+                                class="group flex flex-col justify-between p-6 rounded-2xl border border-gray-200 hover:border-emerald-400 hover:shadow-xl hover:shadow-emerald-900/5 bg-white transition-all hover:-translate-y-1.5 min-h-[220px] relative overflow-hidden">
+
+                                <div class="relative z-10 flex-1 flex flex-col">
+                                    <!-- Year Badge -->
+                                    <div class="flex justify-between items-start mb-3">
+                                        <div v-if="pub.year"
+                                            class="text-xs font-black px-3 py-1 rounded-full bg-gray-100 text-gray-500 group-hover:bg-emerald-100 group-hover:text-emerald-700 transition-colors">
+                                            ${ pub.year }
+                                        </div>
+                                        <div v-else class="w-10"></div>
+
+                                        <div v-if="pub.cited_by?.value || pub.inline_links?.cited_by?.total"
+                                            class="flex items-center text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100">
+                                            <i class="fas fa-fire mr-1.5 opacity-70"></i>
+                                            ${ pub.cited_by?.value || pub.inline_links?.cited_by?.total }
+                                        </div>
+                                    </div>
+
+                                    <h3
+                                        class="font-extrabold text-gray-800 text-[1.1rem] leading-snug mb-3 group-hover:text-emerald-700 transition-colors line-clamp-3">
+                                        ${ pub.title }
+                                    </h3>
+
+                                    <div class="mt-auto pt-4 border-t border-gray-50 border-dashed">
+                                        <!-- Author API Format -->
+                                        <p v-if="pub.authors"
+                                            class="text-sm text-gray-500 font-medium flex items-start gap-2">
+                                            <i class="fas fa-pen-nib text-gray-300 mt-0.5 flex-shrink-0"></i>
+                                            <span class="line-clamp-1">${ pub.authors }</span>
+                                        </p>
+                                        <p v-if="pub.publication"
+                                            class="text-xs text-gray-400 mt-2 flex items-start gap-2">
+                                            <i class="fas fa-bookmark text-gray-200 mt-0.5 flex-shrink-0"></i>
+                                            <span class="line-clamp-1 italic">${ pub.publication }</span>
+                                        </p>
+
+                                        <!-- Organic API Format -->
+                                        <p v-if="!pub.authors && pub.publication_info && pub.publication_info.summary"
+                                            class="text-sm text-gray-500 font-medium flex items-start gap-2">
+                                            <i class="fas fa-pen-nib text-gray-300 mt-0.5 flex-shrink-0"></i>
+                                            <span class="line-clamp-1">${ extractAuthors(pub.publication_info.summary)
+                                                }</span>
+                                        </p>
+                                        <p v-if="!pub.publication && pub.snippet"
+                                            class="text-xs text-gray-400 mt-2 line-clamp-2 leading-relaxed italic">
+                                            ${ pub.snippet }
+                                        </p>
+                                    </div>
+                                </div>
+                            </a>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End v-pre wrapper -->
+{% endblock %}
+
+{% block scripts %}
+<!-- Vue 3 -->
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+<!-- ApexCharts -->
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+<script>
+    window.initPage = async (state, pageData) => {
+        const { createApp, ref, computed, onMounted, watch, nextTick } = Vue;
+
+        const app = createApp({
+            delimiters: ['${', '}'],
+            setup() {
+                const loading = ref(true);
+                const error = ref(null);
+                const facultyData = ref([]);
+                const searchQuery = ref('');
+
+                // Chart instances
+                let pubChart = null;
+                let domainChart = null;
+
+                window.addEventListener('error', function (e) {
+                    error.value = "Engine Fault: " + e.message;
+                });
+                window.addEventListener('unhandledrejection', function (e) {
+                    error.value = "Promise Rejected: " + e.reason;
+                });
+
+                const fetchResearch = async () => {
+                    loading.value = true;
+                    error.value = null;
+                    try {
+                        const response = await fetch('/api/v1/research');
+                        if (!response.ok) throw new Error('API Sync Failed');
+                        const json = await response.json();
+
+                        if (json.status === 'success') {
+                            facultyData.value = json.data.map(f => {
+                                let pubs = f.publications;
+                                if (typeof pubs === 'string') {
+                                    try { pubs = JSON.parse(pubs); } catch (e) { pubs = []; }
+                                }
+                                if (!Array.isArray(pubs)) pubs = [];
+
+                                // Standardize year format to handle "2021", "2021/4/2", etc.
+                                pubs.forEach(p => {
+                                    if (p.year) {
+                                        let match = p.year.toString().match(/\b(19|20)\d{2}\b/);
+                                        if (match) p.clean_year = parseInt(match[0]);
+                                    }
+                                    if (!p.clean_year && p.publication_info?.summary) {
+                                        let match = p.publication_info.summary.match(/\b(19|20)\d{2}\b/);
+                                        if (match) p.clean_year = parseInt(match[0]);
+                                    }
+                                });
+
+                                return { ...f, publications: pubs };
+                            });
+
+                        } else {
+                            throw new Error(json.message || 'Error loading data');
+                        }
+                    } catch (err) {
+                        error.value = err.message;
+                        console.error("API Error:", err);
+                    } finally {
+                        loading.value = false;
+                        nextTick(() => {
+                            buildCharts();
+                            setTimeout(() => {
+                                if (window.AOS) window.AOS.refresh();
+                            }, 100);
+                        });
+                    }
+                };
+
+                onMounted(() => {
+                    fetchResearch();
+                });
+
+                // Helper extractors
+                const extractAuthors = (summaryString) => {
+                    if (!summaryString) return "Unknown Authors";
+                    const parts = summaryString.split(' - ');
+                    if (parts.length > 0) return parts[0];
+                    return summaryString;
+                };
+
+                const getTotalCitations = (pubs) => {
+                    let total = 0;
+                    pubs.forEach(p => {
+                        if (p.cited_by && p.cited_by.value) total += p.cited_by.value;
+                        else if (p.inline_links?.cited_by?.total) total += p.inline_links.cited_by.total;
+                    });
+                    return total;
+                };
+
+                // Filter Engine
+                const filteredPublications = (faculty) => {
+                    if (!searchQuery.value) return faculty.publications;
+                    const query = searchQuery.value.toLowerCase();
+
+                    // IF the search matches the faculty name directly, return ALL their publications
+                    const nameMatch = (faculty.name_th && faculty.name_th.toLowerCase().includes(query)) ||
+                        (faculty.name_en && faculty.name_en.toLowerCase().includes(query));
+                    if (nameMatch) return faculty.publications;
+
+                    // OTHERWISE, filter individual publications by content
+                    return faculty.publications.filter(pub => {
+                        return (pub.title && typeof pub.title === 'string' && pub.title.toLowerCase().includes(query)) ||
+                            (pub.authors && typeof pub.authors === 'string' && pub.authors.toLowerCase().includes(query)) ||
+                            (pub.publication && typeof pub.publication === 'string' && pub.publication.toLowerCase().includes(query)) ||
+                            (pub.snippet && typeof pub.snippet === 'string' && pub.snippet.toLowerCase().includes(query)) ||
+                            (pub.publication_info?.summary && typeof pub.publication_info.summary === 'string' && pub.publication_info.summary.toLowerCase().includes(query));
+                    });
+                };
+
+                const filteredFaculty = computed(() => {
+                    if (!searchQuery.value) return facultyData.value;
+                    const query = searchQuery.value.toLowerCase();
+                    return facultyData.value.filter(faculty => {
+                        const nameMatch = faculty.name_th.toLowerCase().includes(query) ||
+                            faculty.name_en.toLowerCase().includes(query);
+                        return nameMatch || filteredPublications(faculty).length > 0;
+                    });
+                });
+
+                // Global KPI Aggregators
+                const allCurrentPubs = computed(() => {
+                    let all = [];
+                    filteredFaculty.value.forEach(f => {
+                        all.push(...filteredPublications(f));
+                    });
+                    return all;
+                });
+
+                const totalFilteredPublications = computed(() => allCurrentPubs.value.length);
+                const globalCitations = computed(() => getTotalCitations(allCurrentPubs.value));
+
+                // NLP Stopwords
+                const stopWords = new Set(["the", "of", "and", "in", "a", "to", "for", "on", "with", "as", "by", "at", "an", "from", "is", "study", "analysis", "using", "based", "effect", "effects", "via", "its", "are", "that", "this", "model", "method"]);
+
+                // Keyword Extractor (Word Cloud)
+                const topKeywords = computed(() => {
+                    let wordCount = {};
+                    allCurrentPubs.value.forEach(pub => {
+                        if (!pub.title || typeof pub.title !== 'string') return;
+                        let words = pub.title.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/);
+                        words.forEach(w => {
+                            if (w.length > 3 && !stopWords.has(w)) {
+                                wordCount[w] = (wordCount[w] || 0) + 1;
+                            }
+                        });
+                    });
+
+                    // Sort and take top 30
+                    let sorted = Object.keys(wordCount).map(k => ({ word: k, count: wordCount[k] })).sort((a, b) => b.count - a.count).slice(0, 30);
+
+                    if (sorted.length === 0) return [];
+
+                    // Assign CSS sizes based on relative frequency
+                    const max = sorted[0].count;
+                    return sorted.map(k => {
+                        let ratio = k.count / max;
+                        let sizeParam = 'text-xs';
+                        if (ratio > 0.8) sizeParam = 'text-3xl';
+                        else if (ratio > 0.5) sizeParam = 'text-2xl';
+                        else if (ratio > 0.3) sizeParam = 'text-xl';
+                        else if (ratio > 0.1) sizeParam = 'text-sm';
+
+                        return { ...k, size: sizeParam };
+                    });
+                });
+
+                // Chart Rendering Logic using ApexCharts
+                const buildCharts = () => {
+                    if (!facultyData.value.length || document.getElementById('chart-publications') === null) return;
+
+                    if (pubChart) pubChart.destroy();
+                    if (domainChart) domainChart.destroy();
+
+                    // 1. Group by Year
+                    let yearMap = {};
+                    allCurrentPubs.value.forEach(pub => {
+                        if (pub.clean_year && pub.clean_year >= 2000 && pub.clean_year <= new Date().getFullYear() + 1) {
+                            yearMap[pub.clean_year] = (yearMap[pub.clean_year] || 0) + 1;
+                        }
+                    });
+
+                    let years = Object.keys(yearMap).sort();
+                    let pubCounts = years.map(y => yearMap[y]);
+
+                    var pubOptions = {
+                        series: [{
+                            name: 'Publications',
+                            data: pubCounts
+                        }],
+                        chart: { type: 'bar', height: 300, fontFamily: 'Inter, sans-serif', toolbar: { show: false } },
+                        colors: ['#10b981'],
+                        plotOptions: { bar: { borderRadius: 4, columnWidth: '60%' } },
+                        dataLabels: { enabled: false },
+                        xaxis: { categories: years, axisBorder: { show: false }, axisTicks: { show: false } },
+                        yaxis: { labels: { formatter: (val) => Math.floor(val) } },
+                        grid: { strokeDashArray: 4, padding: { top: 0, right: 0, bottom: 0, left: 10 } }
+                    };
+                    pubChart = new ApexCharts(document.querySelector("#chart-publications"), pubOptions);
+                    pubChart.render();
+
+                    // 2. Domain Rules (Simple NLP Clustering)
+                    const categories = {
+                        "Environment & Climate": ["environment", "climate", "pollution", "water", "air", "waste", "carbon", "ecology"],
+                        "GIS & Spatial": ["gis", "spatial", "mapping", "remote", "sensing", "satellite", "earth", "lidar", "radar"],
+                        "Biology & Bio-systems": ["bio", "biology", "species", "plant", "forest", "microbial", "bacteria", "sludge", "anammox"],
+                        "Urban & Planning": ["urban", "city", "planning", "land", "development", "transport"],
+                        "Geology & Resources": ["geo", "geology", "soil", "mineral", "groundwater", "rock"]
+                    };
+
+                    let catCounts = { "Environment & Climate": 0, "GIS & Spatial": 0, "Biology & Bio-systems": 0, "Urban & Planning": 0, "Geology & Resources": 0, "Other": 0 };
+
+                    allCurrentPubs.value.forEach(pub => {
+                        if (!pub.title || typeof pub.title !== 'string') { catCounts["Other"]++; return; }
+                        let title = pub.title.toLowerCase();
+                        let found = false;
+                        for (let [cat, keywords] of Object.entries(categories)) {
+                            if (keywords.some(kw => title.includes(kw))) {
+                                catCounts[cat]++;
+                                found = true;
+                                break; // Only count once per main category
+                            }
+                        }
+                        if (!found) catCounts["Other"]++;
+                    });
+
+                    // Remove empty categories for pie
+                    let labels = [];
+                    let series = [];
+                    for (let [cat, count] of Object.entries(catCounts)) {
+                        if (count > 0) {
+                            labels.push(cat);
+                            series.push(count);
+                        }
+                    }
+
+                    var domainOptions = {
+                        series: series,
+                        labels: labels,
+                        chart: { type: 'donut', height: 320, fontFamily: 'Inter, sans-serif' },
+                        colors: ['#059669', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#9ca3af'],
+                        stroke: { width: 0 },
+                        dataLabels: { enabled: false },
+                        plotOptions: {
+                            pie: {
+                                donut: {
+                                    size: '70%',
+                                    labels: { show: true, name: { show: true }, value: { show: true, fontWeight: 700 }, total: { show: true, showAlways: false, label: 'Dominant', color: '#374151' } }
+                                }
+                            }
+                        },
+                        legend: { position: 'bottom', offsetY: 0, itemMargin: { horizontal: 10, vertical: 5 } }
+                    };
+                    domainChart = new ApexCharts(document.querySelector("#chart-domains"), domainOptions);
+                    domainChart.render();
+                };
+
+                // Watch search query to redraw charts based on filtered datasets
+                watch(searchQuery, () => {
+                    nextTick(() => { buildCharts(); });
+                });
+
+                return {
+                    loading,
+                    error,
+                    searchQuery,
+                    filteredFaculty,
+                    filteredPublications,
+                    extractAuthors,
+                    getTotalCitations,
+                    totalFilteredPublications,
+                    globalCitations,
+                    topKeywords,
+                    fetchResearch
+                };
+            }
+        });
+
+        app.mount('#research-app');
+    };
+</script>
+{% endblock %}

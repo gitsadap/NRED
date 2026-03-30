@@ -1,0 +1,87 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="bg-gray-100 py-16">
+    <div class="container mx-auto px-4">
+        <div class="text-center mb-12 opacity-0 translate-y-8 header-content">
+            <h1 class="text-4xl font-serif font-bold text-gray-800 mb-4">ไดเรกทอรีเว็บไซต์ (Web Directory)</h1>
+            <p class="text-gray-600">รวมลิงก์และแหล่งข้อมูลทั้งหมดของภาควิชาทรัพยากรธรรมชาติและสิ่งแวดล้อม</p>
+            <div class="w-16 h-1 bg-green-600 mx-auto mt-6 rounded-full"></div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {% for group_name, items in menus.items() %}
+            <div
+                class="link-card bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 opacity-0 translate-y-8">
+                <div class="bg-green-800 px-6 py-4 border-b border-green-700">
+                    <h2 class="text-xl font-bold text-white capitalize">
+                        {% if group_name == 'main' %} เมนูหลัก (Main Menu)
+                        {% else %} {{ group_name.replace('_', ' ').title() }}
+                        {% endif %}
+                    </h2>
+                </div>
+                <div class="p-6">
+                    <ul class="space-y-3">
+                        {% for item in items %}
+                        <li>
+                            <a href="{{ item.url }}"
+                                class="flex items-center text-gray-700 hover:text-green-700 transition group">
+                                <span
+                                    class="w-2 h-2 bg-green-400 rounded-full mr-3 group-hover:scale-125 transition"></span>
+                                <span class="font-medium">{{ item.label }}</span>
+                            </a>
+                            <!-- Children (Submenu) -->
+                            {% if item.children %}
+                            <ul class="pl-6 mt-2 space-y-2 border-l-2 border-gray-100 ml-1">
+                                {% for child in item.children %}
+                                <li>
+                                    <a href="{{ child.url }}"
+                                        class="text-sm text-gray-500 hover:text-green-600 block py-1">
+                                        - {{ child.label }}
+                                    </a>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", (event) => {
+        gsap.registerPlugin(ScrollTrigger);
+
+        // Header
+        gsap.to(".header-content", {
+            y: 0,
+            opacity: 1,
+            duration: 1,
+            ease: "power3.out"
+        });
+
+        // Link Cards
+        gsap.to(".link-card", {
+            scrollTrigger: {
+                trigger: ".link-card",
+                start: "top 90%",
+                toggleActions: "play none none none"
+            },
+            y: 0,
+            opacity: 1,
+            duration: 0.8,
+            stagger: 0.1,
+            ease: "power2.out"
+        });
+    });
+</script>
+{% endblock %}
