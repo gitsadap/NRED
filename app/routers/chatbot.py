@@ -1,6 +1,6 @@
 import os
 import pickle
-import numpy as np  # 🌟 ใช้ numpy แทน torch เพื่อประหยัดพื้นที่บน Vercel
+import numpy as np  
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from sentence_transformers import SentenceTransformer
