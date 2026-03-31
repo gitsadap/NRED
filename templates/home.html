@@ -741,33 +741,30 @@
         // AWARDS SWIPER CAROUSEL
         // ==========================================
         if (document.querySelector('.awardsSwiper')) {
-            const awardsSwiper = new Swiper('.awardsSwiper', {
+            new Swiper('.awardsSwiper', {
                 slidesPerView: 1,
-                spaceBetween: 30,
-                effect: 'fade',
-                fadeEffect: {
-                    crossFade: true
-                },
-                loop: window.app?.$data?.pageData?.awards?.length > 1,
-                watchOverflow: true,
+                spaceBetween: 0,
+                loop: true,
                 grabCursor: true,
+                speed: 700,
                 autoplay: {
-                    delay: 6000,
+                    delay: 5000,
                     disableOnInteraction: false,
                     pauseOnMouseEnter: true
                 },
-                speed: 1000,
                 pagination: {
-                    el: '.swiper-pagination',
+                    el: '.awardsSwiper .swiper-pagination',
                     clickable: true,
                     dynamicBullets: true
                 },
                 navigation: {
-                    nextEl: '.swiper-button-next',
-                    prevEl: '.swiper-button-prev',
+                    nextEl: '.awardsSwiper .swiper-button-next',
+                    prevEl: '.awardsSwiper .swiper-button-prev',
                 }
             });
         }
+
+
 
         // Start scrambling after page load
         setTimeout(initScrambling, 500);
@@ -1201,41 +1198,58 @@
     <div class="container mx-auto px-4 relative z-10">
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 md:gap-8 gap-4" id="stats-container">
             {% for stat in stats %}
-            
+
             {% set icon_path = '' %}
             {% if stat.icon == 'graduation-cap' %}
             {% set icon_path = '
             <path d="M12 14l9-5-9-5-9 5 9 5z" />
-            <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+            <path
+                d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
             ' %}
             {% elif stat.icon == 'id-card' %}
-            {% set icon_path = '<path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" />' %}
+            {% set icon_path = '
+            <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" />' %}
             {% elif stat.icon == 'users' %}
             {% set icon_path = '
-            <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+            <path
+                d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
             ' %}
             {% elif stat.icon == 'user-circle' %}
-            {% set icon_path = '<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clip-rule="evenodd" />' %}
+            {% set icon_path = '
+            <path fill-rule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z"
+                clip-rule="evenodd" />' %}
             {% elif stat.icon == 'building' %}
-            {% set icon_path = '<path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clip-rule="evenodd" />' %}
+            {% set icon_path = '
+            <path fill-rule="evenodd"
+                d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z"
+                clip-rule="evenodd" />' %}
             {% else %}
-            {% set icon_path = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />' %}
+            {% set icon_path = '
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />'
+            %}
             {% endif %}
 
             {% set is_stroke = stat.icon == 'chart-line' %}
 
-            <div data-aos="zoom-in" data-aos-delay="{{ loop.index * 100 }}"
-                data-aos-anchor-placement="center-bottom"
+            <div data-aos="zoom-in" data-aos-delay="{{ loop.index * 100 }}" data-aos-anchor-placement="center-bottom"
                 class="glass-dark p-6 rounded-2xl border border-white/10 hover:border-yellow-500/50 hover:bg-white/5 transition duration-300 group text-center gpu relative overflow-hidden">
-                <div class="absolute inset-0 bg-gradient-to-br from-green-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div class="relative z-10 w-16 h-16 mx-auto mb-4 text-gray-400 group-hover:text-yellow-400 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 flex items-center justify-center">
+                <div
+                    class="absolute inset-0 bg-gradient-to-br from-green-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity">
+                </div>
+                <div
+                    class="relative z-10 w-16 h-16 mx-auto mb-4 text-gray-400 group-hover:text-yellow-400 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 flex items-center justify-center">
                     <svg class="w-10 h-10 drop-shadow-lg" fill="{{ 'none' if is_stroke else 'currentColor' }}"
                         stroke="{{ 'currentColor' if is_stroke else 'none' }}" viewBox="0 0 24 24">
                         {{ icon_path | safe }}
                     </svg>
                 </div>
-                <div class="relative z-10 text-4xl font-bold text-white mb-2 drop-shadow-md font-outfit">{{ stat.value }}{{ stat.suffix if stat.suffix else '' }}</div>
-                <div class="relative z-10 text-sm text-gray-300 uppercase tracking-wider font-light">{{ stat.label }}</div>
+                <div class="relative z-10 text-4xl font-bold text-white mb-2 drop-shadow-md font-outfit">
+                    <span class="stat-number" data-target="{{ stat.value }}">0</span>{{ stat.suffix if stat.suffix else
+                    '' }}
+                </div>
+                <div class="relative z-10 text-sm text-gray-300 uppercase tracking-wider font-light">{{ stat.label }}
+                </div>
             </div>
             {% endfor %}
         </div>
@@ -1335,135 +1349,109 @@
 </section>
 
 <!-- ========================================
-     FEATURES SECTION
+     AWARDS / HALL OF FAME SECTION
      ======================================== -->
 <section
-    class="features-section py-20 md:py-32 bg-gradient-to-br from-gray-900 via-slate-900 to-black text-white font-outfit relative overflow-hidden">
+    class="awards-section py-12 md:py-20 bg-gradient-to-br from-gray-950 via-slate-900 to-gray-900 text-white relative overflow-hidden">
 
-    <!-- Background Pattern -->
-    <div class="absolute inset-0 opacity-5"
-        style="background-image: url('data:image/svg+xml,%3Csvg width=&quot;60&quot; height=&quot;60&quot; viewBox=&quot;0 0 60 60&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;%3E%3Cg fill=&quot;%23ffffff&quot; fill-opacity=&quot;1&quot;%3E%3Cpath d=&quot;M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z&quot;/%3E%3C/g%3E%3C/svg%3E');">
-    </div>
+    <!-- Subtle background decoration -->
+    <div class="absolute top-0 right-0 w-96 h-96 bg-yellow-500/5 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute bottom-0 left-0 w-72 h-72 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none"></div>
 
     <div class="container mx-auto px-4 relative z-10">
 
         <!-- Section Header -->
-        <div class="mb-12 md:mb-20" data-aos="fade-up">
+        <div class="mb-10 md:mb-14 text-center" data-aos="fade-up">
             <span
-                class="text-green-400 font-bold tracking-widest uppercase text-xs md:text-sm mb-3 block font-space">Hall
-                of Fame</span>
-            <h2 class="text-5xl md:text-6xl lg:text-7xl font-black mb-6">
-                <span class="text-gradient">แสดงความยินดี</span>
+                class="inline-block text-yellow-400 font-bold tracking-widest uppercase text-xs md:text-sm mb-3 font-space">🏆
+                Hall of Fame</span>
+            <h2 class="text-3xl md:text-4xl lg:text-5xl font-black mb-4 text-white">
+                แสดงความยินดี
             </h2>
-            <div class="w-32 h-2 bg-gradient-to-r from-green-500 via-cyan-500 to-blue-500 rounded-full"></div>
+            <div class="mx-auto w-20 h-1 bg-gradient-to-r from-yellow-400 to-amber-500 rounded-full"></div>
         </div>
 
-        <!-- Congratulations Swiper -->
-        <div class="swiper awardsSwiper" data-aos="fade-up" data-aos-delay="200">
-            <div class="swiper-wrapper pb-12">
+        <!-- Awards Swiper -->
+        <div class="swiper awardsSwiper" data-aos="fade-up" data-aos-delay="100">
+            <div class="swiper-wrapper">
+
+                {% set award_colors = {
+                'yellow': 'from-yellow-500/20 to-amber-500/10 border-yellow-500/40',
+                'blue': 'from-blue-500/20 to-cyan-500/10 border-blue-500/40',
+                'purple': 'from-purple-500/20 to-pink-500/10 border-purple-500/40'
+                } %}
 
                 {% for award in awards %}
-                {% set colors = {
-                'yellow': {'border': 'border-yellow-500/50 hover:border-yellow-400', 'bg': 'from-yellow-500/20
-                to-orange-500/20', 'icon_text': 'text-yellow-400', 'glow': 'glow-yellow', 'shadow':
-                'hover:shadow-yellow-500/20', 'text_hover': 'group-hover:text-yellow-400'},
-                'blue': {'border': 'border-blue-500/50 hover:border-blue-400', 'bg': 'from-blue-500/20
-                to-cyan-500/20',
-                'icon_text': 'text-blue-400', 'glow': 'glow-blue', 'shadow': 'hover:shadow-blue-500/20',
-                'text_hover':
-                'group-hover:text-blue-400'},
-                'purple': {'border': 'border-purple-500/50 hover:border-purple-400', 'bg': 'from-purple-500/20
-                to-pink-500/20', 'icon_text': 'text-purple-400', 'glow': 'glow-purple', 'shadow':
-                'hover:shadow-purple-500/20', 'text_hover': 'group-hover:text-purple-400'}
-                } %}
-                {% set theme = colors[award.color_theme] if award.color_theme in colors else colors['yellow'] %}
+                {% set color_cls = award_colors[award.color_theme] if award.color_theme and award.color_theme in
+                award_colors else award_colors['yellow'] %}
 
-                <div class="swiper-slide h-auto">
-                    {% if award.image_url %}
-                    <!-- Full Image Mode -->
-                    <div class="feature-card glass-dark rounded-3xl overflow-hidden
-                                border-l-4 {{ theme.border }}
-                                transform transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl {{ theme.shadow }}
-                                group gpu h-full">
-                        <img src="{{ award.image_url }}" alt="{{ award.title }}"
-                            class="w-full h-full object-cover min-h-[300px] md:min-h-[400px]">
+                <div class="swiper-slide">
+                    <div
+                        class="flex flex-col md:flex-row gap-0 rounded-2xl overflow-hidden bg-gradient-to-br {{ color_cls }} border border-white/10 shadow-2xl min-h-[320px] md:min-h-[400px]">
 
-                        <!-- Overlay Text (Optional) -->
-                        <div
-                            class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent flex flex-col justify-end p-8 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                            <h3 class="text-2xl font-bold text-white mb-2">{{ award.title }}</h3>
-                            <p class="text-white/80 text-sm">{{ award.description }}</p>
+                        <!-- Image Side -->
+                        {% if award.image_url %}
+                        <div class="w-full md:w-1/2 flex-shrink-0">
+                            <img src="{{ award.image_url }}" alt="{{ award.title }}"
+                                class="w-full h-64 md:h-full object-cover object-center">
                         </div>
-                    </div>
-                    {% else %}
-                    <!-- Default Card Mode -->
-                    <div class="feature-card glass-dark rounded-3xl p-8 md:p-10
-                                border-l-4 {{ theme.border }}
-                                transform transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl {{ theme.shadow }}
-                                group gpu h-full">
-
-                        <!-- Icon/Image -->
-                        <div class="mb-8 relative">
-                            <div class="w-16 h-16 md:w-20 md:h-20 rounded-2xl 
-                                        bg-gradient-to-br {{ theme.bg }}
-                                        flex items-center justify-center
-                                        group-hover:scale-110 group-hover:rotate-6 transition-all duration-300
-                                        border-2 {{ theme.border.split(' ')[0] }} {{ theme.glow }} gpu">
-
-                                <svg class="w-8 h-8 md:w-10 md:h-10 {{ theme.icon_text }}" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    {% if award.icon == 'academic-cap' %}
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 14l9-5-9-5-9 5 9 5z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
-                                    {% elif award.icon == 'beaker' %}
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-                                    {% elif award.icon == 'globe' %}
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    {% else %}
-                                    <!-- Default Trophy Icon -->
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                                    {% endif %}
-                                </svg>
-                            </div>
+                        {% else %}
+                        <!-- No image: icon placeholder -->
+                        <div class="w-full md:w-1/3 flex-shrink-0 flex items-center justify-center bg-white/5 p-12">
+                            <svg class="w-24 h-24 text-yellow-400/60" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                    d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                            </svg>
                         </div>
-
-                        <!-- Content -->
-                        <h3
-                            class="text-2xl md:text-3xl font-bold mb-4 {{ theme.text_hover }} transition-colors text-white">
-                            {{ award.title }}
-                        </h3>
-                        <p class="text-gray-400 leading-relaxed mb-6 text-sm md:text-base">
-                            {{ award.description }}
-                        </p>
-
-                        <!-- CTA -->
-                        {% if award.link_url %}
-                        <a href="{{ award.link_url }}"
-                            class="inline-flex items-center gap-3 text-sm font-bold uppercase tracking-wider text-white hover:text-yellow-400 transition-colors group/link">
-                            <span>Read More</span>
-                            <div class="h-px w-10 bg-current group-hover/link:w-16 transition-all duration-300">
-                            </div>
-                        </a>
                         {% endif %}
+
+                        <!-- Text Side -->
+                        <div class="flex-1 flex flex-col justify-center p-8 md:p-12">
+                            <div class="mb-3">
+                                <span
+                                    class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 tracking-wider uppercase">
+                                    🏅 รางวัล / ประกาศเกียรติคุณ
+                                </span>
+                            </div>
+                            <h3 class="text-2xl md:text-3xl font-black text-white mb-4 leading-tight">
+                                {{ award.title }}
+                            </h3>
+                            {% if award.description %}
+                            <p class="text-gray-300 text-sm md:text-base leading-relaxed mb-6">
+                                {{ award.description }}
+                            </p>
+                            {% endif %}
+                            {% if award.link_url %}
+                            <!-- <div>
+                                <a href="{{ award.link_url }}"
+                                    class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-yellow-500/20 hover:bg-yellow-500/40 border border-yellow-400/40 text-yellow-300 hover:text-yellow-200 text-sm font-semibold transition-all duration-300">
+                                    <span>อ่านเพิ่มเติม</span>
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                                    </svg>
+                                </a>
+                            </div> -->
+                            {% endif %}
+                        </div>
+
                     </div>
-                    {% endif %}
                 </div>
                 {% endfor %}
 
             </div>
+
+            <!-- Navigation -->
+            <div class="awards-nav-prev swiper-button-prev !text-yellow-400 !w-10 !h-10 after:!text-lg"></div>
+            <div class="awards-nav-next swiper-button-next !text-yellow-400 !w-10 !h-10 after:!text-lg"></div>
+
             <!-- Pagination -->
-            <div class="swiper-pagination"></div>
-            <!-- Nav -->
-            <div class="swiper-button-next"></div>
-            <div class="swiper-button-prev"></div>
+            <div class="awards-pagination swiper-pagination !bottom-[-10px] mt-6"></div>
         </div>
+
     </div>
 </section>
+
 
 <!-- ========================================
      NEWS CAROUSEL
@@ -1686,6 +1674,34 @@
         }
 
         setTimeout(fetchAQI, 1000);
+
+        // ==========================================
+        // STATS NUMBER COUNTING ANIMATION
+        // ==========================================
+        gsap.registerPlugin(ScrollTrigger);
+        const statsElements = document.querySelectorAll('.stat-number');
+        if (statsElements.length > 0) {
+            ScrollTrigger.create({
+                trigger: "#dynamic-stats-section",
+                start: "top 85%",
+                once: true,
+                onEnter: () => {
+                    statsElements.forEach(el => {
+                        let targetVal = parseInt(el.getAttribute('data-target'));
+                        if (isNaN(targetVal)) return;
+                        gsap.to(el, {
+                            innerHTML: targetVal,
+                            duration: 2.5,
+                            ease: "power2.out",
+                            snap: { innerHTML: 1 },
+                            onUpdate: function () {
+                                el.innerHTML = Math.floor(this.targets()[0].innerHTML).toLocaleString('th-TH');
+                            }
+                        });
+                    });
+                }
+            });
+        }
 
         // ==========================================
         // MAP INITIALIZATION (MapLibre Light style with 3D buildings)

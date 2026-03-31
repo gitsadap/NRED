@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, desc, text
+from sqlalchemy import select, desc, text, func
 import json
-
+import httpx
 from app.database import get_db
 from app.dependencies import get_global_context
 from app.models import Page, News, Activity, Staff, Faculty, FacultyCV, Banner, Mission, Course, Award, Statistic, ContactInfo, Setting
@@ -214,94 +214,56 @@ async def api_page(slug: str, db: AsyncSession = Depends(get_db)):
 
 @router.get("/external-stats")
 async def api_external_stats(db: AsyncSession = Depends(get_db)):
-    """Fetch external stats aggregated directly from MSSQL database + local Postgres counts for Faculty and Staff"""
-    import pymssql
-    import asyncio
-    
-    def fetch_mssql_stats():
-        query = """
-        SELECT 
-            TRIM(LEVGROUPNAME) AS level,
-            TRIM(PROGRAMNAME) AS program,
-            SUM(CASE WHEN STDSTATUSNAME LIKE '%สำเร็จ%' THEN 1 ELSE 0 END) AS graduated,
-            SUM(CASE WHEN STDSTATUSNAME LIKE '%พ้นสภาพ%' OR STDSTATUSNAME LIKE '%ลาออก%' OR STDSTATUSNAME LIKE '%คัดชื่อ%' THEN 1 ELSE 0 END) AS lost,
-            SUM(CASE WHEN STDSTATUSNAME NOT LIKE '%สำเร็จ%' AND STDSTATUSNAME NOT LIKE '%พ้นสภาพ%' AND STDSTATUSNAME NOT LIKE '%ลาออก%' AND STDSTATUSNAME NOT LIKE '%คัดชื่อ%' THEN 1 ELSE 0 END) AS active
-        FROM [Agri].[View_Student4AgriFaculty]
-        WHERE (
-            (LEVGROUPNAME = 'ปริญญาตรี' AND (PROGRAMNAME LIKE '%สิ่งแวดล้อม%' OR PROGRAMNAME LIKE '%ภูมิ%'))
-            OR 
-            (LEVGROUPNAME IN ('ปริญญาโท', 'ปริญญาเอก') AND (
-                PROGRAMNAME LIKE '%การจัดการสิ่งแวดล้อม%' OR 
-                PROGRAMNAME LIKE '%ทรัพยากรธรรมชาติ%' OR 
-                PROGRAMNAME LIKE '%วิทยาศาสตร์สิ่งแวดล้อม%' OR 
-                PROGRAMNAME LIKE '%ภูมิสารสนเทศ%'
-            ))
-        )
-        GROUP BY LEVGROUPNAME, PROGRAMNAME
-        ORDER BY LEVGROUPNAME DESC, PROGRAMNAME ASC
-        """
-        
-        import os
-        conn = pymssql.connect(
-            server=os.getenv("MSSQL_SERVER", "10.10.98.203"),
-            user=os.getenv("MSSQL_USER", "AGRI_Teeradety"),
-            password=os.getenv("MSSQL_PASSWORD", ""),
-            database=os.getenv("MSSQL_DATABASE", "NUDB"),
-            login_timeout=10
-        )
-        cursor = conn.cursor(as_dict=True)
-        cursor.execute(query)
-        rows = cursor.fetchall()
-        conn.close()
-        return rows
+    """Fetch student stats from internal PHP API + local Postgres counts for Faculty"""
+    import httpx
+    # URL ใหม่ที่คุณเตรียมไว้
+    EXTERNAL_API_URL = "https://oassar.agi.nu.ac.th/esprel/vendor/include/info.php"
 
     try:
-        # Run synchronous pymssql query in a thread to prevent blocking FastAPI's async event loop
-        rows = await asyncio.to_thread(fetch_mssql_stats)
-        
-        # Parallel fetch for Faculty directly from local Postgres via SQLAlchemy
-        from sqlalchemy import func
+        # 1. ดึงข้อมูลจำนวนอาจารย์จาก Postgres (Local) เหมือนเดิม
         faculty_count_stmt = select(func.count()).select_from(Faculty)
-        
         faculty_count_res = await db.execute(faculty_count_stmt)
         total_faculty = faculty_count_res.scalar() or 0
+
+        # 2. ดึงข้อมูลนิสิตจาก API แทนการเชื่อมต่อ MSSQL
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get(EXTERNAL_API_URL)
+            
+            if response.status_code != 200:
+                # กรณี API ปลายทางมีปัญหา ให้ส่งค่า default กลับไปแทนเพื่อให้ระบบไม่ล่ม
+                return {
+                    "status": "partial_success",
+                    "message": "External student API unavailable",
+                    "data": {
+                        "analysis_overview": {"total_faculty": total_faculty},
+                        "data_summary": {},
+                        "results": {}
+                    }
+                }
+            
+            external_data = response.json()
+
+        # 3. นำข้อมูลจาก API มาประกอบร่างกับข้อมูลอาจารย์ (โดยใช้โครงสร้างเดิม)
+        # เนื่องจากโครงสร้าง JSON ที่คุณให้มาเหมือนกับที่หน้าบ้านรออยู่แล้ว 
+        # เราแค่ต้องเอาค่า total_faculty ยัดกลับเข้าไปใน analysis_overview ครับ
         
-        summary = {}
-        grand_total = {'graduated': 0, 'lost': 0, 'active': 0}
+        result = external_data.get("data", external_data) # ปรับตามโครงสร้างที่ส่งมาจริง
         
-        for row in rows:
-            level = row['level']
-            program = row['program']
-            
-            if level not in summary:
-                summary[level] = {'programs': {}}
-            
-            summary[level]['programs'][program] = {
-                'graduated': row['graduated'],
-                'lost': row['lost'],
-                'active': row['active']
-            }
-            
-            grand_total['graduated'] += row['graduated']
-            grand_total['lost'] += row['lost']
-            grand_total['active'] += row['active']
-            
-        result = {
-            'status': 'success',
-            'analysis_overview': {
-                'grand_total': grand_total['graduated'] + grand_total['lost'] + grand_total['active'],
-                'total_graduated': grand_total['graduated'],
-                'total_lost': grand_total['lost'],
-                'total_active': grand_total['active'],
-                'total_faculty': total_faculty
-            },
-            'data_summary': summary,
-            'results': {} 
-        }
+        if "analysis_overview" in result:
+            result["analysis_overview"]["total_faculty"] = total_faculty
         
         return {"status": "success", "data": result}
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return {
+            "status": "error",
+            "message": str(e),
+            "data": {
+                "analysis_overview": {"total_faculty": 0},
+                "data_summary": {},
+                "results": {}
+            }
+        }
 
 @router.get("/research")
 async def api_research_list(db: AsyncSession = Depends(get_db)):

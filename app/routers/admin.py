@@ -93,7 +93,6 @@ class AwardCreate(BaseModel):
     id: Optional[int] = None
     title: str
     description: Optional[str] = None
-    recipient: Optional[str] = None
     icon: Optional[str] = None
     image_url: Optional[str] = None
     color_theme: Optional[str] = "yellow"
@@ -737,16 +736,15 @@ async def save_award(item: AwardCreate, db: AsyncSession = Depends(get_db)):
         if obj:
             obj.title = item.title
             obj.description = item.description
-            obj.recipient = item.recipient
             obj.icon = item.icon
             obj.image_url = item.image_url
-            obj.color_theme = item.color_theme
+            obj.color_theme = item.color_theme or "yellow"
             obj.link_url = item.link_url
             obj.order_index = item.order_index
     else:
         obj = Award(
-            title=item.title, description=item.description, recipient=item.recipient,
-            icon=item.icon, image_url=item.image_url, color_theme=item.color_theme,
+            title=item.title, description=item.description,
+            icon=item.icon, image_url=item.image_url, color_theme=item.color_theme or "yellow",
             link_url=item.link_url, order_index=item.order_index
         )
         db.add(obj)

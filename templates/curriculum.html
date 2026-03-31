@@ -414,7 +414,7 @@
                 if (!startTimestamp) startTimestamp = timestamp;
                 const progress = Math.min((timestamp - startTimestamp) / duration, 1);
                 const easeProgress = 1 - Math.pow(1 - progress, 3);
-                obj.innerText = Math.floor(easeProgress * endValue).toLocaleString();
+                obj.innerText = Math.floor(easeProgress * endValue).toLocaleString('th-TH');
                 if (progress < 1) {
                     window.requestAnimationFrame(step);
                 }
@@ -422,83 +422,78 @@
             window.requestAnimationFrame(step);
         }
 
+        function setFallback(msg) {
+            document.querySelectorAll('.counter').forEach(el => {
+                el.innerText = '-';
+                el.title = msg;
+            });
+        }
+
         async function fetchCurriculumStats() {
             try {
-                // เรียกข้อมูล API
-                const response = await fetch('/api/v1/external-stats');
+                const response = await fetch('/api/v1/external-stats', { signal: AbortSignal.timeout(15000) });
+
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
                 const result = await response.json();
 
-                if (result.status !== "success" || !result.data.data_summary) {
-                    throw new Error("Invalid API structure");
+                // Handle both wrapped and unwrapped structures
+                const outer = result.status === 'success' ? result.data : result;
+                const summary = outer?.data_summary;
+
+                if (!summary || typeof summary !== 'object') {
+                    throw new Error('Invalid API structure — no data_summary found');
                 }
 
-                const summary = result.data.data_summary;
-
-                // สร้างตัวแปรเก็บค่า
                 let stats = {
                     nre: { active: 0, gradBachelor: 0, gradPostgrad: 0 },
-                    geo: { active: 0, gradBachelor: 0, gradPostgrad: 0 }, // ใช้ Postgrad เป็นคำเรียก ป.โท ในตัวแปร
+                    geo: { active: 0, gradBachelor: 0, gradPostgrad: 0 },
                     env: { active: 0, gradPostgrad: 0 }
                 };
 
                 const levels = ['ปริญญาตรี', 'ปริญญาโท', 'ปริญญาเอก'];
 
                 levels.forEach(level => {
-                    // ป้องกัน Error หากข้อมูลใน level นั้นเป็น undefined
-                    if (!summary[level] || !summary[level].programs) return;
+                    if (!summary[level]?.programs) return;
 
                     for (const [progName, data] of Object.entries(summary[level].programs)) {
-
-                        // Safety check: แปลงค่าให้เป็นตัวเลขเสมอ ป้องกัน data.active เป็น null/undefined
                         const activeCount = Number(data?.active) || 0;
                         const graduatedCount = Number(data?.graduated) || 0;
 
-                        // 1. วิทยาศาสตร์สิ่งแวดล้อม (นับรวมโท-เอก เข้าด้วยกัน ไม่มีป.ตรี)
                         if (progName.includes('วิทยาศาสตร์สิ่งแวดล้อม')) {
                             stats.env.active += activeCount;
-                            if (level !== 'ปริญญาตรี') {
-                                stats.env.gradPostgrad += graduatedCount;
-                            }
-                        }
-                        // 2. ภูมิศาสตร์ (แยก ป.ตรี กับ ป.โท)
-                        else if (progName.includes('ภูมิ') || progName.includes('อวกาศ')) {
+                            if (level !== 'ปริญญาตรี') stats.env.gradPostgrad += graduatedCount;
+                        } else if (progName.includes('ภูมิ') || progName.includes('อวกาศ')) {
                             stats.geo.active += activeCount;
-                            if (level === 'ปริญญาตรี') {
-                                stats.geo.gradBachelor += graduatedCount;
-                            } else {
-                                stats.geo.gradPostgrad += graduatedCount; // นับรวมของ ป.โท (ไม่มีเอก)
-                            }
-                        }
-                        // 3. ทรัพยากรธรรมชาติและสิ่งแวดล้อม
-                        else if (progName.includes('ทรัพยากร')) {
+                            if (level === 'ปริญญาตรี') stats.geo.gradBachelor += graduatedCount;
+                            else stats.geo.gradPostgrad += graduatedCount;
+                        } else if (progName.includes('ทรัพยากร')) {
                             stats.nre.active += activeCount;
-                            if (level === 'ปริญญาตรี') {
-                                stats.nre.gradBachelor += graduatedCount;
-                            } else {
-                                stats.nre.gradPostgrad += graduatedCount; // นับรวมของ ป.โท-เอก
-                            }
+                            if (level === 'ปริญญาตรี') stats.nre.gradBachelor += graduatedCount;
+                            else stats.nre.gradPostgrad += graduatedCount;
                         }
                     }
                 });
 
-                // แสดงผลลัพธ์ลงบนหน้าเว็บ
-                // NRE
-                animateCounter("stat-nre-active", stats.nre.active);
+                // Animate counters
+                animateCounter("stat-nre-active",        stats.nre.active);
                 animateCounter("stat-nre-grad-bachelor", stats.nre.gradBachelor);
                 animateCounter("stat-nre-grad-postgrad", stats.nre.gradPostgrad);
-
-                // GEO
-                animateCounter("stat-geo-active", stats.geo.active);
+                animateCounter("stat-geo-active",        stats.geo.active);
                 animateCounter("stat-geo-grad-bachelor", stats.geo.gradBachelor);
                 animateCounter("stat-geo-grad-postgrad", stats.geo.gradPostgrad);
-
-                // ENV
-                animateCounter("stat-env-active", stats.env.active);
+                animateCounter("stat-env-active",        stats.env.active);
                 animateCounter("stat-env-grad-postgrad", stats.env.gradPostgrad);
 
+                // Show total bar if present
+                const overviewEl = document.getElementById('stat-total-active');
+                if (overviewEl && outer.analysis_overview?.total_active) {
+                    animateCounter('stat-total-active', outer.analysis_overview.total_active);
+                }
+
             } catch (error) {
-                console.error("Failed to load stats:", error);
-                document.querySelectorAll('.counter').forEach(el => el.innerText = "-");
+                console.warn("⚠️ Curriculum stats unavailable:", error.message);
+                setFallback('ไม่สามารถดึงข้อมูลได้ในขณะนี้');
             }
         }
 

@@ -327,11 +327,10 @@
     <div id="chatbot-widget" class="fixed bottom-6 right-6 z-[100]">
         <!-- Chat Button -->
         <button id="chatbot-toggle"
-            class="bg-teal-600 hover:bg-teal-700 text-white rounded-full p-4 shadow-lg focus:outline-none transition-transform hover:scale-105 active:scale-95">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+            class="bg-gradient-to-br from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white rounded-full p-4 shadow-xl focus:outline-none transition-transform hover:scale-110 active:scale-95 group">
+            <svg class="h-8 w-8 group-hover:animate-wiggle drop-shadow-md" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M21 10h-1a2 2 0 0 0-2-2h-12a2 2 0 0 0-2 2H3a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h1v2a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-2h1a1 1 0 0 0 1-1v-4a1 1 0 0 0-1-1Zm-5.5 7a2.5 2.5 0 0 1-5 0v-1h5v1Zm-5-4.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm7 0a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z" />
+                <path d="M12 7a2 2 0 0 0 2-2V3a2 2 0 0 0-4 0v2A2 2 0 0 0 12 7Z" />
             </svg>
         </button>
 
@@ -341,19 +340,20 @@
 
             <!-- Header -->
             <div
-                class="bg-gradient-to-r from-teal-500 to-teal-700 p-4 text-white flex justify-between items-center rounded-t-2xl">
-                <div class="flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 flex-shrink-0" fill="none"
-                        viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-                    </svg>
+                class="bg-gradient-to-r from-teal-500 to-emerald-600 p-4 text-white flex justify-between items-center rounded-t-2xl shadow-sm">
+                <div class="flex items-center gap-3">
+                    <div class="bg-white/20 p-1.5 rounded-full flex-shrink-0 backdrop-blur-sm">
+                        <svg class="h-6 w-6 text-white" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M21 10h-1a2 2 0 0 0-2-2h-12a2 2 0 0 0-2 2H3a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h1v2a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-2h1a1 1 0 0 0 1-1v-4a1 1 0 0 0-1-1Zm-5.5 7a2.5 2.5 0 0 1-5 0v-1h5v1Zm-5-4.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm7 0a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z" />
+                            <path d="M12 7a2 2 0 0 0 2-2V3a2 2 0 0 0-4 0v2A2 2 0 0 0 12 7Z" />
+                        </svg>
+                    </div>
                     <div>
-                        <h3 class="font-bold text-sm md:text-lg leading-tight truncate">NRE AI Assistant</h3>
-                        <p class="text-[10px] md:text-xs text-teal-100">ถาม-ตอบ รายละเอียดหลักสูตร</p>
+                        <h3 class="font-bold text-sm md:text-lg leading-tight truncate tracking-wide">NRED AI</h3>
+                        <p class="text-[10px] md:text-xs text-teal-100 font-light">ถาม-ตอบ รายละเอียดหลักสูตรแบบอัจฉริยะ</p>
                     </div>
                 </div>
-                <button id="chatbot-close" class="text-white hover:text-gray-200 focus:outline-none transition p-1">
+                <button id="chatbot-close" class="text-white hover:text-red-200 hover:rotate-90 transition-all p-1">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -367,16 +367,15 @@
                 class="flex-1 p-4 bg-gray-50 h-72 md:h-80 max-h-[60vh] md:max-h-80 overflow-y-auto space-y-4 text-sm scroll-smooth">
                 <!-- Welcome Bot Message -->
                 <div class="flex items-start gap-2">
-                    <div class="bg-teal-100 p-2 rounded-full text-teal-700 flex-shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                    <div class="bg-gradient-to-br from-teal-100 to-emerald-100 p-2 rounded-full text-teal-700 flex-shrink-0 shadow-sm border border-teal-200/50">
+                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M21 10h-1a2 2 0 0 0-2-2h-12a2 2 0 0 0-2 2H3a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h1v2a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-2h1a1 1 0 0 0 1-1v-4a1 1 0 0 0-1-1Zm-5.5 7a2.5 2.5 0 0 1-5 0v-1h5v1Zm-5-4.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm7 0a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z" />
+                            <path d="M12 7a2 2 0 0 0 2-2V3a2 2 0 0 0-4 0v2A2 2 0 0 0 12 7Z" />
                         </svg>
                     </div>
                     <div
-                        class="bg-white p-3 rounded-2xl rounded-tl-none shadow-sm border border-gray-100 text-gray-700">
-                        สวัสดีครับ! ผมคือผู้ช่วย AI สรุปข้อมูลหลักสูตรของภาควิชาฯ มีอะไรให้ผมช่วยแนะนำไหมครับ?
+                        class="bg-white p-3 rounded-2xl rounded-tl-none shadow-sm border border-gray-100 text-gray-700 leading-relaxed font-medium">
+                        สวัสดีครับ! 😊 ผมคือ <b>NRED AI</b> ผู้ช่วยตอบคำถามเรื่องหลักสูตร มีอะไรให้ผมช่วยแนะนำไหมครับ?
                     </div>
                 </div>
             </div>
@@ -385,10 +384,10 @@
             <div class="p-3 bg-white border-t border-gray-100">
                 <form id="chatbot-form" class="flex gap-2 relative">
                     <input type="text" id="chatbot-input" placeholder="พิมพ์คำถามเกี่ยวกับหลักสูตร..."
-                        class="flex-1 border border-gray-200 rounded-full pl-4 pr-12 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm transition"
+                        class="flex-1 bg-gray-50 border border-gray-200 rounded-full pl-4 pr-12 py-2.5 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white text-sm transition-all"
                         autocomplete="off" required>
                     <button type="submit"
-                        class="absolute right-1 top-1/2 -translate-y-1/2 bg-teal-600 hover:bg-teal-700 text-white rounded-full p-2 w-8 h-8 flex items-center justify-center focus:outline-none transition group shadow-sm disabled:opacity-50">
+                        class="absolute right-1.5 top-1/2 -translate-y-1/2 bg-teal-600 hover:bg-teal-700 text-white rounded-full p-2 w-8 h-8 flex items-center justify-center focus:outline-none transition group shadow-md disabled:opacity-50">
                         <svg xmlns="http://www.w3.org/2000/svg"
                             class="h-4 w-4 transform rotate-90 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"
                             fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -402,6 +401,17 @@
     </div>
 
     {% block scripts %}{% endblock %}
+
+    <!-- add custom animation style for wiggle -->
+    <style>
+        @keyframes wiggle {
+            0%, 100% { transform: rotate(-3deg); }
+            50% { transform: rotate(3deg); }
+        }
+        .animate-wiggle {
+            animation: wiggle 0.5s ease-in-out infinite;
+        }
+    </style>
 
     <script>
         const { createApp, ref, onMounted, watch, nextTick } = Vue;
@@ -500,7 +510,7 @@
 
                 messagesEl.innerHTML = '';
 
-                addMessage("สวัสดีครับ! ผมคือผู้ช่วย AI ประจำภาควิชาฯ เพื่อความแม่นยำ <b>กรุณาเลือกระดับการศึกษา</b> ที่ต้องการสอบถามครับ 👇", false, ['ปริญญาตรี', 'ปริญญาโท', 'ปริญญาเอก'], handleLevelSelect);
+                addMessage("สวัสดีครับ! ผม <b>NRED AI</b> ยินดีให้บริการ เพื่อแชตที่ตรงจุด... <b>กรุณาเลือกระดับการศึกษา</b> ที่สนใจก่อนนะครับ 👇", false, ['ปริญญาตรี', 'ปริญญาโท', 'ปริญญาเอก'], handleLevelSelect);
             }
 
             function handleLevelSelect(selectedLevel) {
@@ -522,7 +532,7 @@
                     submitBtn.disabled = false;
                     inputEl.placeholder = "พิมพ์คำถามของคุณได้เลยครับ...";
                     inputEl.focus();
-                    addMessage(`✅ ตั้งค่าเรียบร้อย! ตอนนี้ผมพร้อมตอบคำถามเกี่ยวกับ <b>${chatState.level} สาขา ${chatState.program}</b> แล้วครับ มีอะไรให้ผมช่วยไหมครับ?`, false, ["รีเซ็ตการเลือกใหม่"], resetChatFlow);
+                    addMessage(`✅ พร้อมสำหรับให้ข้อมูลเกี่ยวกับ <b>${chatState.level} สาขา ${chatState.program}</b> แล้วครับ ถามมาได้เลย!`, false, ["รีเซ็ตการเลือกใหม่"], resetChatFlow);
                 }, 500);
             }
 
@@ -534,13 +544,14 @@
                 }
             }
 
+            const aiAvatarHTML = `<div class="bg-gradient-to-br from-teal-100 to-emerald-100 p-2 rounded-full text-teal-700 flex-shrink-0 shadow-sm border border-teal-200/50"><svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M21 10h-1a2 2 0 0 0-2-2h-12a2 2 0 0 0-2 2H3a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h1v2a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-2h1a1 1 0 0 0 1-1v-4a1 1 0 0 0-1-1Zm-5.5 7a2.5 2.5 0 0 1-5 0v-1h5v1Zm-5-4.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm7 0a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z"/><path d="M12 7a2 2 0 0 0 2-2V3a2 2 0 0 0-4 0v2A2 2 0 0 0 12 7Z"/></svg></div>`;
+            const userAvatarHTML = `<div class="bg-gray-100 p-2 rounded-full text-gray-500 flex-shrink-0 border border-gray-200"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg></div>`;
+
             function addMessage(text, isUser = false, options = [], onOptionClick = null) {
                 const msgWrapper = document.createElement('div');
                 msgWrapper.className = 'flex items-start gap-2 ' + (isUser ? 'flex-row-reverse' : '');
 
-                let avatarHTML = isUser ?
-                    `<div class="bg-gray-200 p-2 rounded-full text-gray-500 flex-shrink-0"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg></div>` :
-                    `<div class="bg-teal-100 p-2 rounded-full text-teal-700 flex-shrink-0"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg></div>`;
+                let avatarHTML = isUser ? userAvatarHTML : aiAvatarHTML;
 
                 const msgStyles = isUser ? 'bg-teal-600 text-white rounded-2xl rounded-tr-none' : 'bg-white text-gray-700 shadow-sm border border-gray-100 rounded-2xl rounded-tl-none whitespace-pre-line';
 
@@ -591,7 +602,7 @@
                 inputEl.disabled = true;
 
                 const loadingId = 'loading-' + Date.now();
-                messagesEl.insertAdjacentHTML('beforeend', `<div id="${loadingId}" class="flex items-start gap-2 mb-2"><div class="bg-teal-100 p-2 rounded-full text-teal-700 flex-shrink-0 mt-1"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg></div><div class="p-4 bg-white shadow-sm border border-gray-100 rounded-2xl rounded-tl-none flex items-center h-[42px]"><div class="flex space-x-1.5 items-center"><div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0s"></div><div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div><div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.4s"></div></div></div></div>`);
+                messagesEl.insertAdjacentHTML('beforeend', `<div id="${loadingId}" class="flex items-start gap-2 mb-3 mt-1">${aiAvatarHTML}<div class="p-3.5 bg-white shadow-sm border border-gray-100 rounded-2xl rounded-tl-none flex items-center"><div class="flex space-x-1.5 items-center"><div class="w-1.5 h-1.5 bg-teal-400 rounded-full animate-bounce" style="animation-delay: 0s"></div><div class="w-1.5 h-1.5 bg-teal-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div><div class="w-1.5 h-1.5 bg-teal-400 rounded-full animate-bounce" style="animation-delay: 0.4s"></div></div></div></div>`);
                 messagesEl.scrollTop = messagesEl.scrollHeight;
 
                 if (chatHistory.length > 6) chatHistory = chatHistory.slice(-6);

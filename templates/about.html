@@ -1,0 +1,341 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<!-- ============================================================
+     HERO SECTION
+     ============================================================ -->
+<section class="relative min-h-[60vh] flex items-center bg-gradient-to-br from-gray-950 via-slate-900 to-emerald-950 text-white overflow-hidden">
+    <!-- Background decoration -->
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute -top-32 -right-32 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-3xl"></div>
+        <div class="absolute -bottom-32 -left-32 w-[400px] h-[400px] bg-teal-500/10 rounded-full blur-3xl"></div>
+        <div class="absolute inset-0 opacity-5"
+            style="background-image: url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cg fill=%22%23ffffff%22 fill-opacity=%221%22%3E%3Cpath d=%22M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z%22/%3E%3C/g%3E%3C/svg%3E');"></div>
+    </div>
+
+    <div class="container mx-auto px-4 relative z-10 py-24">
+        <div class="max-w-3xl" data-aos="fade-up">
+            <span class="inline-block text-emerald-400 font-bold tracking-widest uppercase text-xs md:text-sm mb-4">เกี่ยวกับเรา · About Us</span>
+            <h1 class="text-4xl md:text-6xl font-black mb-6 leading-tight">
+                ภาควิชา<br>
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">
+                    {{ settings.get('site_title', 'ภูมิสารสนเทศและการสำรวจระยะไกล') }}
+                </span>
+            </h1>
+            <p class="text-gray-300 text-lg leading-relaxed max-w-2xl">
+                {{ settings.get('site_description', 'มุ่งมั่นผลิตบัณฑิตที่มีความรู้และทักษะด้านภูมิสารสนเทศ เพื่อการพัฒนาประเทศอย่างยั่งยืน') }}
+            </p>
+            <div class="mt-8 flex flex-wrap gap-4" data-aos="fade-up" data-aos-delay="100">
+                <a href="/faculty"
+                    class="px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-emerald-500/30">
+                    ดูทีมอาจารย์
+                </a>
+                <a href="/news"
+                    class="px-6 py-3 border border-white/30 hover:border-emerald-400 hover:text-emerald-400 text-white font-bold rounded-full transition-all duration-300">
+                    ข่าวสารล่าสุด
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================================
+     STATISTICS BAR
+     ============================================================ -->
+{% if stats %}
+<section class="bg-emerald-700 py-10">
+    <div class="container mx-auto px-4">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-{{ stats|length if stats|length <= 5 else 5 }} gap-6 text-center text-white">
+            {% for stat in stats %}
+            <div class="about-stat" data-aos="zoom-in" data-aos-delay="{{ loop.index0 * 80 }}">
+                <div class="text-4xl font-black mb-1">
+                    <span class="stat-count" data-target="{{ stat.value }}">{{ stat.value }}</span>{{ stat.suffix or '' }}
+                </div>
+                <div class="text-emerald-200 text-sm uppercase tracking-wider">{{ stat.label }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- ============================================================
+     MISSION / VISION SECTION
+     ============================================================ -->
+{% if missions %}
+<section class="py-20 bg-white">
+    <div class="container mx-auto px-4">
+        <div class="text-center mb-14" data-aos="fade-up">
+            <span class="text-emerald-600 font-bold tracking-widest uppercase text-xs md:text-sm mb-2 block">พันธกิจ</span>
+            <h2 class="text-3xl md:text-4xl font-black text-gray-900 mb-3">วิสัยทัศน์ & พันธกิจ</h2>
+            <div class="mx-auto w-16 h-1 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"></div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {% for mission in missions %}
+            {% set color_map = {
+                'green':  {'bg': 'bg-green-50',  'icon': 'bg-green-100 text-green-700',  'border': 'border-green-200'},
+                'blue':   {'bg': 'bg-blue-50',   'icon': 'bg-blue-100 text-blue-700',   'border': 'border-blue-200'},
+                'cyan':   {'bg': 'bg-cyan-50',   'icon': 'bg-cyan-100 text-cyan-700',   'border': 'border-cyan-200'},
+                'indigo': {'bg': 'bg-indigo-50', 'icon': 'bg-indigo-100 text-indigo-700','border': 'border-indigo-200'},
+                'purple': {'bg': 'bg-purple-50', 'icon': 'bg-purple-100 text-purple-700','border': 'border-purple-200'},
+                'amber':  {'bg': 'bg-amber-50',  'icon': 'bg-amber-100 text-amber-700', 'border': 'border-amber-200'}
+            } %}
+            {% set c = color_map[mission.color] if mission.color in color_map else color_map['green'] %}
+            <div class="rounded-2xl border {{ c.border }} {{ c.bg }} p-8 group hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                 data-aos="fade-up" data-aos-delay="{{ loop.index0 * 80 }}">
+                <div class="w-14 h-14 rounded-2xl {{ c.icon }} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                    {% if mission.icon == 'academic-cap' %}
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0112 20.055a11.952 11.952 0 01-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/></svg>
+                    {% elif mission.icon == 'globe' %}
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    {% elif mission.icon == 'beaker' %}
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+                    {% elif mission.icon == 'light-bulb' %}
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m1.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                    {% elif mission.icon == 'users' %}
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    {% else %}
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+                    {% endif %}
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-3">{{ mission.title }}</h3>
+                <p class="text-gray-500 text-sm leading-relaxed">{{ mission.desc }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- ============================================================
+     EXECUTIVES SECTION
+     ============================================================ -->
+{% if executives %}
+<section class="py-20 bg-gradient-to-br from-slate-800 to-gray-900 text-white">
+    <div class="container mx-auto px-4">
+        <div class="text-center mb-14" data-aos="fade-up">
+            <span class="text-emerald-400 font-bold tracking-widest uppercase text-xs md:text-sm mb-2 block">ผู้บริหาร</span>
+            <h2 class="text-3xl md:text-4xl font-black mb-3">ผู้บริหารภาควิชา</h2>
+            <div class="mx-auto w-16 h-1 bg-gradient-to-r from-emerald-400 to-teal-400 rounded-full"></div>
+        </div>
+
+        <div class="flex flex-wrap justify-center gap-8 items-start">
+            {% for f in executives %}
+            {% set is_head = 'หัวหน้าภาควิชา' in (f.admin_position or '') and 'รอง' not in (f.admin_position or '') %}
+            <div class="text-center group {{ 'w-56' if not is_head else 'w-64' }}"
+                 data-aos="fade-up" data-aos-delay="{{ loop.index0 * 100 }}">
+
+                <!-- Avatar -->
+                <div class="relative mx-auto mb-4 {{ 'w-44 h-44' if is_head else 'w-32 h-32' }} rounded-2xl overflow-hidden
+                            ring-4 {{ 'ring-yellow-400 shadow-lg shadow-yellow-500/30' if is_head else 'ring-emerald-500/30 group-hover:ring-emerald-400' }}
+                            transition-all duration-300">
+                    {% if f.image %}
+                    <img src="{{ f.image }}" alt="{{ f.fname }} {{ f.lname }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                    {% else %}
+                    <div class="w-full h-full {{ 'bg-gradient-to-br from-yellow-600 to-amber-700' if is_head else 'bg-gradient-to-br from-emerald-700 to-teal-800' }} flex items-center justify-center text-4xl font-black text-white">
+                        {{ f.fname[0] if f.fname else '?' }}
+                    </div>
+                    {% endif %}
+
+                    {% if is_head %}
+                    <!-- Crown badge for head -->
+                    <div class="absolute top-2 right-2 bg-yellow-400 text-yellow-900 text-xs font-black rounded-full w-7 h-7 flex items-center justify-center shadow">
+                        👑
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Name -->
+                <div class="{{ 'text-lg' if is_head else 'text-base' }} font-bold text-white leading-tight">
+                    {{ f.prefix or '' }}{{ f.fname }} {{ f.lname }}
+                </div>
+
+                <!-- Position badge -->
+                <div class="mt-2 inline-block px-3 py-1 rounded-full text-xs font-semibold
+                            {{ 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/40' if is_head else 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' }}">
+                    {{ f.admin_position }}
+                </div>
+
+                {% if f.email %}
+                <a href="mailto:{{ f.email }}" class="text-gray-500 text-xs hover:text-emerald-400 transition mt-2 block truncate max-w-full">
+                    {{ f.email }}
+                </a>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+    </div>
+</section>
+{% endif %}
+
+<!-- ============================================================
+     AWARDS / ACHIEVEMENTS
+     ============================================================ -->
+{% if awards %}
+<section class="py-20 bg-gray-50">
+    <div class="container mx-auto px-4">
+        <div class="text-center mb-14" data-aos="fade-up">
+            <span class="text-yellow-600 font-bold tracking-widest uppercase text-xs md:text-sm mb-2 block">ความสำเร็จ</span>
+            <h2 class="text-3xl md:text-4xl font-black text-gray-900 mb-3">รางวัลและผลสำเร็จ</h2>
+            <div class="mx-auto w-16 h-1 bg-gradient-to-r from-yellow-400 to-amber-500 rounded-full"></div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for award in awards %}
+            {% set color_map = {
+                'yellow': 'from-yellow-50 to-amber-50 border-yellow-200 text-yellow-700 bg-yellow-100',
+                'blue':   'from-blue-50 to-cyan-50 border-blue-200 text-blue-700 bg-blue-100',
+                'purple': 'from-purple-50 to-pink-50 border-purple-200 text-purple-700 bg-purple-100'
+            } %}
+            {% set c = color_map[award.color_theme] if award.color_theme and award.color_theme in color_map else color_map['yellow'] %}
+
+            <div class="rounded-2xl border overflow-hidden hover:shadow-lg transition-all duration-300 bg-white group"
+                 data-aos="fade-up" data-aos-delay="{{ loop.index0 * 60 }}">
+                {% if award.image_url %}
+                <img src="{{ award.image_url }}" alt="{{ award.title }}" class="w-full h-44 object-cover group-hover:scale-105 transition-transform duration-500">
+                {% endif %}
+                <div class="p-6">
+                    <div class="w-10 h-10 rounded-xl mb-4 flex items-center justify-center {{ c.split(' ')[4] }} {{ c.split(' ')[3] }}">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+                        </svg>
+                    </div>
+                    <h3 class="font-bold text-gray-800 text-lg mb-2 leading-snug">{{ award.title }}</h3>
+                    {% if award.description %}
+                    <p class="text-gray-500 text-sm leading-relaxed line-clamp-3">{{ award.description }}</p>
+                    {% endif %}
+                    {% if award.link_url %}
+                    <a href="{{ award.link_url }}" class="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 hover:text-emerald-900">
+                        อ่านเพิ่มเติม
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- ============================================================
+     CONTACT SECTION
+     ============================================================ -->
+<section class="py-20 bg-gradient-to-br from-emerald-900 to-slate-900 text-white">
+    <div class="container mx-auto px-4">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+
+            <!-- Left: Text -->
+            <div data-aos="fade-right">
+                <span class="text-emerald-400 font-bold tracking-widest uppercase text-xs md:text-sm mb-3 block">ติดต่อเรา</span>
+                <h2 class="text-3xl md:text-4xl font-black mb-6">ข้อมูลติดต่อภาควิชา</h2>
+                <p class="text-gray-300 mb-8 leading-relaxed">ยินดีให้บริการข้อมูลและรับฟังความคิดเห็นจากทุกท่าน</p>
+
+                <div class="space-y-5">
+                    {% for contact in contacts %}
+                    <div class="flex items-start gap-4">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-700/50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            {% if 'phone' in contact.key or 'โทร' in (contact.value or '') %}
+                            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                            {% elif 'email' in contact.key or '@' in (contact.value or '') %}
+                            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                            {% elif 'address' in contact.key or 'ที่อยู่' in (contact.value or '') %}
+                            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                            {% else %}
+                            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <div class="text-xs text-emerald-400 font-bold uppercase tracking-wider mb-1">{{ contact.key }}</div>
+                            <div class="text-gray-200 text-sm leading-relaxed">{{ contact.value }}</div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <p class="text-gray-400 text-sm">ยังไม่มีข้อมูลติดต่อ กรุณาตรวจสอบผ่าน CMS</p>
+                    {% endfor %}
+                </div>
+
+                <div class="mt-10">
+                    <a href="/appeals"
+                        class="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-emerald-500/30">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                        ส่งข้อความร้องเรียน / สอบถาม
+                    </a>
+                </div>
+            </div>
+
+            <!-- Right: Quick Links -->
+            <div data-aos="fade-left" data-aos-delay="100">
+                <div class="bg-white/5 border border-white/10 rounded-2xl p-8">
+                    <h3 class="text-lg font-bold mb-6 text-emerald-400">ลิงก์ที่เกี่ยวข้อง</h3>
+                    <div class="space-y-3">
+                        <a href="/faculty" class="flex items-center gap-3 p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-emerald-500/40 transition-all group">
+                            <span class="text-2xl">👨‍🏫</span>
+                            <div>
+                                <div class="font-semibold text-sm text-white group-hover:text-emerald-400 transition">บุคลากรและอาจารย์</div>
+                                <div class="text-xs text-gray-400">คณาจารย์และเจ้าหน้าที่ภาควิชา</div>
+                            </div>
+                        </a>
+                        <a href="/curriculum" class="flex items-center gap-3 p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-emerald-500/40 transition-all group">
+                            <span class="text-2xl">📚</span>
+                            <div>
+                                <div class="font-semibold text-sm text-white group-hover:text-emerald-400 transition">หลักสูตร</div>
+                                <div class="text-xs text-gray-400">ระดับปริญญาตรีและบัณฑิตศึกษา</div>
+                            </div>
+                        </a>
+                        <a href="/current-students" class="flex items-center gap-3 p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-emerald-500/40 transition-all group">
+                            <span class="text-2xl">🎓</span>
+                            <div>
+                                <div class="font-semibold text-sm text-white group-hover:text-emerald-400 transition">นักศึกษาปัจจุบัน</div>
+                                <div class="text-xs text-gray-400">ข้อมูลสำหรับนักศึกษาในภาควิชา</div>
+                            </div>
+                        </a>
+                        <a href="/news" class="flex items-center gap-3 p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-emerald-500/40 transition-all group">
+                            <span class="text-2xl">📰</span>
+                            <div>
+                                <div class="font-semibold text-sm text-white group-hover:text-emerald-400 transition">ข่าวสารและกิจกรรม</div>
+                                <div class="text-xs text-gray-400">ข่าวสาร ประกาศ และกิจกรรมล่าสุด</div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Count-up animation for stats
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (!entry.isIntersecting) return;
+            const el = entry.target;
+            const target = parseInt(el.dataset.target);
+            if (isNaN(target)) return;
+            let start = 0;
+            const duration = 1800;
+            const step = timestamp => {
+                if (!start) start = timestamp;
+                const progress = Math.min((timestamp - start) / duration, 1);
+                el.textContent = Math.floor(progress * target).toLocaleString('th-TH');
+                if (progress < 1) requestAnimationFrame(step);
+                else el.textContent = target.toLocaleString('th-TH');
+            };
+            requestAnimationFrame(step);
+            observer.unobserve(el);
+        });
+    }, { threshold: 0.3 });
+
+    document.querySelectorAll('.stat-count').forEach(el => observer.observe(el));
+});
+</script>
+{% endblock %}

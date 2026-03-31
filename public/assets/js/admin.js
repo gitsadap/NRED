@@ -447,6 +447,34 @@ function selectMedia(url) {
     closeMediaSelector();
 }
 
+// Upload file and set image field + preview
+async function uploadAndSetHomeImage(inputEl, fieldId, previewId) {
+    const file = inputEl.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        const res = await fetch('/admin/api/upload', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (data.location) {
+            const input = document.getElementById(fieldId);
+            const preview = document.getElementById(previewId);
+            if (input) input.value = data.location;
+            if (preview) {
+                preview.src = data.location;
+                preview.classList.remove('hidden');
+            }
+            // Also refresh media selector grid if open
+            loadMediaSelectorGrid();
+        } else {
+            Swal.fire({ icon: 'error', title: 'อัพโหลดไม่สำเร็จ', text: data.error || 'Unknown error' });
+        }
+    } catch (err) {
+        Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: err.message });
+    }
+}
 
 // --- Tag Logic ---
 async function loadTags() {
@@ -630,7 +658,7 @@ function renderHomeSectionTable(items) {
     if (currentHomeTab === 'banners') head = `<tr><th class="py-3 px-4">Title</th><th class="py-3 px-4">Status</th><th class="py-3 px-4 text-right">Actions</th></tr>`;
     if (currentHomeTab === 'missions') head = `<tr><th class="py-3 px-4">Title</th><th class="py-3 px-4">Icon</th><th class="py-3 px-4 text-right">Actions</th></tr>`;
     if (currentHomeTab === 'stats') head = `<tr><th class="py-3 px-4">Label</th><th class="py-3 px-4">Value</th><th class="py-3 px-4 text-right">Actions</th></tr>`;
-    if (currentHomeTab === 'awards') head = `<tr><th class="py-3 px-4">Title</th><th class="py-3 px-4">Recipient</th><th class="py-3 px-4 text-right">Actions</th></tr>`;
+    if (currentHomeTab === 'awards') head = `<tr><th class="py-3 px-4">Title</th><th class="py-3 px-4">Description</th><th class="py-3 px-4 text-right">Actions</th></tr>`;
     if (currentHomeTab === 'courses') head = `<tr><th class="py-3 px-4">Title (TH)</th><th class="py-3 px-4">Video ID</th><th class="py-3 px-4 text-right">Actions</th></tr>`;
 
     document.getElementById('home_table_head').innerHTML = head;
@@ -641,7 +669,7 @@ function renderHomeSectionTable(items) {
         if (currentHomeTab === 'banners') cells = `<td class="py-3 px-4 font-medium">${item.title}</td><td class="py-3 px-4">${item.is_active ? 'Active' : 'Hidden'}</td>`;
         if (currentHomeTab === 'missions') cells = `<td class="py-3 px-4 font-medium">${item.title}</td><td class="py-3 px-4 text-xl">#${item.icon}</td>`;
         if (currentHomeTab === 'stats') cells = `<td class="py-3 px-4 font-medium">${item.label}</td><td class="py-3 px-4 font-bold">${item.value}${item.suffix || ''}</td>`;
-        if (currentHomeTab === 'awards') cells = `<td class="py-3 px-4 font-medium">${item.title}</td><td class="py-3 px-4 text-sm text-gray-500">${item.recipient || '-'}</td>`;
+        if (currentHomeTab === 'awards') cells = `<td class="py-3 px-4 font-medium">${item.title}</td><td class="py-3 px-4 text-sm text-gray-500">${item.description || '-'}</td>`;
         if (currentHomeTab === 'courses') cells = `<td class="py-3 px-4 font-medium">${item.title_th}</td><td class="py-3 px-4 font-mono text-xs">${item.video_url}</td>`;
 
         return `
@@ -671,7 +699,15 @@ function editHomeItem(id) {
         html = `
             <div class="col-span-2"><label class="block text-xs mb-1">Title</label><input name="title" class="w-full border p-2 rounded" value="${item.title || ''}"></div>
             <div class="col-span-2"><label class="block text-xs mb-1">Subtitle</label><input name="subtitle" class="w-full border p-2 rounded" value="${item.subtitle || ''}"></div>
-            <div><label class="block text-xs mb-1">Image URL</label><input name="image_url" class="w-full border p-2 rounded" value="${item.image_url || ''}"></div>
+            <div class="col-span-2">
+                <label class="block text-xs mb-1">Image</label>
+                <div class="flex gap-2 items-center">
+                    <input id="home_image_url" name="image_url" class="flex-1 border p-2 rounded text-sm" value="${item.image_url || ''}" placeholder="/uploads/filename.jpg">
+                    <button type="button" onclick="openMediaSelector((url)=>{ document.getElementById('home_image_url').value=url; document.getElementById('home_image_preview').src=url; document.getElementById('home_image_preview').classList.remove('hidden'); })" class="px-3 py-2 bg-indigo-600 text-white text-xs rounded hover:bg-indigo-700 whitespace-nowrap">🖼 เลือก</button>
+                    <label class="px-3 py-2 bg-gray-600 text-white text-xs rounded hover:bg-gray-700 cursor-pointer whitespace-nowrap">📁 อัพโหลด<input type="file" accept="image/*" class="hidden" onchange="uploadAndSetHomeImage(this, 'home_image_url', 'home_image_preview')"></label>
+                </div>
+                <img id="home_image_preview" src="${item.image_url || ''}" class="mt-2 h-24 rounded object-cover ${item.image_url ? '' : 'hidden'}">
+            </div>
             <div><label class="block text-xs mb-1">Video URL (Optional)</label><input name="video_url" class="w-full border p-2 rounded" value="${item.video_url || ''}"></div>
             <div><label class="block text-xs mb-1">Order</label><input name="order_index" type="number" class="w-full border p-2 rounded" value="${item.order_index || 0}"></div>
             <div class="flex items-center gap-2 mt-4"><input type="checkbox" name="is_active" ${item.is_active !== 0 ? 'checked' : ''}> <label>Active</label></div>
@@ -696,12 +732,21 @@ function editHomeItem(id) {
         html = `
              <div class="col-span-2"><label class="block text-xs mb-1">Award Title</label><input name="title" class="w-full border p-2 rounded" value="${item.title || ''}"></div>
              <div class="col-span-2"><label class="block text-xs mb-1">Description</label><textarea name="description" class="w-full border p-2 rounded">${item.description || ''}</textarea></div>
-             <div><label class="block text-xs mb-1">Recipient Name</label><input name="recipient" class="w-full border p-2 rounded" value="${item.recipient || ''}"></div>
-             <div><label class="block text-xs mb-1">Order</label><input name="order_index" type="number" class="w-full border p-2 rounded" value="${item.order_index || 0}"></div>
-             <div class="col-span-2"><label class="block text-xs mb-1">Image URL</label><input name="image_url" class="w-full border p-2 rounded" value="${item.image_url || ''}"></div>
-             <div><label class="block text-xs mb-1">Icon</label><input name="icon" class="w-full border p-2 rounded" value="${item.icon || ''}"></div>
+             <div><label class="block text-xs mb-1">Icon (academic-cap / beaker / globe)</label><input name="icon" class="w-full border p-2 rounded" value="${item.icon || ''}"></div>
+             <div><label class="block text-xs mb-1">Color Theme (yellow/blue/purple)</label><input name="color_theme" class="w-full border p-2 rounded" value="${item.color_theme || 'yellow'}"></div>
              <div><label class="block text-xs mb-1">Link URL</label><input name="link_url" class="w-full border p-2 rounded" value="${item.link_url || ''}"></div>
+             <div><label class="block text-xs mb-1">Order</label><input name="order_index" type="number" class="w-full border p-2 rounded" value="${item.order_index || 0}"></div>
+             <div class="col-span-2">
+                 <label class="block text-xs mb-1 font-medium">รูปภาพ (Image)</label>
+                 <div class="flex gap-2 items-center">
+                     <input id="home_image_url" name="image_url" class="flex-1 border p-2 rounded text-sm" value="${item.image_url || ''}" placeholder="/uploads/filename.jpg">
+                     <button type="button" onclick="openMediaSelector((url)=>{ document.getElementById('home_image_url').value=url; document.getElementById('home_image_preview').src=url; document.getElementById('home_image_preview').classList.remove('hidden'); })" class="px-3 py-2 bg-indigo-600 text-white text-xs rounded hover:bg-indigo-700 whitespace-nowrap">🖼 เลือกจากคลัง</button>
+                     <label class="px-3 py-2 bg-gray-600 text-white text-xs rounded hover:bg-gray-700 cursor-pointer whitespace-nowrap">📁 อัพโหลด<input type="file" accept="image/*" class="hidden" onchange="uploadAndSetHomeImage(this, 'home_image_url', 'home_image_preview')"></label>
+                 </div>
+                 <img id="home_image_preview" src="${item.image_url || ''}" class="mt-2 h-32 w-auto rounded object-cover shadow border ${item.image_url ? '' : 'hidden'}">
+             </div>
         `;
+
     } else if (currentHomeTab === 'courses') {
         html = `
             <div class="col-span-2"><label class="block text-xs mb-1">Course Title (TH)</label><input name="title_th" class="w-full border p-2 rounded" value="${item.title_th || ''}"></div>
@@ -745,9 +790,6 @@ async function saveHomeItem(e) {
 
 async function deleteHomeItem(id) {
     confirmAction('ลบรายการนี้ใช่หรือไม่?', async () => {
-        const res = await apiCall(`/admin/api/generic/delete`, 'POST', { model: currentHomeTab.replace(/s$/, '').charAt(0).toUpperCase() + currentHomeTab.replace(/s$/, '').slice(1), id });
-        // Correcting model name mapping for generic delete if needed, but let's use the specific if better.
-        // Banners -> Banner, Missions -> Mission, Stats -> Statistic, etc.
         let model = "";
         if (currentHomeTab === 'banners') model = "Banner";
         else if (currentHomeTab === 'missions') model = "Mission";
@@ -755,7 +797,11 @@ async function deleteHomeItem(id) {
         else if (currentHomeTab === 'stats') model = "Statistic";
         else if (currentHomeTab === 'awards') model = "Award";
 
-        const fres = await apiCall(`/admin/api/${currentHomeTab}/delete`, 'POST', { id }); // Using specific first
+        if (model) {
+            await apiCall(`/admin/api/generic/delete`, 'POST', { model: model, id: id });
+        } else {
+            await apiCall(`/admin/api/${currentHomeTab}/delete`, 'POST', { id: id });
+        }
         loadHomeSectionData();
     });
 }

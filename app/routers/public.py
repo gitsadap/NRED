@@ -89,6 +89,59 @@ async def home(request: Request, db: AsyncSession = Depends(get_db)):
     )
 
 
+@router.get("/about", response_class=HTMLResponse)
+async def about_page(request: Request, db: AsyncSession = Depends(get_db)):
+    from app.models import Mission, Statistic, Faculty, Award, ContactInfo
+    context = await get_global_context(db)
+
+    # Missions / Vision / Values
+    mission_res = await db.execute(select(Mission).order_by(Mission.order_index))
+    missions = mission_res.scalars().all()
+
+    # Statistics
+    stat_res = await db.execute(select(Statistic).order_by(Statistic.order_index))
+    stats = stat_res.scalars().all()
+
+    # Faculty members (grouped)
+    fac_res = await db.execute(select(Faculty).order_by(Faculty.id))
+    faculty_all = fac_res.scalars().all()
+
+    def exec_sort_key(f):
+        pos = (f.admin_position or '').strip()
+        if 'หัวหน้าภาควิชา' in pos and 'รอง' not in pos:
+            return 0  # Head first
+        elif 'รองหัวหน้า' in pos:
+            return 1  # Deputy heads second
+        else:
+            return 2  # Others last
+
+    executives = sorted(
+        [f for f in faculty_all if f.admin_position],
+        key=exec_sort_key
+    )
+    experts = [f for f in faculty_all if f.is_expert]
+    faculty_regular = [f for f in faculty_all if not f.admin_position and not f.is_expert]
+
+    # Awards / Achievements
+    award_res = await db.execute(select(Award).order_by(Award.order_index))
+    awards = award_res.scalars().all()
+
+    # Contact Info
+    contact_res = await db.execute(select(ContactInfo).order_by(ContactInfo.order_index))
+    contacts = contact_res.scalars().all()
+
+    context["request"] = request
+    context["title"] = "เกี่ยวกับภาควิชา - " + context["site_title"]
+    context["missions"] = missions
+    context["stats"] = stats
+    context["executives"] = executives
+    context["experts"] = experts
+    context["faculty_regular"] = faculty_regular
+    context["faculty_count"] = len(faculty_all)
+    context["awards"] = awards
+    context["contacts"] = contacts
+    return templates.TemplateResponse(request=request, name="about.html", context=context)
+
 @router.get("/links", response_class=HTMLResponse)
 async def show_links_directory(request: Request, db: AsyncSession = Depends(get_db)):
     context = await get_global_context(db)
@@ -143,21 +196,69 @@ async def appeals_page(request: Request, db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/news", response_class=HTMLResponse)
-async def show_news(request: Request, category: str = None,  db: AsyncSession = Depends(get_db)):
+async def show_news(request: Request, category: str = None, tag: str = None, db: AsyncSession = Depends(get_db)):
+    from app.models import Tag, Activity
+    from datetime import datetime
+
     context = await get_global_context(db)
-    
-    query = select(News).order_by(desc(News.created_at))
+
+    # Fetch Tags for filter
+    tag_res = await db.execute(select(Tag).order_by(Tag.name))
+    tags = tag_res.scalars().all()
+
+    # Fetch News
+    news_query = select(News).order_by(desc(News.created_at))
     if category:
-        query = query.where(News.category == category)
-        
-    result = await db.execute(query)
-    news_list = result.scalars().all()
-    
+        news_query = news_query.where(News.category == category)
+    if tag:
+        news_query = news_query.where(News.tags.contains(tag))
+    news_result = await db.execute(news_query)
+    news_items = news_result.scalars().all()
+
+    # Fetch Activities
+    act_query = select(Activity).order_by(desc(Activity.created_at))
+    if category:
+        act_query = act_query.where(Activity.category == category)
+    if tag:
+        act_query = act_query.where(Activity.tags.contains(tag))
+    act_result = await db.execute(act_query)
+    activities = act_result.scalars().all()
+
+    # Merge and sort by created_at
+    combined = []
+    for n in news_items:
+        combined.append({
+            "id": n.id, "type": "news",
+            "title": n.title, "content": n.content,
+            "image_url": n.image_url, "category": n.category,
+            "tags": n.tags, "created_at": n.created_at or datetime.min
+        })
+    for a in activities:
+        combined.append({
+            "id": a.id, "type": "activity",
+            "title": a.title, "content": a.content,
+            "image_url": a.image_url, "category": a.category,
+            "tags": a.tags, "created_at": a.created_at or datetime.min
+        })
+    combined.sort(key=lambda x: x["created_at"], reverse=True)
+
+    # Distinct categories from both
+    categories = sorted(set(
+        [n.category for n in news_items if n.category] +
+        [a.category for a in activities if a.category]
+    ))
+
     context["request"] = request
     context["title"] = "ข่าวสารและกิจกรรม - " + context["site_title"]
-    context["news_list"] = news_list
+    context["items"] = combined
+    context["tags"] = tags
+    context["categories"] = categories
     context["current_category"] = category
+    context["current_tag"] = tag
+    # keep backward compat
+    context["news_list"] = news_items
     return templates.TemplateResponse(request=request, name="news.html", context=context)
+
 
 @router.get("/news/{id}", response_class=HTMLResponse)
 async def show_news_detail(id: int, request: Request, db: AsyncSession = Depends(get_db)):
