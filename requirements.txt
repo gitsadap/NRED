@@ -13,6 +13,4 @@ celery
 redis
 python-multipart
 pymssql
-sentence-transformers
-numpy
-scikit-learn
+
