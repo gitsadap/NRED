@@ -1188,7 +1188,7 @@
 </section>
 
 <!-- ========================================
-     STATS SECTION (Dynamic API)
+     STATS SECTION
      ======================================== -->
 <section id="dynamic-stats-section"
     class="stats-section py-20 md:py-32 bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white relative overflow-hidden">
@@ -1199,8 +1199,45 @@
     </div>
 
     <div class="container mx-auto px-4 relative z-10">
-        <div class="grid grid-cols-2 lg:grid-cols-4 md:gap-8 gap-4" id="stats-container">
-            <!-- Populated via Javascript -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 md:gap-8 gap-4" id="stats-container">
+            {% for stat in stats %}
+            
+            {% set icon_path = '' %}
+            {% if stat.icon == 'graduation-cap' %}
+            {% set icon_path = '
+            <path d="M12 14l9-5-9-5-9 5 9 5z" />
+            <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+            ' %}
+            {% elif stat.icon == 'id-card' %}
+            {% set icon_path = '<path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" />' %}
+            {% elif stat.icon == 'users' %}
+            {% set icon_path = '
+            <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+            ' %}
+            {% elif stat.icon == 'user-circle' %}
+            {% set icon_path = '<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clip-rule="evenodd" />' %}
+            {% elif stat.icon == 'building' %}
+            {% set icon_path = '<path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clip-rule="evenodd" />' %}
+            {% else %}
+            {% set icon_path = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />' %}
+            {% endif %}
+
+            {% set is_stroke = stat.icon == 'chart-line' %}
+
+            <div data-aos="zoom-in" data-aos-delay="{{ loop.index * 100 }}"
+                data-aos-anchor-placement="center-bottom"
+                class="glass-dark p-6 rounded-2xl border border-white/10 hover:border-yellow-500/50 hover:bg-white/5 transition duration-300 group text-center gpu relative overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-br from-green-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div class="relative z-10 w-16 h-16 mx-auto mb-4 text-gray-400 group-hover:text-yellow-400 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 flex items-center justify-center">
+                    <svg class="w-10 h-10 drop-shadow-lg" fill="{{ 'none' if is_stroke else 'currentColor' }}"
+                        stroke="{{ 'currentColor' if is_stroke else 'none' }}" viewBox="0 0 24 24">
+                        {{ icon_path | safe }}
+                    </svg>
+                </div>
+                <div class="relative z-10 text-4xl font-bold text-white mb-2 drop-shadow-md font-outfit">{{ stat.number }}</div>
+                <div class="relative z-10 text-sm text-gray-300 uppercase tracking-wider font-light">{{ stat.label }}</div>
+            </div>
+            {% endfor %}
         </div>
     </div>
 </section>

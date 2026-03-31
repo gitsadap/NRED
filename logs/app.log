@@ -31588,3 +31588,8 @@ You have two options:
 2026-03-30 17:18:50,681 - app - INFO -  - /{slug} [show_page]
 2026-03-30 17:18:50,681 - app - INFO -  - /api/curriculum-stats-proxy [get_curriculum_stats_proxy]
 2026-03-30 17:18:50,845 - watchfiles.main - INFO - 4 changes detected
+2026-03-30 17:19:18,761 - watchfiles.main - INFO - 19 changes detected
+2026-03-30 17:19:24,639 - watchfiles.main - INFO - 37 changes detected
+2026-03-30 17:19:28,961 - watchfiles.main - INFO - 4 changes detected
+2026-03-30 17:26:44,606 - watchfiles.main - INFO - 5 changes detected
+2026-03-30 17:28:56,049 - watchfiles.main - INFO - 1 change detected
