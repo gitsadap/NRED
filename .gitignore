@@ -6,7 +6,7 @@ __pycache__/
 # AI & Data (ตัวหนัก)
 hf_cache/
 *.sql
-*.mp4
+!hf_cache/*.pkl
 
 # Secrets
 .env
