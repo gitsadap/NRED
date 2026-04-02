@@ -1,13 +1,10 @@
-# Python
+
 venv/
 __pycache__/
 *.py[cod]
 
-# AI & Data (ตัวหนัก)
 hf_cache/
 *.sql
-!hf_cache/*.pkl
 
-# Secrets
 .env
 .env.*
