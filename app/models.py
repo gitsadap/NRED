@@ -1,5 +1,6 @@
 
 from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql import func
 from app.custom_orm import ModelBase
 
@@ -174,10 +175,10 @@ class Faculty(ModelBase):
     major = Column(String, nullable=True)
     admin_position = Column(String, nullable=True)
     is_expert = Column(Boolean, default=False)
-    expertise = Column(Text, nullable=True) # JSONB stored as Text for simplicity or use JSONB type
+    expertise = Column(JSONB, nullable=True) # Maps precisely to postgres JSONB
     scholar_id = Column(String, nullable=True) # Google Scholar Author ID
-    scholar_data = Column(Text, nullable=True) # JSONB stored as text - Articles
-    cited = Column(Text, nullable=True) # JSONB stored as text - Cited By metrics
+    scholar_data = Column(JSONB, nullable=True) 
+    cited = Column(JSONB, nullable=True) 
     updated_at = Column(DateTime(timezone=True), server_default=func.now())
 
 

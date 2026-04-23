@@ -2,9 +2,10 @@
 venv/
 __pycache__/
 *.py[cod]
-
+DS_Store
 hf_cache/
 *.sql
-
+*/.DS_Store
 .env
 .env.*
+logs/

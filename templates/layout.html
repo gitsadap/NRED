@@ -414,25 +414,46 @@
     </style>
 
     <script>
+        window.__INITIAL_GLOBAL_CONTEXT__ = {
+            site_title: {{ site_title|default('Department of NRE')|tojson }},
+            site_logo: {{ site_logo|default('/assets/images/logo_new.png')|tojson }},
+            site_footer: {{ site_footer|default('© 2024 Department of NRE. All Rights Reserved.')|tojson }},
+            menu_items: {{ menu_items|default([])|tojson }},
+            contacts: {{ contacts|default([])|tojson }}
+        };
         const { createApp, ref, onMounted, watch, nextTick } = Vue;
         const app = createApp({
             delimiters: ['[[', ']]'],
             setup() {
-                const globalContext = ref({ site_title: 'NRE', site_logo: '', menu_items: [], contacts: {} });
+                const initialGlobal = window.__INITIAL_GLOBAL_CONTEXT__ || {};
+                const globalContext = ref({
+                    site_title: initialGlobal.site_title || 'NRE',
+                    site_logo: initialGlobal.site_logo || '/assets/images/logo_new.png',
+                    site_footer: initialGlobal.site_footer || '',
+                    menu_items: Array.isArray(initialGlobal.menu_items) ? initialGlobal.menu_items : [],
+                    contacts: Array.isArray(initialGlobal.contacts) ? initialGlobal.contacts : []
+                });
                 const state = ref({ title: 'Department of NRE', description: 'Naresuan University' });
                 const pageData = ref({});
 
                 watch(() => state.value.title, (t) => { document.title = t; });
 
                 onMounted(async () => {
-                    try {
-                        const res = await fetch('/api/v1/context');
-                        const data = await res.json();
-                        if (data.status === 'success') {
-                            globalContext.value = data.data;
-                            if (globalContext.value.site_title) state.value.title += " | " + globalContext.value.site_title;
+                    if (!globalContext.value.menu_items?.length) {
+                        try {
+                            const res = await fetch('/api/v1/context');
+                            const data = await res.json();
+                            if (data.status === 'success') {
+                                globalContext.value = data.data;
+                            }
+                        } catch (e) { console.error(e); }
+                    }
+                    if (globalContext.value.site_title) {
+                        const suffix = " | " + globalContext.value.site_title;
+                        if (!state.value.title.includes(suffix)) {
+                            state.value.title += suffix;
                         }
-                    } catch (e) { console.error(e); }
+                    }
 
                     if (window.initPage) {
                         try {

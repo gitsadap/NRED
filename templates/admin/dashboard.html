@@ -59,6 +59,10 @@
                 class="block py-3 px-6 hover:bg-secondary cursor-pointer transition-colors border-l-4 border-transparent hover:border-accent">
                 <span class="mr-2">📊</span> แดชบอร์ด
             </a>
+            <a onclick="showSection('cv_update')" id="nav-cv_update"
+                class="block py-3 px-6 hover:bg-secondary cursor-pointer transition-colors border-l-4 border-transparent hover:border-accent">
+                <span class="mr-2">🧑‍🏫</span> แก้ไขข้อมูลส่วนตัว (CV)
+            </a>
             <a onclick="showSection('pages')" id="nav-pages"
                 class="block py-3 px-6 hover:bg-secondary cursor-pointer transition-colors border-l-4 border-transparent hover:border-accent">
                 <span class="mr-2">📄</span> หน้าเพจ (Pages)
@@ -102,9 +106,8 @@
             <h1 class="text-2xl font-bold text-gray-800" id="headerTitle">แดชบอร์ด</h1>
             <div class="flex items-center gap-4">
                 <span class="text-sm text-gray-600">Admin User</span>
-                <div
-                    class="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold border border-blue-200">
-                    A</div>
+                <div class="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold border border-blue-200"> A</div>
+                <button onclick="logout()" class="ml-4 px-3 py-1 bg-red-500 text-white text-sm font-semibold rounded hover:bg-red-600 transition">Logout</button>
             </div>
         </header>
 
@@ -135,6 +138,62 @@
                             <p class="text-blue-600 text-sm">จัดการเมนูและหน้าแรก</p>
                         </div>
                     </div>
+                </div>
+            </div>
+            
+            <!-- Update CV Feature -->
+            <div id="cv_update" class="section-view">
+                <div class="bg-white rounded-xl shadow-sm p-8 border border-gray-100 max-w-4xl">
+                    <h2 class="text-xl font-bold mb-4 text-gray-800">อัปเดตข้อมูลส่วนตัว (CV)</h2>
+                    <p class="text-gray-500 text-sm mb-6">คุณสามารถแก้ไขข้อมูลรายละเอียดประสบการณ์การทำงาน การศึกษา และอื่นๆ ของคุณได้ที่นี่</p>
+                    
+                    <form id="cvUpdateForm" onsubmit="event.preventDefault(); submitMyCV();" class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">ตำแหน่งทางวิชาการ</label>
+                                <select id="cv_academic_position" class="w-full p-2 border rounded-lg bg-white outline-none">
+                                    <option value="">-- เลือกตำแหน่ง --</option>
+                                    <option value="อาจารย์">อาจารย์</option>
+                                    <option value="ผู้ช่วยศาสตราจารย์">ผู้ช่วยศาสตราจารย์</option>
+                                    <option value="รองศาสตราจารย์">รองศาสตราจารย์</option>
+                                    <option value="ศาสตราจารย์">ศาสตราจารย์</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">ความเชี่ยวชาญ (Expertise)</label>
+                                <div id="cv_expertise_container" class="space-y-2 mb-2">
+                                    <!-- Dynamic Bullet Points -->
+                                </div>
+                                <button type="button" onclick="addExpertiseField('')" class="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded border border-blue-200 hover:bg-blue-100">+ เพิ่มความเชี่ยวชาญ</button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">รูปโปรไฟล์ (URL หรือ กดอัปโหลดไฟล์)</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="cv_image_url" class="w-full p-2 border rounded-lg mb-2 flex-1">
+                                <img id="cv_image_preview" class="h-10 w-10 object-cover rounded hidden bg-gray-100 border">
+                            </div>
+                            <input type="file" id="cv_image_file" accept=".jpg,.png" class="text-sm">
+                            <button type="button" onclick="uploadCVImage()" class="mt-2 text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded">อัปโหลดรูป</button>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">ไฟล์ CV (อัปโหลดเฉพาะ PDF เท่านั้น)</label>
+                            <div class="flex gap-2 items-center mb-2">
+                                <input type="text" id="cv_file_url" class="w-full p-2 bg-gray-100 border rounded-lg flex-1" placeholder="ไม่มีไฟล์ปัจจุบัน หรือ URL ของไฟล์ CV" readonly>
+                                <a id="cv_file_preview_link" href="#" target="_blank" class="hidden text-blue-600 hover:underline text-sm font-medium px-2">ดูไฟล์/ดาวน์โหลด</a>
+                            </div>
+                            <input type="file" id="cv_pdf_file" accept=".pdf" class="text-sm mt-1">
+                            <button type="button" onclick="uploadCVPdf()" class="mt-2 text-xs bg-green-100 text-green-700 px-3 py-1 rounded">อัปโหลดไฟล์ PDF</button>
+                        </div>
+                        
+                        <div class="flex justify-end gap-2 pt-4">
+                            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium shadow-sm transition">
+                                บันทึกข้อมูล
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
 
@@ -638,7 +697,7 @@
     </div>
 
     <!-- Custom Admin Dashboard Logic -->
-    <script src="/assets/js/admin.js?v=2.0.0"></script>
+    <script src="/assets/js/admin.js?v=2.0.4"></script>
 
 </body>
 

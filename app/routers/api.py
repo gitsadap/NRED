@@ -5,7 +5,8 @@ import json
 import httpx
 from app.database import get_db
 from app.dependencies import get_global_context
-from app.models import Page, News, Activity, Staff, Faculty, FacultyCV, Banner, Mission, Course, Award, Statistic, ContactInfo, Setting
+from app.models import Page, News, Activity, Staff, Faculty, FacultyCV, Banner, Mission, Course, Award, Statistic, ContactInfo
+from app.logging_config import logger
 
 router = APIRouter(prefix="/api/v1", tags=["Public API"])
 
@@ -52,11 +53,10 @@ async def api_home(db: AsyncSession = Depends(get_db)):
     stat_res = await db.execute(select(Statistic).order_by(Statistic.order_index))
     stats = [{"label": s.label, "number": s.value, "suffix": s.suffix, "icon": s.icon} for s in stat_res.scalars().all()]
 
-    # Fetch Settings for quick buttons fallback
-    result = await db.execute(select(Setting))
-    settings_dict = {row.Setting.key: row.Setting.value for row in result.all()}
-    
-    quick_buttons = json.loads(settings_dict.get('quick_buttons_json') or '[]')
+    context = await get_global_context(db)
+    settings_dict = context.get("settings", {})
+
+    quick_buttons = context.get("quick_buttons", [])
     if not quick_buttons:
         quick_buttons = [
             {'title': 'Natural Resources & Environment', 'url': '/curriculum#nre', 'color': 'blue', 'image': ''},
@@ -255,9 +255,10 @@ async def api_external_stats(db: AsyncSession = Depends(get_db)):
         return {"status": "success", "data": result}
 
     except Exception as e:
+        logger.error(f"EXTERNAL-STATS error: {e}", exc_info=True)
         return {
             "status": "error",
-            "message": str(e),
+            "message": "Internal error",
             "data": {
                 "analysis_overview": {"total_faculty": 0},
                 "data_summary": {},
@@ -368,5 +369,5 @@ async def get_coop_stats(db: AsyncSession = Depends(get_db)):
             }
         }
     except Exception as e:
-        print(f"❌ [COOP-STATS ERROR]: {str(e)}")
-        return {"status": "error", "message": str(e)}
+        logger.error(f"COOP-STATS error: {e}", exc_info=True)
+        return {"status": "error", "message": "Internal error"}

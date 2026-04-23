@@ -1,5 +1,6 @@
 import os
 import pickle
+import json
 import numpy as np  
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -39,32 +40,72 @@ doc_embeddings = None
 documents_meta = []
 
 try:
-    meta_path = os.path.join(hf_cache_dir, "vector_meta.pkl")
-    vector_path = os.path.join(hf_cache_dir, "vector_db.pkl")
+    meta_json_path = os.path.join(hf_cache_dir, "vector_meta.json")
+    vector_npy_path = os.path.join(hf_cache_dir, "vector_db.npy")
+
+    meta_pkl_path = os.path.join(hf_cache_dir, "vector_meta.pkl")
+    vector_pkl_path = os.path.join(hf_cache_dir, "vector_db.pkl")
     
-    if os.path.exists(meta_path) and os.path.exists(vector_path):
-        with open(meta_path, "rb") as f:
-            documents_meta = pickle.load(f)
-        with open(vector_path, "rb") as f:
-            doc_embeddings = pickle.load(f)
-            # มั่นใจว่าเป็น numpy array สำหรับการคำนวณ
-            doc_embeddings = np.array(doc_embeddings)
+    loaded = False
+
+    # Prefer safe formats (JSON + NPY) to avoid unsafe deserialization.
+    if os.path.exists(meta_json_path) and os.path.exists(vector_npy_path):
+        with open(meta_json_path, "r", encoding="utf-8") as f:
+            documents_meta = json.load(f)
+        doc_embeddings = np.load(vector_npy_path, allow_pickle=False)
+        doc_embeddings = np.array(doc_embeddings)
+        loaded = True
+        logger.info("✅ Chatbot vector store loaded (safe JSON/NPY)")
+
+    # Fallback: pickles only when explicitly allowed (debug/local migration).
+    elif os.path.exists(meta_pkl_path) and os.path.exists(vector_pkl_path):
+        if settings.allow_unsafe_pickle_load or settings.debug:
+            logger.warning(
+                "⚠️ Unsafe pickle vector store load enabled. "
+                "This is vulnerable to RCE if files are untrusted. Prefer migrating to JSON/NPY."
+            )
+            with open(meta_pkl_path, "rb") as f:
+                documents_meta = pickle.load(f)
+            with open(vector_pkl_path, "rb") as f:
+                doc_embeddings = pickle.load(f)
+                doc_embeddings = np.array(doc_embeddings)
+            loaded = True
+
+            # Best-effort migration to safe formats (only if filesystem allows writing).
+            try:
+                with open(meta_json_path, "w", encoding="utf-8") as f:
+                    json.dump(documents_meta, f, ensure_ascii=False)
+                np.save(vector_npy_path, doc_embeddings, allow_pickle=False)
+                logger.info("✅ Migrated vector store to safe JSON/NPY format")
+            except Exception as migrate_err:
+                logger.warning(f"Vector store migration skipped/failed: {migrate_err}")
+        else:
+            logger.error(
+                "❌ Vector store is only available as pickle (.pkl) but unsafe pickle loading is disabled. "
+                "Run scripts/migrate_vector_store.py to generate vector_meta.json and vector_db.npy."
+            )
         
+    if loaded:
         # โหลดโมเดล SentenceTransformer (รันบน CPU)
         ai_model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2', cache_folder=hf_cache_dir, device='cpu')
-        logger.info("✅ Chatbot Vector Database & Model loaded")
+        logger.info("✅ Chatbot Model loaded")
 except Exception as e:
-    logger.error(f"❌ Failed to load AI models: {e}")
+    logger.error(f"❌ Failed to load AI models: {e}", exc_info=True)
 
 def expand_query(query: str) -> str:
     replacements = {
         "EIA": "EIA การประเมินผลกระทบสิ่งแวดล้อม Environmental Impact Assessment",
         "GIS": "Geographic Information System",
         "IoT": "Internet of Things",
-        "วิชาดิน": "ปฐพีวิทยา",
+        "วิชาดิน": "ปฐพีวิทยา ดิน",
         "วิจัย": "ระเบียบวิธีวิจัย",
-        "ปี 1": "ชั้นปีที่ 1", "ปี 2": "ชั้นปีที่ 2", "ปี 3": "ชั้นปีที่ 3", "ปี 4": "ชั้นปีที่ 4",
-        "เทอม 1": "ภาคเรียนที่ 1", "เทอม 2": "ภาคเรียนที่ 2", "ซัมเมอร์": "ภาคเรียนที่ 3"
+        "ปี1": "ชั้นปีที่ 1", "ปี 1": "ชั้นปีที่ 1", 
+        "ปี2": "ชั้นปีที่ 2", "ปี 2": "ชั้นปีที่ 2", 
+        "ปี3": "ชั้นปีที่ 3", "ปี 3": "ชั้นปีที่ 3", 
+        "ปี4": "ชั้นปีที่ 4", "ปี 4": "ชั้นปีที่ 4",
+        "เทอม1": "ภาคการศึกษาต้น", "เทอม 1": "ภาคการศึกษาต้น", 
+        "เทอม2": "ภาคการศึกษาปลาย", "เทอม 2": "ภาคการศึกษาปลาย", 
+        "ซัมเมอร์": "ภาคการศึกษาฤดูร้อน"
     }
     for short, full in replacements.items():
         if short.upper() in query.upper():
@@ -110,12 +151,16 @@ async def get_chatbot_response(req: ChatRequest):
         final_contexts = []
         
         for idx in top_indices:
-            if scores[idx] > 0.12: # Threshold ตามเดิมของคุณ
+            if scores[idx] > 0.20: # Threshold แบบใหม่ที่คัดเฉพาะข้อมูลที่ตรงคำถามเท่านั้น
                 meta = filtered_meta[idx]
                 if meta['source'] not in seen_pages:
                     final_contexts.append(f"อ้างอิงจาก {meta['source']}:\n{meta['parent_content']}")
                     seen_pages.add(meta['source'])
             if len(final_contexts) >= 6: break
+            
+        print(f"DEBUG: Retrieved {len(final_contexts)} contexts for {target_code}.")
+        for i, c in enumerate(final_contexts):
+            print(f"Context {i+1}: {c[:100]}...")
 
         if not final_contexts:
             return {"response": f"ไม่พบข้อมูลที่เกี่ยวข้องกับ '{user_msg}' ในฐานข้อมูล {target_code}"}
@@ -130,12 +175,14 @@ async def get_chatbot_response(req: ChatRequest):
             model = genai.GenerativeModel('models/gemini-3.1-flash-lite-preview')
             
             prompt = f"""
-คุณคือผู้ช่วยอัจฉริยะสาวประจำภาควิชาทรัพยากรธรรมชาติและสิ่งแวดล้อม มหาวิทยาลัยนเรศวร
+คุณคือผู้ช่วยอัจฉริยะสาวประจำภาควิชา มหาวิทยาลัยนเรศวร
 หน้าที่: ตอบคำถามนิสิตเกี่ยวกับหลักสูตร {target_code}
 กฎการตอบ: 
 1. ใช้ข้อมูลจาก 'ข้อมูลอ้างอิง' เท่านั้น
-2. พยายามสรุปรายวิชาหรือเนื้อหาออกมาเป็นรายการให้สวยงาม
-3. ตอบสั้นๆ เข้าใจง่าย และมีความเป็นกันเองแต่สุภาพ
+2. ในข้อมูลอ้างอิงอาจจะแสดงผลเป็นตารางหรือข้อความที่อ่านยาก ให้พยายามถอดรหัสรายวิชาออกมา
+3. ถ้าพบชื่อวิชาและรหัสวิชา ให้สรุปออกมาเป็นรายการ
+4. ถ้าไม่มีข้อมูลในนั้น ให้ตอบว่าไม่พบข้อมูลและแนะนำให้ติดต่ออาจารย์ที่ปรึกษา
+5. ตอบเป็นข้อๆ สั้นๆ ให้เข้าใจง่ายและสุภาพ
 
 ข้อมูลอ้างอิง:
 {full_context_text}

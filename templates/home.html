@@ -1620,6 +1620,10 @@
         // ==========================================
         async function fetchAQI() {
             try {
+                const aqiValueEl = document.getElementById('aqi-value');
+                const aqiStatusEl = document.getElementById('aqi-status');
+                if (!aqiValueEl || !aqiStatusEl) return;
+
                 // Coordinates for Phitsanulok 
                 const lat = 16.742;
                 const lon = 100.193;
@@ -1642,14 +1646,14 @@
                     const rain = weatherData.current.precipitation;
                     const wind = weatherData.current.wind_speed_10m;
 
-                    document.getElementById('aqi-value').innerText = aqi;
+                    aqiValueEl.innerText = aqi;
                     if (document.getElementById('pm25-value')) document.getElementById('pm25-value').innerText = pm25;
                     if (document.getElementById('temp-value')) document.getElementById('temp-value').innerText = temp;
                     if (document.getElementById('uv-value')) document.getElementById('uv-value').innerText = uv;
                     if (document.getElementById('rain-value')) document.getElementById('rain-value').innerText = rain;
                     if (document.getElementById('wind-value')) document.getElementById('wind-value').innerText = wind;
 
-                    const statusEl = document.getElementById('aqi-status');
+                    const statusEl = aqiStatusEl;
                     const widgetIcon = document.querySelector('#aqi-widget .rounded-full');
 
                     // AQI Color logic
@@ -1669,7 +1673,8 @@
                 }
             } catch (err) {
                 console.error("Failed to fetch Weather", err);
-                document.getElementById('aqi-status').innerText = 'Unavailable';
+                const statusEl = document.getElementById('aqi-status');
+                if (statusEl) statusEl.innerText = 'Unavailable';
             }
         }
 

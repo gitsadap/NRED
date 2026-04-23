@@ -3,11 +3,13 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc
+import httpx
 import json
 
 from app.database import get_db
 from app.dependencies import get_global_context
 from app.models import Page, News, Activity, Staff
+from app.logging_config import logger
 
 router = APIRouter()
 from pathlib import Path
@@ -224,6 +226,14 @@ async def show_news(request: Request, category: str = None, tag: str = None, db:
     act_result = await db.execute(act_query)
     activities = act_result.scalars().all()
 
+    # Fetch Awards (แสดงความยินดี)
+    from app.models import Award
+    award_items = []
+    if not tag and (not category or category == "แสดงความยินดี"):
+        aw_query = select(Award).order_by(desc(Award.created_at))
+        aw_res = await db.execute(aw_query)
+        award_items = aw_res.scalars().all()
+
     # Merge and sort by created_at
     combined = []
     for n in news_items:
@@ -240,12 +250,21 @@ async def show_news(request: Request, category: str = None, tag: str = None, db:
             "image_url": a.image_url, "category": a.category,
             "tags": a.tags, "created_at": a.created_at or datetime.min
         })
+    for aw in award_items:
+        combined.append({
+            "id": aw.id, "type": "award",
+            "title": aw.title, "content": aw.description,
+            "image_url": aw.image_url, "category": "แสดงความยินดี",
+            "tags": "", "created_at": aw.created_at or datetime.min,
+            "link_url": getattr(aw, "link_url", None)
+        })
     combined.sort(key=lambda x: x["created_at"], reverse=True)
 
-    # Distinct categories from both
+    # Distinct categories from all fetched items
     categories = sorted(set(
         [n.category for n in news_items if n.category] +
-        [a.category for a in activities if a.category]
+        [a.category for a in activities if a.category] +
+        (["แสดงความยินดี"] if award_items else [])
     ))
 
     context["request"] = request
@@ -370,7 +389,14 @@ async def show_faculty(request: Request, db: AsyncSession = Depends(get_db)):
                 elif img_val.startswith("/static"): img = img_val
                 else: img = f"https://ww2.agi.nu.ac.th/personnel/upload/{img_val}"
             
-            cv_url = f"/uploads/{cv_map[row.id]}" if row.id in cv_map else None
+            cv_filename = cv_map.get(row.id)
+            cv_url = None
+            if cv_filename:
+                # To handle both old uploads (filename only) and new uploads (/uploads/... format)
+                if cv_filename.startswith("/uploads/"):
+                    cv_url = cv_filename
+                else:
+                    cv_url = f"/uploads/{cv_filename}"
             
             # Expertise Logic
             expertise = []
@@ -465,8 +491,8 @@ async def show_faculty(request: Request, db: AsyncSession = Depends(get_db)):
                 })
 
     except Exception as e:
-        print(f"Error fetching faculty: {e}")
-        context["error"] = f"Error: {e}"
+        logger.error(f"Error fetching faculty groups: {e}", exc_info=True)
+        context["error"] = "ขออภัย ระบบไม่สามารถโหลดข้อมูลบุคลากรได้ในขณะนี้"
 
     context["request"] = request
     context["title"] = "คณาจารย์ - " + context["site_title"]
@@ -477,82 +503,10 @@ async def show_faculty(request: Request, db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/teacher-portal", response_class=HTMLResponse)
-async def teacher_portal(request: Request, db: AsyncSession = Depends(get_db)):
-    context = await get_global_context(db)
-    
-    # Needs faculty list for dropdown
-    faculty_list = []
-    
-    try:
-        from app.models import Faculty
-        from sqlalchemy import select
-        result = await db.execute(select(Faculty).order_by(Faculty.fname))
-        faculties = result.scalars().all()
-        
-        for row in faculties:
-            name = f"{row.prefix or ''} {row.fname} {row.lname}".strip()
-            faculty_list.append({'id': row.id, 'name': name})
-            
-    except Exception as e:
-        print(f"Error in teacher portal DB: {e}")
-        faculty_list = [{'id': 1, 'name': 'Demo Teacher (DB Error)'}]
-    
-    context["request"] = request
-    context["faculty"] = faculty_list
-    context["title"] = "Teacher Portal - Upload CV"
-    return templates.TemplateResponse(request=request, name="teacher_portal.html", context=context)
-
-from fastapi import UploadFile, File, Form
-import shutil
-import os
-
-@router.post("/api/faculty/upload-cv")
-async def upload_cv_endpoint(
-    user_id: int = Form(...),
-    file: UploadFile = File(...),
-    db: AsyncSession = Depends(get_db)
-):
-    import traceback
-    try:
-        from app.models import FacultyCV
-        
-        # 1. Save File
-        UPLOAD_DIR = "public/uploads"
-        if os.environ.get("VERCEL"):
-            UPLOAD_DIR = "/tmp"
-        elif not os.path.exists(UPLOAD_DIR):
-            os.makedirs(UPLOAD_DIR)
-        
-        # Safe filename: user_id_filename.pdf
-        # Ensure filename is clean
-        import re
-        clean_filename = re.sub(r'[^a-zA-Z0-9_.-]', '_', file.filename)
-        safe_filename = f"cv_{user_id}_{clean_filename}"
-        file_location = f"{UPLOAD_DIR}/{safe_filename}"
-        
-        print(f"Saving file to {file_location}")
-        
-        with open(file_location, "wb+") as file_object:
-            shutil.copyfileobj(file.file, file_object)
-            
-        # 2. Update/Insert DB
-        # Check if exists
-        res = await db.execute(select(FacultyCV).where(FacultyCV.user_id == user_id))
-        existing = res.scalars().first()
-        
-        if existing:
-            existing.cv_file = safe_filename
-            # updated_at auto updates
-        else:
-            new_cv = FacultyCV(user_id=user_id, cv_file=safe_filename)
-            db.add(new_cv)
-        
-        await db.commit()
-        
-        return RedirectResponse(url="/faculty", status_code=303)
-    except Exception as e:
-        traceback.print_exc()
-        return HTMLResponse(content=f"<h1>Error uploading file</h1><pre>{traceback.format_exc()}</pre>", status_code=500)
+async def teacher_portal():
+    # Deprecated insecure flow (public upload without auth) was removed.
+    # Teachers should login and use the CV update section in the Admin/Teacher dashboard.
+    return RedirectResponse(url="/admin/login", status_code=302)
 
 @router.get("/executives", response_class=HTMLResponse)
 async def show_executives(request: Request, db: AsyncSession = Depends(get_db)):
@@ -754,13 +708,15 @@ async def show_page(slug: str, request: Request, db: AsyncSession = Depends(get_
 @router.get("/api/curriculum-stats-proxy")
 async def get_curriculum_stats_proxy():
     api_url = "https://oassar.agi.nu.ac.th/esprel/vendor/include/info.php"
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=10.0) as client:
         try:
             response = await client.get(api_url)
             # ตรวจสอบว่าได้ข้อมูลถูกต้องไหม
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as e:
-            raise HTTPException(status_code=500, detail=f"API server error: {e}")
+            logger.warning(f"Curriculum stats proxy upstream error: {e}", exc_info=True)
+            raise HTTPException(status_code=502, detail="Upstream API unavailable")
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Failed to fetch stats: {e}")
+            logger.error(f"Curriculum stats proxy failed: {e}", exc_info=True)
+            raise HTTPException(status_code=502, detail="Upstream API unavailable")

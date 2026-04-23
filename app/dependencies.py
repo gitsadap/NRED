@@ -3,9 +3,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import Setting, Menu, ContactInfo
 from app.logging_config import logger
 import json
+import time
+from copy import deepcopy
+
+_GLOBAL_CONTEXT_CACHE_TTL_SECONDS = 30
+_global_context_cache: dict = {"value": None, "expires_at": 0.0}
 
 async def get_global_context(db: AsyncSession):
     """Get global context with proper error handling"""
+    now = time.monotonic()
+    if _global_context_cache["value"] is not None and now < _global_context_cache["expires_at"]:
+        # Return a copy so request-level mutations won't poison shared cache.
+        return deepcopy(_global_context_cache["value"])
+
     try:
         # Fetch Settings
         result = await db.execute(select(Setting))
@@ -79,7 +89,7 @@ async def get_global_context(db: AsyncSession):
             logger.error(f"Error fetching contacts: {e}")
             contacts = []
 
-        return {
+        context = {
             "site_title": site_title,
             "site_logo": site_logo,
             "site_footer": site_footer,
@@ -90,6 +100,9 @@ async def get_global_context(db: AsyncSession):
             "contacts": contacts,
             "settings": settings,
         }
+        _global_context_cache["value"] = context
+        _global_context_cache["expires_at"] = now + _GLOBAL_CONTEXT_CACHE_TTL_SECONDS
+        return deepcopy(context)
         
     except Exception as e:
         logger.error(f"Error in get_global_context: {e}")

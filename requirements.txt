@@ -16,3 +16,8 @@ pymssql
 sentence-transformers
 numpy
 scikit-learn
+python-jose[cryptography]
+passlib
+bcrypt
+werkzeug
+ldap3

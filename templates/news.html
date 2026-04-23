@@ -73,7 +73,13 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {% for item in items %}
-            {% set detail_url = '/news/' ~ item.id if item.type == 'news' else '/activities/' ~ item.id %}
+            {% if item.type == 'news' %}
+                {% set detail_url = '/news/' ~ item.id %}
+            {% elif item.type == 'activity' %}
+                {% set detail_url = '/activities/' ~ item.id %}
+            {% else %}
+                {% set detail_url = item.link_url if item.link_url else (item.image_url if item.image_url else '#') %}
+            {% endif %}
 
             <article class="news-card bg-white rounded-2xl shadow-sm hover:shadow-lg border border-gray-100 hover:border-green-300 overflow-hidden flex flex-col transition-all duration-300 group">
 
@@ -84,7 +90,7 @@
                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                     {% else %}
                     <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100">
-                        <span class="text-5xl">{{ '📰' if item.type == 'news' else '🎯' }}</span>
+                        <span class="text-5xl">{{ '📰' if item.type == 'news' else ('🎯' if item.type == 'activity' else '🏆') }}</span>
                     </div>
                     {% endif %}
                 </a>
@@ -95,10 +101,10 @@
                     <div class="flex items-center gap-2 mb-3 flex-wrap">
                         <!-- Type badge -->
                         <span class="px-2 py-0.5 rounded-full text-xs font-bold
-                            {{ 'bg-blue-100 text-blue-700' if item.type == 'news' else 'bg-orange-100 text-orange-700' }}">
-                            {{ 'ข่าวสาร' if item.type == 'news' else 'กิจกรรม' }}
+                            {{ 'bg-blue-100 text-blue-700' if item.type == 'news' else ('bg-orange-100 text-orange-700' if item.type == 'activity' else 'bg-yellow-100 text-yellow-700') }}">
+                            {{ 'ข่าวสาร' if item.type == 'news' else ('กิจกรรม' if item.type == 'activity' else 'แสดงความยินดี') }}
                         </span>
-                        {% if item.category %}
+                        {% if item.category and item.category != 'แสดงความยินดี' %}
                         <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200">
                             {{ item.category }}
                         </span>

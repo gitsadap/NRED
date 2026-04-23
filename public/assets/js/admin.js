@@ -3,6 +3,62 @@
  */
 console.log("Admin.js loading...");
 
+// --- Auth / Session Helpers ---
+const AUTH_CLOCK_SKEW_SECONDS = 30; // tolerate minor client/server clock drift
+let authExpiryTimer = null;
+
+function base64UrlDecode(input) {
+    // base64url -> base64
+    const base64 = input.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = base64.padEnd(base64.length + (4 - (base64.length % 4)) % 4, '=');
+    return atob(padded);
+}
+
+function parseJwtPayload(token) {
+    try {
+        if (!token) return null;
+        const parts = token.split('.');
+        if (parts.length !== 3) return null;
+        return JSON.parse(base64UrlDecode(parts[1]));
+    } catch (e) {
+        return null;
+    }
+}
+
+function getTokenExpiryMs(token) {
+    const payload = parseJwtPayload(token);
+    if (!payload || typeof payload.exp !== 'number') return null;
+    return payload.exp * 1000;
+}
+
+function isTokenExpired(token) {
+    const expMs = getTokenExpiryMs(token);
+    if (!expMs) return true;
+    return Date.now() >= (expMs - AUTH_CLOCK_SKEW_SECONDS * 1000);
+}
+
+function scheduleAutoLogout(token) {
+    if (authExpiryTimer) {
+        clearTimeout(authExpiryTimer);
+        authExpiryTimer = null;
+    }
+
+    const expMs = getTokenExpiryMs(token);
+    if (!expMs) return;
+
+    const delayMs = Math.max(expMs - Date.now() - AUTH_CLOCK_SKEW_SECONDS * 1000, 0);
+    authExpiryTimer = setTimeout(() => handleAuthFailure('expired'), delayMs);
+}
+
+function getValidTokenOrRedirect() {
+    const token = localStorage.getItem('admin_token');
+    if (!token || isTokenExpired(token)) {
+        handleAuthFailure('expired');
+        return null;
+    }
+    return token;
+}
+
 
 // --- Global Config & Init ---
 const tinyConfig = {
@@ -17,9 +73,19 @@ const tinyConfig = {
     images_upload_handler: (blobInfo, progress) => new Promise((resolve, reject) => {
         const formData = new FormData();
         formData.append('file', blobInfo.blob(), blobInfo.filename());
-        fetch('/admin/api/upload', { method: 'POST', body: formData })
-            .then(r => r.json())
+        const token = getValidTokenOrRedirect();
+        if (!token) return reject('Auth required');
+        fetch('/admin/api/upload', { 
+            method: 'POST', 
+            body: formData,
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        })
+            .then(r => {
+                if(r.status === 401) return handleAuthFailure();
+                return r.json()
+            })
             .then(json => {
+                if (!json) return reject('Upload failed: Auth error');
                 if (json.location) resolve(json.location);
                 else reject('Upload failed: ' + json.error);
             })
@@ -28,21 +94,55 @@ const tinyConfig = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Check if authenticated
+    const token = localStorage.getItem('admin_token');
+    if (!token || isTokenExpired(token)) return handleAuthFailure('expired');
+    scheduleAutoLogout(token);
+    initAdminApp();
+});
+
+function getUserPayload() {
+    return parseJwtPayload(getValidTokenOrRedirect());
+}
+
+function initAdminApp() {
+    const payload = getUserPayload();
+    let initialSection = 'dashboard';
+    
+    // Role Based Access Control UI
+    if (payload && payload.role === 'teacher') {
+        initialSection = 'cv_update';
+        // Hide CMS menus for teachers
+        const adminIds = ['nav-dashboard', 'nav-pages', 'nav-unified', 'nav-faculty', 'nav-home_sections', 'nav-media', 'nav-settings', 'nav-appeals'];
+        adminIds.forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.style.display = 'none';
+        });
+        document.getElementById('headerTitle').innerText = 'ระบบจัดการโปรไฟล์อาจารย์';
+    } else {
+        // Hide CV update for Admins if they don't want to use it
+        // Or keep it so admins can update their own CV too. Let's keep it visible.
+    }
+
     // Init TinyMCE
     if (typeof tinymce !== 'undefined') {
         tinymce.init({ ...tinyConfig, selector: '#content' });      // Page Editor
         tinymce.init({ ...tinyConfig, selector: '#postContent' });  // Unified Editor
+        tinymce.init({ ...tinyConfig, selector: '#cv_editor' });    // CV Editor
     }
 
     // Default Section
-    showSection('dashboard');
-});
+    showSection(initialSection);
+}
 
 // --- Navigation & Sections ---
 function showSection(sectionId) {
     document.querySelectorAll('.section-view').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('nav a').forEach(el => {
-        el.className = 'block py-3 px-6 hover:bg-slate-800 cursor-pointer transition-colors border-l-4 border-transparent hover:border-blue-500 text-slate-100';
+        // Reset styles but preserve display:none
+        if (el.style.display !== 'none') {
+            el.className = 'block py-3 px-6 hover:bg-slate-800 cursor-pointer transition-colors border-l-4 border-transparent hover:border-blue-500 text-slate-100';
+        }
     });
 
     const target = document.getElementById(sectionId);
@@ -54,6 +154,7 @@ function showSection(sectionId) {
     }
 
     // Load Data on Switch
+    if (sectionId === 'cv_update') loadMyCV();
     if (sectionId === 'pages') loadPages();
     if (sectionId === 'unified') switchUnifiedTab('content');
     if (sectionId === 'faculty') loadFaculty();
@@ -64,14 +165,199 @@ function showSection(sectionId) {
 }
 
 // --- API Helpers ---
+function handleAuthFailure(reason = 'unauthorized') {
+    try {
+        localStorage.removeItem('admin_token');
+        sessionStorage.setItem('auth_failure_reason', reason);
+    } catch (e) {
+        // ignore
+    }
+    window.location.href = '/admin/login';
+}
+
+async function uploadCVImage() {
+    const fileInput = document.getElementById('cv_image_file');
+    if(!fileInput.files.length) return Swal.fire('แจ้งเตือน', 'กรุณาเลือกไฟล์รูปภาพก่อน', 'warning');
+    
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+    
+    try {
+        // Note: this uses the new unified role-based token. We can use /admin/api/upload if it's protected by verify_user instead of verify_admin_role
+        // We will fallback to the public api if /admin/api/upload requires admin.
+        const token = getValidTokenOrRedirect();
+        if (!token) return;
+        const headers = { 'Authorization': `Bearer ${token}` };
+        
+        // Use generic upload endpoint
+        const res = await fetch('/admin/api/upload', { method: 'POST', body: formData, headers });
+        if(res.status === 401) return handleAuthFailure();
+        if(res.status === 403) return Swal.fire('Error', 'Permission denied', 'error');
+        
+        const data = await res.json();
+        if(data.location) {
+            document.getElementById('cv_image_url').value = data.location;
+            Swal.fire('สำเร็จ', 'อัปโหลดรูปภาพเรียบร้อย', 'success');
+        } else {
+            Swal.fire('Error', data.error || 'Upload failed', 'error');
+        }
+    } catch(e) {
+        Swal.fire('Error', e.message, 'error');
+    }
+}
+
+async function loadMyCV() {
+    Swal.fire({ title: 'กำลังโหลด...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    try {
+        const res = await apiCall('/admin/api/faculty/my-cv');
+        Swal.close();
+        if (res && res.success && res.faculty) {
+            document.getElementById('cv_academic_position').value = res.faculty.position || '';
+            document.getElementById('cv_image_url').value = res.faculty.image || '';
+            
+            const preview = document.getElementById('cv_image_preview');
+            if (res.faculty.image) {
+                preview.src = res.faculty.image;
+                preview.classList.remove('hidden');
+            } else {
+                preview.classList.add('hidden');
+            }
+            
+            const expContainer = document.getElementById('cv_expertise_container');
+            expContainer.innerHTML = '';
+            let expertiseList = [];
+            if (Array.isArray(res.faculty.expertise)) {
+                expertiseList = res.faculty.expertise;
+            } else if (res.faculty.expertise) {
+                try {
+                    let rawExp = String(res.faculty.expertise);
+                    // Convert python single-quoted list to valid JSON if it's a python string
+                    let fixedJson = rawExp.replace(/'/g, '"');
+                    expertiseList = JSON.parse(fixedJson);
+                    if (!Array.isArray(expertiseList)) expertiseList = [expertiseList];
+                } catch (e) {
+                    let rawExp = String(res.faculty.expertise).replace(/^\[/, '').replace(/\]$/, '');
+                    expertiseList = rawExp.split(',').map(s => s.replace(/['"]/g, '').trim()).filter(s => s);
+                }
+            }
+            
+            if (expertiseList.length === 0) {
+                addExpertiseField('');
+            } else {
+                expertiseList.forEach(exp => addExpertiseField(exp));
+            }
+            
+            if (res.cv_file) {
+                document.getElementById('cv_file_url').value = res.cv_file;
+                const link = document.getElementById('cv_file_preview_link');
+                link.href = res.cv_file;
+                link.classList.remove('hidden');
+            } else {
+                document.getElementById('cv_file_url').value = '';
+                document.getElementById('cv_file_preview_link').classList.add('hidden');
+            }
+        } else if (res && !res.success) {
+            Swal.fire('ข้อความจากระบบ', 'Debug: ' + JSON.stringify(res), 'info');
+            addExpertiseField('');
+        }
+    } catch (e) {
+        Swal.close();
+        console.error("Failed to load CV:", e);
+    }
+}
+
+function addExpertiseField(value) {
+    const container = document.getElementById('cv_expertise_container');
+    const div = document.createElement('div');
+    div.className = 'flex gap-2 items-center';
+    div.innerHTML = `
+        <span class="text-gray-400">•</span>
+        <input type="text" class="expertise-input flex-1 p-2 border rounded-lg text-sm bg-gray-50 focus:bg-white transition outline-none" value="${value || ''}" placeholder="ระบุความเชี่ยวชาญ">
+        <button type="button" onclick="this.parentElement.remove()" class="text-red-500 hover:bg-red-50 rounded px-2 py-1 text-lg leading-none">&times;</button>
+    `;
+    container.appendChild(div);
+}
+
+async function uploadCVPdf() {
+    const fileInput = document.getElementById('cv_pdf_file');
+    if(!fileInput.files.length) return Swal.fire('แจ้งเตือน', 'กรุณาเลือกไฟล์ PDF ก่อน', 'warning');
+    
+    const file = fileInput.files[0];
+    if(file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+        return Swal.fire('แจ้งเตือน', 'กรุณาอัปโหลดไฟล์ PDF เท่านั้น', 'warning');
+    }
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    Swal.fire({ title: 'กำลังอัปโหลด...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    try {
+        const token = getValidTokenOrRedirect();
+        if (!token) return;
+        const headers = { 'Authorization': `Bearer ${token}` };
+        const res = await fetch('/admin/api/upload', { method: 'POST', body: formData, headers });
+        if(res.status === 401) return handleAuthFailure();
+        if(res.status === 403) return Swal.fire('Error', 'Permission denied', 'error');
+        
+        const data = await res.json();
+        if(data.location) {
+            document.getElementById('cv_file_url').value = data.location;
+            const link = document.getElementById('cv_file_preview_link');
+            link.href = data.location;
+            link.classList.remove('hidden');
+            Swal.fire('สำเร็จ', 'อัปโหลดไฟล์ PDF เรียบร้อย', 'success');
+        } else {
+            Swal.fire('Error', data.error || 'Upload failed', 'error');
+        }
+    } catch(e) {
+        Swal.fire('Error', e.message, 'error');
+    }
+}
+
+async function submitMyCV() {
+    Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    try {
+        const expInputs = document.querySelectorAll('.expertise-input');
+        const expList = Array.from(expInputs).map(inp => inp.value.trim()).filter(val => val);
+        
+        const payload = {
+            position: document.getElementById('cv_academic_position').value,
+            expertise: JSON.stringify(expList),
+            image: document.getElementById('cv_image_url').value,
+            cv_file: document.getElementById('cv_file_url').value
+        };
+        const res = await apiCall('/admin/api/faculty/my-cv', 'POST', payload);
+        if(!res) return; // Error handled inside apiCall already
+        
+        if(res.success) {
+            Swal.fire('สำเร็จ', 'บันทึกข้อมูล CV เรียบร้อย', 'success');
+        } else {
+            Swal.fire('ผิดพลาด', res.message || 'ไม่สามารถบันทึกได้', 'error');
+        }
+    } catch(e) {
+        Swal.fire('Error', e.message, 'error');
+    }
+}
+
+function logout() {
+    try { localStorage.removeItem('admin_token'); } catch (e) {}
+    window.location.href = '/admin/login';
+}
+
 async function apiCall(url, method = 'GET', body = null) {
     try {
-        const opts = { method };
+        const token = getValidTokenOrRedirect();
+        if (!token) return null;
+        const opts = { method, headers: {} };
+        opts.headers['Authorization'] = `Bearer ${token}`;
         if (body) {
-            opts.headers = { 'Content-Type': 'application/json' };
+            opts.headers['Content-Type'] = 'application/json';
             opts.body = JSON.stringify(body);
         }
         const res = await fetch(url, opts);
+        if (res.status === 401) {
+            return handleAuthFailure();
+        }
         return await res.json();
     } catch (e) {
         console.error("API Error:", e);
@@ -400,7 +686,13 @@ async function uploadFile(input) {
     Swal.fire({ title: 'Uploading...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
     try {
-        const res = await fetch('/admin/api/upload', { method: 'POST', body: formData });
+        const token = localStorage.getItem('admin_token');
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        const res = await fetch('/admin/api/upload', { method: 'POST', headers, body: formData });
+        if(res.status === 401) {
+            Swal.close();
+            return handleAuthFailure();
+        }
         const json = await res.json();
         if (json.location) {
             Swal.close();
@@ -456,7 +748,12 @@ async function uploadAndSetHomeImage(inputEl, fieldId, previewId) {
     formData.append('file', file);
 
     try {
-        const res = await fetch('/admin/api/upload', { method: 'POST', body: formData });
+        const token = localStorage.getItem('admin_token');
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        const res = await fetch('/admin/api/upload', { method: 'POST', headers, body: formData });
+        if(res.status === 401) {
+            return handleAuthFailure();
+        }
         const data = await res.json();
         if (data.location) {
             const input = document.getElementById(fieldId);
@@ -1127,4 +1424,3 @@ async function saveCurrentMenu() {
 }
 console.log("Admin.js loaded successfully.");
 window.switchHomeTab = switchHomeTab;
-

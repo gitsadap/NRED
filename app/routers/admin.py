@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query, HTTPException, Request
+from fastapi import APIRouter, Depends, Query, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc
 from app.database import get_db
@@ -6,6 +6,7 @@ from app.models import Page, News, Activity, Appeal, Menu, Tag
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
+from app.routers.auth import verify_admin_role, get_current_user
 
 # Pydantic Schemas for Admin Actions
 class PageCreate(BaseModel):
@@ -121,18 +122,34 @@ class ContactInfoCreate(BaseModel):
     icon: Optional[str] = None
     order_index: Optional[int] = 0
 
-router = APIRouter(
+dashboard_router = APIRouter(
     prefix="/admin",
-    tags=["admin"],
+    tags=["admin_views"]
 )
 
 from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
-@router.get("/")
+@dashboard_router.get("/")
 async def admin_dashboard(request: Request):
     return templates.TemplateResponse(request=request, name="admin/dashboard.html", context={"request": request})
+
+@dashboard_router.get("/login")
+async def admin_login(request: Request):
+    return templates.TemplateResponse(request=request, name="admin/login.html", context={"request": request})
+
+router = APIRouter(
+    prefix="/admin",
+    tags=["admin_api"],
+    dependencies=[Depends(verify_admin_role)]
+)
+
+teacher_router = APIRouter(
+    prefix="/admin",
+    tags=["teacher_api"],
+    dependencies=[Depends(get_current_user)]
+)
 
 # API Endpoints used by Dashboard
 
@@ -497,7 +514,11 @@ async def delete_staff(req: DeleteRequest, db: AsyncSession = Depends(get_db)):
 from fastapi import UploadFile, File
 import shutil
 import os
+import uuid
+from werkzeug.utils import secure_filename
 from app.tasks import process_document_to_blob
+from app.config import settings as app_settings
+from app.logging_config import logger
 
 UPLOAD_DIR = "public/uploads"
 if not os.environ.get("VERCEL"):
@@ -506,12 +527,55 @@ if not os.environ.get("VERCEL"):
 else:
     # ถ้าอยู่บน Vercel ให้ใช้โฟลเดอร์ /tmp แทน (เป็นที่เดียวที่ Vercel ยอมให้เขียนไฟล์ชั่วคราวได้)
     UPLOAD_DIR = "/tmp"
-@router.post("/api/upload")
-async def upload_file(file: UploadFile = File(...)):
+
+ALLOWED_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.gif', '.pdf', '.doc', '.docx', '.xls', '.xlsx'}
+
+@teacher_router.post("/api/upload")
+async def upload_file(request: Request, file: UploadFile = File(...), user: dict = Depends(get_current_user)):
     try:
-        file_location = f"{UPLOAD_DIR}/{file.filename}"
+        request_id = getattr(request.state, "request_id", None)
+        # Validate File Extension
+        _, ext = os.path.splitext(file.filename)
+        ext = ext.lower()
+        if ext not in ALLOWED_EXTENSIONS:
+            return {"error": f"File type not allowed. Allowed types: {', '.join(ALLOWED_EXTENSIONS)}"}
+
+        # Sanitize filename & add unique ID to prevent collisions
+        safe_filename = secure_filename(file.filename)
+        if not safe_filename:
+            return {"error": "Invalid filename"}
+        unique_name = f"{uuid.uuid4().hex[:8]}_{safe_filename}"
+        
+        file_location = f"{UPLOAD_DIR}/{unique_name}"
         with open(file_location, "wb+") as file_object:
-            shutil.copyfileobj(file.file, file_object)
+            max_bytes = int(getattr(app_settings, "max_file_size", 0) or 0)
+            if max_bytes <= 0:
+                max_bytes = 10 * 1024 * 1024  # 10MB safe default
+
+            written = 0
+            while True:
+                chunk = await file.read(1024 * 1024)  # 1MB
+                if not chunk:
+                    break
+                written += len(chunk)
+                if written > max_bytes:
+                    try:
+                        file_object.close()
+                    finally:
+                        try:
+                            os.remove(file_location)
+                        except Exception:
+                            pass
+                    logger.warning(
+                        f"UPLOAD rejected too_large filename={safe_filename} bytes={written} max_bytes={max_bytes} username={user.get('username')} role={user.get('role')} request_id={request_id}"
+                    )
+                    return {"error": f"File too large. Max size is {max_bytes} bytes."}
+                file_object.write(chunk)
+        await file.close()
+
+        logger.info(
+            f"UPLOAD success filename={unique_name} bytes={written} username={user.get('username')} role={user.get('role')} request_id={request_id}"
+        )
             
         # Background optimize access and path-to-blob transformation using Celery
         try:
@@ -519,9 +583,13 @@ async def upload_file(file: UploadFile = File(...)):
         except Exception as celery_err:
             pass # ignore broker errors gracefully if redis is down
             
-        return {"location": f"/uploads/{file.filename}"} # TinyMCE expects 'location'
+        return {"location": f"/uploads/{unique_name}"} # TinyMCE expects 'location'
     except Exception as e:
-        return {"error": str(e)}
+        request_id = getattr(request.state, "request_id", None)
+        logger.error(
+            f"UPLOAD failed filename={getattr(file, 'filename', None)} username={user.get('username')} role={user.get('role')} request_id={request_id} error={e}"
+        )
+        return {"error": "Upload failed"}
 
 @router.get("/api/media")
 async def get_media_files():
@@ -536,10 +604,16 @@ async def get_media_files():
 async def delete_media_file(req: Dict[str, str]):
     filename = req.get("filename")
     if not filename: return {"success": False}
+    # Prevent path traversal
+    if filename != os.path.basename(filename) or "/" in filename or "\\" in filename:
+        return {"success": False, "message": "Invalid filename"}
     file_path = os.path.join(UPLOAD_DIR, filename)
     if os.path.exists(file_path):
-        os.remove(file_path)
-        return {"success": True}
+        try:
+            os.remove(file_path)
+            return {"success": True}
+        except Exception:
+            return {"success": False, "message": "Delete failed"}
     return {"success": False, "message": "File not found"}
 
 # --- Settings & Menu API (Basic) ---
@@ -762,6 +836,14 @@ async def get_admin_faculty(db: AsyncSession = Depends(get_db)):
 
 @router.post("/api/faculty")
 async def save_faculty(item: FacultyCreate, db: AsyncSession = Depends(get_db)):
+    import json
+    parsed_expertise = []
+    if item.expertise:
+        try:
+            parsed_expertise = json.loads(item.expertise)
+        except Exception:
+            parsed_expertise = item.expertise # Fallback
+            
     if item.id:
         res = await db.execute(select(Faculty).where(Faculty.id == item.id))
         obj = res.scalars().first()
@@ -778,13 +860,13 @@ async def save_faculty(item: FacultyCreate, db: AsyncSession = Depends(get_db)):
             obj.major = item.major
             obj.admin_position = item.admin_position
             obj.is_expert = item.is_expert
-            obj.expertise = item.expertise
+            obj.expertise = parsed_expertise
     else:
         obj = Faculty(
             prefix=item.prefix, fname=item.fname, lname=item.lname,
             fname_en=item.fname_en, lname_en=item.lname_en, position=item.position,
             email=item.email, phone=item.phone, image=item.image, major=item.major,
-            admin_position=item.admin_position, is_expert=item.is_expert, expertise=item.expertise
+            admin_position=item.admin_position, is_expert=item.is_expert, expertise=parsed_expertise
         )
         db.add(obj)
     await db.commit()
@@ -840,3 +922,98 @@ async def generic_delete(req: Dict[str, Any], db: AsyncSession = Depends(get_db)
         return {"success": True}
     return {"success": False}
 
+from app.models import FacultyCV
+
+@teacher_router.get("/api/faculty/my-cv")
+async def get_my_cv(request: Request, user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    username = (user.get("username") or "").strip()
+    if "@" in username:
+        username = username.split("@", 1)[0]
+
+    res = await db.execute(select(Faculty).where(Faculty.email.ilike(f"{username}@%")))
+    faculty = res.scalars().first()
+        
+    if not faculty:
+        return {"success": False, "message": f"ไม่พบข้อมูลบุคลากรที่เชื่อมโยงกับบัญชีผู้ใช้นี้ (username in token: {user['username']})"}
+        
+    res_cv = await db.execute(select(FacultyCV).where(FacultyCV.user_id == faculty.id))
+    faculty_cv = res_cv.scalars().first()
+    
+    return {
+        "success": True, 
+        "faculty": {
+            "id": faculty.id,
+            "position": faculty.position,
+            "expertise": faculty.expertise,
+            "image": faculty.image
+        },
+        "cv_file": faculty_cv.cv_file if faculty_cv else None
+    }
+
+@teacher_router.post("/api/faculty/my-cv")
+async def save_my_cv(payload: dict, request: Request, user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    username = (user.get("username") or "").strip()
+    if "@" in username:
+        username = username.split("@", 1)[0]
+
+    res = await db.execute(select(Faculty).where(Faculty.email.ilike(f"{username}@%")))
+    faculty = res.scalars().first()
+        
+    if not faculty:
+        return {"success": False, "message": "ไม่พบข้อมูลบุคลากรที่เชื่อมโยงกับบัญชีผู้ใช้นี้"}
+
+    import json
+    import os
+    import re
+    from urllib.parse import urlparse
+    
+    faculty.position = payload.get("position")
+    
+    # Parse the JSON string from frontend into a Python list so asyncpg correctly binds it as JSONB
+    expertise_str = payload.get("expertise", "[]")
+    try:
+        faculty.expertise = json.loads(expertise_str) if expertise_str else []
+    except Exception:
+        faculty.expertise = []
+        
+    faculty.image = payload.get("image")
+
+    # Basic URL validation to prevent storing dangerous schemes (e.g., javascript:)
+    image_val = (faculty.image or "").strip()
+    if image_val:
+        if image_val.startswith(("/uploads/", "/static/")):
+            pass
+        else:
+            parsed = urlparse(image_val)
+            if parsed.scheme not in ("http", "https"):
+                return {"success": False, "message": "รูปโปรไฟล์ไม่ถูกต้อง (รองรับเฉพาะ http/https หรือ path ภายในระบบ)"}
+    
+    cv_file_url = payload.get("cv_file")
+    if cv_file_url:
+        cv_file_url = str(cv_file_url).strip()
+        # Only allow internal uploads for CV PDFs
+        if cv_file_url.startswith("/uploads/"):
+            cv_name = cv_file_url[len("/uploads/"):]
+        else:
+            cv_name = cv_file_url
+
+        if (
+            not cv_name
+            or cv_name != os.path.basename(cv_name)
+            or "/" in cv_name
+            or "\\" in cv_name
+            or not re.fullmatch(r"[A-Za-z0-9_.-]+", cv_name)
+            or not cv_name.lower().endswith(".pdf")
+        ):
+            return {"success": False, "message": "ไฟล์ CV ไม่ถูกต้อง (ต้องเป็น PDF ที่อัปโหลดผ่านระบบเท่านั้น)"}
+
+        res_cv = await db.execute(select(FacultyCV).where(FacultyCV.user_id == faculty.id))
+        faculty_cv = res_cv.scalars().first()
+        
+        if faculty_cv:
+            faculty_cv.cv_file = cv_file_url
+        else:
+            db.add(FacultyCV(user_id=faculty.id, cv_file=cv_file_url))
+
+    await db.commit()
+    return {"success": True, "message": "บันทึกข้อมูล CV เรียบร้อย"}

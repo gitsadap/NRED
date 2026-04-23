@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เข้าสู่ระบบ - ระบบจัดการข้อมูลวิศวกรรมเกษตร</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Kanit', 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            overflow: hidden;
+        }
+        
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 1.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 20px rgba(255,255,255,0.1);
+        }
+
+        .bg-shapes {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .shape {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 20s infinite linear;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0) rotate(0deg); }
+            100% { transform: translateY(-1000px) rotate(360deg); }
+        }
+
+        /* Floating elements */
+        .shape:nth-child(1) { width: 150px; height: 150px; left: 10%; top: 80%; animation-duration: 25s; }
+        .shape:nth-child(2) { width: 300px; height: 300px; left: 80%; top: 60%; animation-duration: 30s; }
+        .shape:nth-child(3) { width: 100px; height: 100px; left: 40%; top: 100%; animation-duration: 15s; }
+        .shape:nth-child(4) { width: 200px; height: 200px; left: 60%; top: 80%; animation-duration: 22s; }
+        .shape:nth-child(5) { width: 80px; height: 80px; left: 20%; top: 100%; animation-duration: 18s; }
+    </style>
+</head>
+<body>
+
+    <div class="bg-shapes">
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+    </div>
+
+    <div class="glass-panel w-full max-w-md p-10 transform transition-all hover:scale-[1.01]">
+        <div class="text-center mb-10">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 text-blue-600 mb-4 ring-8 ring-blue-50">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+            </div>
+            <h2 class="text-3xl font-bold text-gray-800 tracking-tight">เข้าสู่ระบบ</h2>
+            <p class="text-gray-500 mt-2 text-sm">กรุณากรอกข้อมูลบัญชีผู้ใช้ NU หรือแอดมิน เพื่อเข้าใช้งานระบบจัดการเนื้อหา (CMS / Update CV)</p>
+        </div>
+
+        <form id="loginForm" class="space-y-6">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1" for="username">ชื่อผู้ใช้ (Username)</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                    </div>
+                    <input type="text" id="username" name="username" required
+                           class="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors shadow-sm outline-none bg-gray-50 text-gray-800"
+                           placeholder="เช่น gitsadap">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1" for="password">รหัสผ่าน (Password)</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                    </div>
+                    <input type="password" id="password" name="password" required
+                           class="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors shadow-sm outline-none bg-gray-50 text-gray-800"
+                           placeholder="••••••••">
+                </div>
+            </div>
+
+            <button type="submit" id="submitBtn"
+                    class="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all hover:shadow-blue-500/30">
+                <span>เข้าสู่ระบบ</span>
+                <svg id="loadingIcon" class="animate-spin ml-2 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </button>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const AUTH_CLOCK_SKEW_SECONDS = 30;
+            function base64UrlDecode(input) {
+                const base64 = input.replace(/-/g, '+').replace(/_/g, '/');
+                const padded = base64.padEnd(base64.length + (4 - (base64.length % 4)) % 4, '=');
+                return atob(padded);
+            }
+            function parseJwtPayload(token) {
+                try {
+                    if (!token) return null;
+                    const parts = token.split('.');
+                    if (parts.length !== 3) return null;
+                    return JSON.parse(base64UrlDecode(parts[1]));
+                } catch (e) { return null; }
+            }
+            function isTokenExpired(token) {
+                const payload = parseJwtPayload(token);
+                if (!payload || typeof payload.exp !== 'number') return true;
+                const expMs = payload.exp * 1000;
+                return Date.now() >= (expMs - AUTH_CLOCK_SKEW_SECONDS * 1000);
+            }
+
+            // If there is a token but it's expired/invalid, clear it to avoid redirect loops.
+            const existingToken = localStorage.getItem('admin_token');
+            if (existingToken) {
+                if (isTokenExpired(existingToken)) {
+                    localStorage.removeItem('admin_token');
+                } else {
+                    window.location.href = '/admin/';
+                    return;
+                }
+            }
+
+            // Show reason (if redirected from admin due to expired/invalid session)
+            try {
+                const reason = sessionStorage.getItem('auth_failure_reason');
+                if (reason) {
+                    sessionStorage.removeItem('auth_failure_reason');
+                    if (reason === 'expired') {
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'Session หมดอายุ',
+                            text: 'กรุณาเข้าสู่ระบบใหม่อีกครั้ง',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    }
+                }
+            } catch (e) {}
+
+            const form = document.getElementById('loginForm');
+            const submitBtn = document.getElementById('submitBtn');
+            const loadingIcon = document.getElementById('loadingIcon');
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                
+                if (!username || !password) return;
+
+                // UI loading state
+                submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-75');
+                loadingIcon.classList.remove('hidden');
+
+                try {
+                    const formData = new FormData();
+                    formData.append('username', username);
+                    formData.append('password', password);
+                    
+                    const res = await fetch('/admin/api/auth/token', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (res.ok) {
+                        const data = await res.json();
+                        localStorage.setItem('admin_token', data.access_token);
+                        
+                        // Parse JWT to check role
+                        try {
+                            const payload = parseJwtPayload(data.access_token);
+                            if (payload && payload.role === 'teacher') {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'เข้าสู่ระบบสำเร็จ',
+                                    text: 'ยินดีต้อนรับอาจารย์/บุคลากร กำลังเข้าสู่หน้าแก้ไข CV...',
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                }).then(() => {
+                                    window.location.href = '/admin/';
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'เข้าสู่ระบบสำเร็จ',
+                                    text: 'กำลังเข้าสู่หน้า Admin Dashboard...',
+                                    timer: 1000,
+                                    showConfirmButton: false
+                                }).then(() => {
+                                    window.location.href = '/admin/';
+                                });
+                            }
+                        } catch(err) {
+                            window.location.href = '/admin/';
+                        }
+                    } else {
+                        throw new Error('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+                    }
+                } catch (error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'เข้าสู่ระบบไม่สำเร็จ',
+                        text: error.message || 'เกิดข้อผิดพลาดในการเชื่อมต่อ',
+                    });
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.classList.remove('opacity-75');
+                    loadingIcon.classList.add('hidden');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
