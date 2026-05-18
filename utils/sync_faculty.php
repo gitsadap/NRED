@@ -12,7 +12,7 @@ $mysql_pass = "it[[{ko-hv,^]8ItgdK9i";
 $mysql_db   = "db_user";
 
 // PostgreSQL (Destination)
-$pg_host = getenv("DB_HOST") ?: "aws-1-ap-northeast-1.pooler.supabase.com";
+$pg_host = getenv("DB_HOST") ?: "10.10.58.21";
 $pg_user = "agi";
 $pg_pass = "adminagi";
 $pg_db   = "nred";

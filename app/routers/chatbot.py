@@ -1,10 +1,10 @@
 import os
 import pickle
 import json
+import time  # <--- เพิ่ม import time แล้ว
 import numpy as np  
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from sentence_transformers import SentenceTransformer
 import google.generativeai as genai
 from app.logging_config import logger 
 from typing import List, Dict, Optional
@@ -33,9 +33,8 @@ def get_program_code(level: str, program: str) -> str:
 # Load Models
 base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 hf_cache_dir = os.path.join(base_dir, "hf_cache")
-os.environ["HF_HOME"] = hf_cache_dir
 
-ai_model = None
+# ลบ ai_model ออกไปเลย เพราะไม่ได้ใช้รันบนเซิร์ฟเวอร์แล้ว
 doc_embeddings = None
 documents_meta = []
 
@@ -71,7 +70,6 @@ try:
                 doc_embeddings = np.array(doc_embeddings)
             loaded = True
 
-            # Best-effort migration to safe formats (only if filesystem allows writing).
             try:
                 with open(meta_json_path, "w", encoding="utf-8") as f:
                     json.dump(documents_meta, f, ensure_ascii=False)
@@ -86,11 +84,9 @@ try:
             )
         
     if loaded:
-        # โหลดโมเดล SentenceTransformer (รันบน CPU)
-        ai_model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2', cache_folder=hf_cache_dir, device='cpu')
-        logger.info("✅ Chatbot Model loaded")
+        logger.info("✅ Vector Database loaded successfully")
 except Exception as e:
-    logger.error(f"❌ Failed to load AI models: {e}", exc_info=True)
+    logger.error(f"❌ Failed to load vector database: {e}", exc_info=True)
 
 def expand_query(query: str) -> str:
     replacements = {
@@ -115,17 +111,40 @@ def expand_query(query: str) -> str:
 @router.post("/chatbot")
 async def get_chatbot_response(req: ChatRequest):
     user_msg = req.message.strip()
-    if not user_msg: return {"response": "กรุณาพิมพ์คำถามครับ"}
+    if not user_msg: 
+        return {"response": "กรุณาพิมพ์คำถามครับ"}
     
-    # Check if models are ready
-    if ai_model is None or doc_embeddings is None:
-        return {"response": "ขออภัยค่ะ ระบบฐานความรู้ยังไม่พร้อมใช้งาน (Model/Vector missing)"}
+    # เช็คแค่ฐานข้อมูล Vector ว่าโหลดมาสำเร็จไหม (ไม่ต้องเช็ค ai_model แล้ว)
+    if doc_embeddings is None:
+        return {"response": "ขออภัยค่ะ ระบบฐานความรู้ยังไม่พร้อมใช้งาน (Vector missing)"}
 
     try:
+        # เตรียมคำถามก่อนส่งไปทำ Embedding
         search_query = expand_query(user_msg)
         target_code = get_program_code(req.level, req.program)
         
-        # กรองข้อมูลเฉพาะหลักสูตรที่เลือก
+        # เช็ค API Key
+        gemini_key = settings.gemini_api_key or os.getenv("GEMINI_API_KEY")
+        if not gemini_key:
+             return {"response": "พี่ AI ขัดข้องเรื่อง API Key ค่ะ ฝากแจ้งแอดมินทีนะคะ"}
+
+        genai.configure(api_key=gemini_key)
+
+        # ---------------------------------------------------------
+        # 1. ทำ Embedding ด้วย Google Gemini API
+        # ---------------------------------------------------------
+        start_encode_time = time.time()
+        embedding_result = genai.embed_content(
+            model="models/text-embedding-004", 
+            content=search_query
+        )
+        query_embedding = np.array(embedding_result['embedding'])
+        encode_duration = time.time() - start_encode_time
+        logger.info(f"⏱️ [1] Time to encode vector (Gemini API): {encode_duration:.2f} seconds")
+
+        # ---------------------------------------------------------
+        # 2. ค้นหาข้อมูลใน Vector Database (RAG)
+        # ---------------------------------------------------------
         indices = [i for i, m in enumerate(documents_meta) if m.get("program_code") == target_code]
         if not indices:
             return {"response": f"ขออภัยค่ะ ยังไม่มีข้อมูลของหลักสูตร {target_code}"}
@@ -133,13 +152,9 @@ async def get_chatbot_response(req: ChatRequest):
         filtered_embeddings = doc_embeddings[indices]
         filtered_meta = [documents_meta[i] for i in indices]
 
-        # 🔍 สร้าง Embedding จากคำถาม (Numpy)
-        query_embedding = ai_model.encode(search_query)
-
-        # 🌟 คำนวณ Cosine Similarity ด้วย Numpy
+        # คำนวณ Cosine Similarity ด้วย Numpy
         norm_query = np.linalg.norm(query_embedding)
         norm_filtered = np.linalg.norm(filtered_embeddings, axis=1)
-        # ป้องกันการหารด้วยศูนย์
         denom = norm_filtered * norm_query
         denom[denom == 0] = 1e-9
         scores = np.dot(filtered_embeddings, query_embedding) / denom
@@ -151,30 +166,24 @@ async def get_chatbot_response(req: ChatRequest):
         final_contexts = []
         
         for idx in top_indices:
-            if scores[idx] > 0.20: # Threshold แบบใหม่ที่คัดเฉพาะข้อมูลที่ตรงคำถามเท่านั้น
+            if scores[idx] > 0.20:
                 meta = filtered_meta[idx]
                 if meta['source'] not in seen_pages:
                     final_contexts.append(f"อ้างอิงจาก {meta['source']}:\n{meta['parent_content']}")
                     seen_pages.add(meta['source'])
             if len(final_contexts) >= 6: break
-            
-        print(f"DEBUG: Retrieved {len(final_contexts)} contexts for {target_code}.")
-        for i, c in enumerate(final_contexts):
-            print(f"Context {i+1}: {c[:100]}...")
 
         if not final_contexts:
             return {"response": f"ไม่พบข้อมูลที่เกี่ยวข้องกับ '{user_msg}' ในฐานข้อมูล {target_code}"}
 
         full_context_text = "\n\n---\n\n".join(final_contexts)
         
-        # --- เรียกใช้ Gemini ตัวเดิมที่คุณต้องการ ---
-        gemini_key = settings.gemini_api_key or os.getenv("GEMINI_API_KEY")
-        if gemini_key:
-            genai.configure(api_key=gemini_key)
-            # กลับมาใช้รุ่นเดิมตามที่คุณต้องการ
-            model = genai.GenerativeModel('models/gemini-3.1-flash-lite-preview')
-            
-            prompt = f"""
+        # ---------------------------------------------------------
+        # 3. เรียกใช้ Gemini (แบบ Async)
+        # ---------------------------------------------------------
+        model = genai.GenerativeModel('models/gemini-3.1-flash-lite-preview')
+        
+        prompt = f"""
 คุณคือผู้ช่วยอัจฉริยะสาวประจำภาควิชา มหาวิทยาลัยนเรศวร
 หน้าที่: ตอบคำถามนิสิตเกี่ยวกับหลักสูตร {target_code}
 กฎการตอบ: 
@@ -189,11 +198,17 @@ async def get_chatbot_response(req: ChatRequest):
 
 คำถามจากนิสิต: {user_msg}
 """
-            response = model.generate_content(prompt)
-            return {"response": response.text}
-            
-        return {"response": "พี่ AI ขัดข้องเรื่อง API Key ค่ะ ฝากแจ้งแอดมินทีนะคะ"}
+        start_gemini_time = time.time()
+        
+        # เรียกแบบ Async ป้องกันเซิร์ฟเวอร์ค้าง
+        response = await model.generate_content_async(prompt)
+        
+        gemini_duration = time.time() - start_gemini_time
+        logger.info(f"⏱️ [2] Time waiting for Gemini API: {gemini_duration:.2f} seconds")
+        logger.info(f"⏱️ [Total] Response Time: {(encode_duration + gemini_duration):.2f} seconds")
+
+        return {"response": response.text}
             
     except Exception as e:
-        logger.error(f"Chatbot Error: {e}")
+        logger.error(f"Chatbot Error: {e}", exc_info=True)
         return {"response": f"เกิดข้อผิดพลาด: {str(e)}"}

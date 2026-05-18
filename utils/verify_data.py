@@ -5,7 +5,7 @@ import json
 import os
 from dotenv import load_dotenv
 load_dotenv()
-PG_HOST = os.getenv("DB_HOST", "aws-1-ap-northeast-1.pooler.supabase.com")
+PG_HOST = os.getenv("DB_HOST", "10.10.58.21")
 PG_USER = "agi"
 PG_PASS = os.getenv("DB_PASSWORD", "")
 PG_DB   = "nred"
