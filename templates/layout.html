@@ -4,14 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>[[ state.title ]]</title>
+    <title>{{ title|default(site_title)|default('Department of NRE') }}</title>
 
     <!-- Meta -->
     <meta name="description" :content="state.description">
     <link rel="icon" href="/assets/images/logo_new.png">
 
     <!-- Vue 3 -->
-    {% if settings.debug %}
+    {% if debug %}
     <script src="/assets/js/vue.global.js?v=1.0.2"></script>
     {% else %}
     <script src="/assets/js/vue.global.prod.js?v=1.0.2"></script>
@@ -529,14 +529,36 @@
         }
     </style>
 
+    <!-- Server-side context variables to prevent IDE syntax error in Javascript script block -->
+    <div id="server-context" class="hidden"
+         data-site-title="{{ site_title|default('Department of NRE')|forceescape }}"
+         data-site-logo="{{ site_logo|default('/assets/images/logo_new.png')|forceescape }}"
+         data-site-footer="{{ site_footer|default('© 2024 Department of NRE. All Rights Reserved.')|forceescape }}"
+         data-menu-items="{{ menu_items|default([])|tojson|forceescape }}"
+         data-contacts="{{ contacts|default([])|tojson|forceescape }}">
+    </div>
+
     <script>
-        window.__INITIAL_GLOBAL_CONTEXT__ = {
-            site_title: {{ site_title |default ('Department of NRE') | tojson }},
-        site_logo: { { site_logo |default ('/assets/images/logo_new.png') | tojson } },
-        site_footer: { { site_footer |default ('© 2024 Department of NRE. All Rights Reserved.') | tojson } },
-        menu_items: { { menu_items |default ([]) | tojson } },
-        contacts: { { contacts |default ([]) | tojson } }
-        };
+        (function() {
+            const ctxEl = document.getElementById('server-context');
+            if (ctxEl) {
+                window.__INITIAL_GLOBAL_CONTEXT__ = {
+                    site_title: ctxEl.dataset.siteTitle,
+                    site_logo: ctxEl.dataset.siteLogo,
+                    site_footer: ctxEl.dataset.siteFooter,
+                    menu_items: JSON.parse(ctxEl.dataset.menuItems || '[]'),
+                    contacts: JSON.parse(ctxEl.dataset.contacts || '[]')
+                };
+            } else {
+                window.__INITIAL_GLOBAL_CONTEXT__ = {
+                    site_title: 'Department of NRE',
+                    site_logo: '/assets/images/logo_new.png',
+                    site_footer: '© 2024 Department of NRE. All Rights Reserved.',
+                    menu_items: [],
+                    contacts: []
+                };
+            }
+        })();
         const { createApp, ref, onMounted, watch, nextTick } = Vue;
         const app = createApp({
             delimiters: ['[[', ']]'],

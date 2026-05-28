@@ -6,6 +6,7 @@ from app.security.html_sanitizer import sanitize_rich_html, sanitize_svg_icon
 import json
 import time
 from copy import deepcopy
+from app.config import settings as app_settings
 
 _GLOBAL_CONTEXT_CACHE_TTL_SECONDS = 30
 _global_context_cache: dict = {"value": None, "expires_at": 0.0}
@@ -107,6 +108,7 @@ async def get_global_context(db: AsyncSession):
             "news_categories": news_categories,
             "contacts": contacts,
             "settings": settings,
+            "debug": app_settings.debug,
         }
         _global_context_cache["value"] = context
         _global_context_cache["expires_at"] = now + _GLOBAL_CONTEXT_CACHE_TTL_SECONDS
@@ -125,4 +127,5 @@ async def get_global_context(db: AsyncSession):
             "news_categories": ["General"],
             "contacts": [],
             "settings": {},
+            "debug": app_settings.debug,
         }
