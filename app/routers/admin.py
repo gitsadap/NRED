@@ -7,6 +7,7 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 from app.routers.auth import verify_admin_role, get_current_user
+from app.security.html_sanitizer import sanitize_rich_html, sanitize_svg_icon
 
 # Pydantic Schemas for Admin Actions
 class PageCreate(BaseModel):
@@ -115,6 +116,7 @@ class FacultyCreate(BaseModel):
     admin_position: Optional[str] = None
     is_expert: Optional[bool] = False
     expertise: Optional[str] = None # Expect JSON string or raw text
+    cv_file: Optional[str] = None
 
 class ContactInfoCreate(BaseModel):
     key: str
@@ -197,7 +199,7 @@ async def save_page(page: PageCreate, db: AsyncSession = Depends(get_db)):
         if db_page:
             db_page.title = page.title
             db_page.slug = page.slug
-            db_page.content = page.content
+            db_page.content = sanitize_rich_html(page.content)
             # db_page.updated_at = func.now() # Auto updated
     else:
         # Check slug
@@ -205,7 +207,12 @@ async def save_page(page: PageCreate, db: AsyncSession = Depends(get_db)):
         if result.scalars().first():
              return {"success": False, "message": "Slug already exists"}
         
-        new_page = Page(slug=page.slug, title=page.title, content=page.content, is_published=1)
+        new_page = Page(
+            slug=page.slug,
+            title=page.title,
+            content=sanitize_rich_html(page.content),
+            is_published=1,
+        )
         db.add(new_page)
     
     await db.commit()
@@ -240,7 +247,7 @@ async def save_news(news: NewsCreate, db: AsyncSession = Depends(get_db)):
         db_news = result.scalars().first()
         if db_news:
             db_news.title = news.title
-            db_news.content = news.content
+            db_news.content = sanitize_rich_html(news.content)
             db_news.image_url = news.image
             db_news.category = news.category
             db_news.tags = news.tags
@@ -248,7 +255,7 @@ async def save_news(news: NewsCreate, db: AsyncSession = Depends(get_db)):
     else:
         new_news = News(
             title=news.title, 
-            content=news.content, 
+            content=sanitize_rich_html(news.content), 
             image_url=news.image, 
             category=news.category or "General",
             tags=news.tags,
@@ -280,14 +287,14 @@ async def save_activity(act: ActivityCreate, db: AsyncSession = Depends(get_db))
         db_act = result.scalars().first()
         if db_act:
             db_act.title = act.title
-            db_act.content = act.content
+            db_act.content = sanitize_rich_html(act.content)
             db_act.image_url = act.image
             db_act.category = act.category or "Activity"
             db_act.tags = act.tags
     else:
         new_act = Activity(
             title=act.title, 
-            content=act.content, 
+            content=sanitize_rich_html(act.content), 
             image_url=act.image,
             category=act.category or "Activity",
             tags=act.tags,
@@ -378,7 +385,7 @@ async def save_unified_content(item: ContentCreate, db: AsyncSession = Depends(g
             db_obj = res.scalars().first()
             if db_obj:
                 db_obj.title = item.title
-                db_obj.content = item.content
+                db_obj.content = sanitize_rich_html(item.content)
                 db_obj.image_url = item.image
                 db_obj.category = item.category
                 db_obj.tags = item.tags
@@ -386,7 +393,7 @@ async def save_unified_content(item: ContentCreate, db: AsyncSession = Depends(g
         else:
             db_obj = News(
                 title=item.title,
-                content=item.content,
+                content=sanitize_rich_html(item.content),
                 image_url=item.image,
                 category=item.category or "General",
                 tags=item.tags,
@@ -401,7 +408,7 @@ async def save_unified_content(item: ContentCreate, db: AsyncSession = Depends(g
             db_obj = res.scalars().first()
             if db_obj:
                 db_obj.title = item.title
-                db_obj.content = item.content
+                db_obj.content = sanitize_rich_html(item.content)
                 db_obj.image_url = item.image
                 db_obj.category = item.category
                 db_obj.tags = item.tags
@@ -409,7 +416,7 @@ async def save_unified_content(item: ContentCreate, db: AsyncSession = Depends(g
         else:
             db_obj = Activity(
                 title=item.title,
-                content=item.content,
+                content=sanitize_rich_html(item.content),
                 image_url=item.image,
                 category=item.category or "Activity",
                 tags=item.tags,
@@ -630,13 +637,16 @@ async def get_settings(db: AsyncSession = Depends(get_db)):
 @router.post("/api/settings")
 async def update_settings(settings: Dict[str, str], db: AsyncSession = Depends(get_db)):
     for key, value in settings.items():
+        safe_value = value
+        if key in {"footer_text"}:
+            safe_value = sanitize_rich_html(value)
         # Upsert
         result = await db.execute(select(Setting).where(Setting.key == key))
         setting_item = result.scalars().first()
         if setting_item:
-            setting_item.value = value
+            setting_item.value = safe_value
         else:
-            db.add(Setting(key=key, value=value))
+            db.add(Setting(key=key, value=safe_value))
     await db.commit()
     return {"success": True}
 
@@ -832,7 +842,31 @@ from sqlalchemy import delete
 @router.get("/api/faculty")
 async def get_admin_faculty(db: AsyncSession = Depends(get_db)):
     res = await db.execute(select(Faculty).order_by(Faculty.id))
-    return res.scalars().all()
+    fac_list = res.scalars().all()
+    
+    cv_res = await db.execute(select(FacultyCV))
+    cv_map = {cv.user_id: cv.cv_file for cv in cv_res.scalars().all()}
+    
+    results = []
+    for f in fac_list:
+        results.append({
+            "id": f.id,
+            "prefix": f.prefix,
+            "fname": f.fname,
+            "lname": f.lname,
+            "fname_en": f.fname_en,
+            "lname_en": f.lname_en,
+            "position": f.position,
+            "email": f.email,
+            "phone": f.phone,
+            "image": f.image,
+            "major": f.major,
+            "admin_position": f.admin_position,
+            "is_expert": f.is_expert,
+            "expertise": f.expertise,
+            "cv_file": cv_map.get(f.id)
+        })
+    return results
 
 @router.post("/api/faculty")
 async def save_faculty(item: FacultyCreate, db: AsyncSession = Depends(get_db)):
@@ -869,6 +903,24 @@ async def save_faculty(item: FacultyCreate, db: AsyncSession = Depends(get_db)):
             admin_position=item.admin_position, is_expert=item.is_expert, expertise=parsed_expertise
         )
         db.add(obj)
+        
+    await db.flush() # Make sure obj.id is generated if new faculty
+    
+    # Save the Faculty CV if provided
+    cv_file_url = item.cv_file
+    if cv_file_url is not None:
+        cv_file_url = cv_file_url.strip()
+        res_cv = await db.execute(select(FacultyCV).where(FacultyCV.user_id == obj.id))
+        faculty_cv = res_cv.scalars().first()
+        if cv_file_url:
+            if faculty_cv:
+                faculty_cv.cv_file = cv_file_url
+            else:
+                db.add(FacultyCV(user_id=obj.id, cv_file=cv_file_url))
+        else:
+            if faculty_cv:
+                await db.delete(faculty_cv)
+                
     await db.commit()
     return {"success": True}
 
@@ -890,12 +942,14 @@ async def get_contact_info(db: AsyncSession = Depends(get_db)):
 async def save_contact_info(item: ContactInfoCreate, db: AsyncSession = Depends(get_db)):
     res = await db.execute(select(ContactInfo).where(ContactInfo.key == item.key))
     obj = res.scalars().first()
+    safe_value = sanitize_rich_html(item.value)
+    safe_icon = sanitize_svg_icon(item.icon)
     if obj:
-        obj.value = item.value
-        obj.icon = item.icon
+        obj.value = safe_value
+        obj.icon = safe_icon
         obj.order_index = item.order_index
     else:
-        obj = ContactInfo(key=item.key, value=item.value, icon=item.icon, order_index=item.order_index)
+        obj = ContactInfo(key=item.key, value=safe_value, icon=safe_icon, order_index=item.order_index)
         db.add(obj)
     await db.commit()
     return {"success": True}

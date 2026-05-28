@@ -6,16 +6,23 @@ header('Content-Type: text/plain');
 
 // --- Configuration ---
 // MySQL (Source)
-$mysql_host = "10.10.58.16";
-$mysql_user = "gitsadap";
-$mysql_pass = "it[[{ko-hv,^]8ItgdK9i";
-$mysql_db   = "db_user";
+$mysql_host = getenv("MYSQL_HOST") ?: "";
+$mysql_user = getenv("MYSQL_USER") ?: "";
+$mysql_pass = getenv("MYSQL_PASSWORD") ?: "";
+$mysql_db   = getenv("MYSQL_DB") ?: "db_user";
 
 // PostgreSQL (Destination)
-$pg_host = getenv("DB_HOST") ?: "10.10.58.21";
-$pg_user = "agi";
-$pg_pass = "adminagi";
-$pg_db   = "nred";
+$pg_host = getenv("DB_HOST") ?: "";
+$pg_user = getenv("DB_USER") ?: "agi";
+$pg_pass = getenv("DB_PASSWORD") ?: "";
+$pg_db   = getenv("DB_NAME") ?: "nred";
+
+if (!$mysql_host || !$mysql_user || !$mysql_pass) {
+    throw new RuntimeException("Missing MYSQL_* environment variables");
+}
+if (!$pg_host || !$pg_pass) {
+    throw new RuntimeException("Missing DB_HOST/DB_PASSWORD environment variables");
+}
 
 try {
     // 1. Connect to MySQL (Source)

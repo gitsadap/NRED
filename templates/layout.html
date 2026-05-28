@@ -11,10 +11,10 @@
     <link rel="icon" href="/assets/images/logo_new.png">
 
     <!-- Vue 3 -->
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="/assets/js/vue.global.js"></script>
 
     <!-- Tailwind -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/assets/js/tailwind.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -38,7 +38,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600&display=swap"
         rel="stylesheet">
-    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link href="/assets/css/aos.css" rel="stylesheet">
     <link rel="stylesheet" href="/assets/css/style.css">
 
     {% block extra_head %}{% endblock %}
@@ -253,6 +253,58 @@
                             {% endif %}
                         </ul>
                     </div>
+                    
+                    <!-- Column 3: Map & SDGs -->
+                    <div>
+                        <!-- Section 1: NU Map -->
+                        <div class="mb-8">
+                            <h4 class="font-bold mb-4 text-white text-base tracking-wide flex items-center gap-2">
+                                <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                                </svg>
+                                ค้นหาเส้นทางด้วย NU Map
+                            </h4>
+                            <a href="https://numap.nu.ac.th/" target="_blank"
+                                class="group relative block overflow-hidden rounded-xl bg-white/5 border border-white/10 p-2 hover:border-indigo-500/50 hover:shadow-[0_0_20px_rgba(99,102,241,0.2)] transition-all duration-300 transform hover:-translate-y-0.5">
+                                <img src="https://citcoms.office.nu.ac.th/wp-content/uploads/2023/05/NUMap-vertStu.png" alt="NU Map"
+                                    class="w-full h-auto object-cover rounded-lg group-hover:scale-[1.02] transition-transform duration-500">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                    <span class="text-xs text-white font-medium flex items-center gap-1">
+                                        เปิดแผนที่นำทางมหาวิทยาลัย →
+                                    </span>
+                                </div>
+                            </a>
+                        </div>
+
+                        <!-- Section 2: NU SDGs -->
+                        <div>
+                            <h4 class="font-bold mb-4 text-white text-base tracking-wide flex items-center gap-2">
+                                <svg class="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                                </svg>
+                                NU SDGs
+                            </h4>
+                            <div class="grid grid-cols-3 gap-2">
+                                <a href="https://www.sdgs.nu.ac.th/?page_id=296" target="_blank" rel="noopener" class="px-2 py-1.5 text-[10px] font-bold text-white rounded text-center hover:scale-105 active:scale-95 transition-all shadow-sm hover:brightness-110 tracking-wider truncate" style="background-color: #eb1c30;">SDG 1</a>
+                                <a href="https://www.sdgs.nu.ac.th/?page_id=297" target="_blank" rel="noopener" class="px-2 py-1.5 text-[10px] font-bold text-white rounded text-center hover:scale-105 active:scale-95 transition-all shadow-sm hover:brightness-110 tracking-wider truncate" style="background-color: #d2a12a;">SDG 2</a>
+                                <a href="https://www.sdgs.nu.ac.th/?page_id=298" target="_blank" rel="noopener" class="px-2 py-1.5 text-[10px] font-bold text-white rounded text-center hover:scale-105 active:scale-95 transition-all shadow-sm hover:brightness-110 tracking-wider truncate" style="background-color: #279b4a;">SDG 3</a>
+                                <a href="https://www.sdgs.nu.ac.th/?page_id=299" target="_blank" rel="noopener" class="px-2 py-1.5 text-[10px] font-bold text-white rounded text-center hover:scale-105 active:scale-95 transition-all shadow-sm hover:brightness-110 tracking-wider truncate" style="background-color: #c31e2f;">SDG 4</a>
+                                <a href="https://www.sdgs.nu.ac.th/?page_id=300" target="_blank" rel="noopener" class="px-2 py-1.5 text-[10px] font-bold text-white rounded text-center hover:scale-105 active:scale-95 transition-all shadow-sm hover:brightness-110 tracking-wider truncate" style="background-color: #ee3f2a;">SDG 5</a>
+                                <a href="https://www.sdgs.nu.ac.th/?page_id=302" target="_blank" rel="noopener" class="px-2 py-1.5 text-[10px] font-bold text-white rounded text-center hover:scale-105 active:scale-95 transition-all shadow-sm hover:brightness-110 tracking-wider truncate" style="background-color: #03aeda;">SDG 6</a>
+                                <a href="https://www.sdgs.nu.ac.th/?page_id=302" target="_blank" rel="noopener" class="px-2 py-1.5 text-[10px] font-bold text-white rounded text-center hover:scale-105 active:scale-95 transition-all shadow-sm hover:brightness-110 tracking-wider truncate" style="background-color: #feb614;">SDG 7</a>
+                                <a href="https://www.sdgs.nu.ac.th/?page_id=303" target="_blank" rel="noopener" class="px-2 py-1.5 text-[10px] font-bold text-white rounded text-center hover:scale-105 active:scale-95 transition-all shadow-sm hover:brightness-110 tracking-wider truncate" style="background-color: #8e1737;">SDG 8</a>
+                                <a href="https://www.sdgs.nu.ac.th/?page_id=304" target="_blank" rel="noopener" class="px-2 py-1.5 text-[10px] font-bold text-white rounded text-center hover:scale-105 active:scale-95 transition-all shadow-sm hover:brightness-110 tracking-wider truncate" style="background-color: #f26e24;">SDG 9</a>
+                                <a href="https://www.sdgs.nu.ac.th/?page_id=305" target="_blank" rel="noopener" class="px-2 py-1.5 text-[10px] font-bold text-white rounded text-center hover:scale-105 active:scale-95 transition-all shadow-sm hover:brightness-110 tracking-wider truncate" style="background-color: #e21387;">SDG 10</a>
+                                <a href="https://www.sdgs.nu.ac.th/?page_id=289" target="_blank" rel="noopener" class="px-2 py-1.5 text-[10px] font-bold text-white rounded text-center hover:scale-105 active:scale-95 transition-all shadow-sm hover:brightness-110 tracking-wider truncate" style="background-color: #f89d28;">SDG 11</a>
+                                <a href="https://www.sdgs.nu.ac.th/?page_id=290" target="_blank" rel="noopener" class="px-2 py-1.5 text-[10px] font-bold text-white rounded text-center hover:scale-105 active:scale-95 transition-all shadow-sm hover:brightness-110 tracking-wider truncate" style="background-color: #cd8d2c;">SDG 12</a>
+                                <a href="https://www.sdgs.nu.ac.th/?page_id=291" target="_blank" rel="noopener" class="px-2 py-1.5 text-[10px] font-bold text-white rounded text-center hover:scale-105 active:scale-95 transition-all shadow-sm hover:brightness-110 tracking-wider truncate" style="background-color: #477640;">SDG 13</a>
+                                <a href="https://www.sdgs.nu.ac.th/?page_id=292" target="_blank" rel="noopener" class="px-2 py-1.5 text-[10px] font-bold text-white rounded text-center hover:scale-105 active:scale-95 transition-all shadow-sm hover:brightness-110 tracking-wider truncate" style="background-color: #067ab3;">SDG 14</a>
+                                <a href="https://www.sdgs.nu.ac.th/?page_id=293" target="_blank" rel="noopener" class="px-2 py-1.5 text-[10px] font-bold text-white rounded text-center hover:scale-105 active:scale-95 transition-all shadow-sm hover:brightness-110 tracking-wider truncate" style="background-color: #3db049;">SDG 15</a>
+                                <a href="https://www.sdgs.nu.ac.th/?page_id=294" target="_blank" rel="noopener" class="px-2 py-1.5 text-[10px] font-bold text-white rounded text-center hover:scale-105 active:scale-95 transition-all shadow-sm hover:brightness-110 tracking-wider truncate" style="background-color: #035489;">SDG 16</a>
+                                <a href="https://www.sdgs.nu.ac.th/?page_id=295" target="_blank" rel="noopener" class="px-2.5 py-1.5 text-[10px] font-bold text-white rounded text-center hover:scale-105 active:scale-95 transition-all shadow-sm hover:brightness-110 tracking-wider truncate col-span-2" style="background-color: #193769;">SDG 17</a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="pt-8 border-t border-white/5 text-gray-500 text-xs">
                     <p>&copy; 2026 Dept. of NRE, Naresuan University.</p>
@@ -304,7 +356,7 @@
         </nav>
     </div>
 
-    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="/assets/js/aos.js"></script>
     <script>
         function toggleMobileMenu() {
             const menu = document.getElementById('mobile-menu');

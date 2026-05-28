@@ -65,6 +65,15 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             or request.url.path.startswith("/openapi.json")
         ):
             is_admin_page = request.url.path.startswith("/admin")
+            
+            # แยกสิทธิ์โดเมนภายนอก: หน้าบ้านจะปลอดภัยสูงสุดโดยไม่มี CDN ภายนอกส่วนเกิน
+            # ส่วนแอดมินหลังบ้านจะผ่อนปรนเฉพาะ cdnjs เพื่อใช้งาน TinyMCE
+            style_src_domains = "https://fonts.googleapis.com"
+            script_src_domains = ""
+            
+            if is_admin_page:
+                script_src_domains += " https://cdnjs.cloudflare.com"
+                
             csp = (
                 "default-src 'self'; "
                 "base-uri 'self'; "
@@ -73,10 +82,10 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
                 "frame-ancestors 'self'; "
                 "img-src 'self' data: https:; "
                 "font-src 'self' data: https://fonts.gstatic.com; "
-                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com https://cdn.jsdelivr.net; "
+                f"style-src 'self' 'unsafe-inline' {style_src_domains}; "
                 "script-src 'self' 'unsafe-inline' "
                 + ("" if is_admin_page else "'unsafe-eval' ")
-                + "https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com; "
+                + f"{script_src_domains}; "
                 + ("worker-src 'self'; " if is_admin_page else "worker-src 'self' blob:; ")
                 + "connect-src 'self' https:; "
                 + "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com; "

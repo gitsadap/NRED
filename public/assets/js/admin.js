@@ -6,6 +6,36 @@ console.log("Admin.js loading...");
 // --- Auth / Session Helpers ---
 const AUTH_CLOCK_SKEW_SECONDS = 30; // tolerate minor client/server clock drift
 let authExpiryTimer = null;
+let _appealsById = new Map();
+
+function toText(value) {
+    if (value === null || value === undefined) return '';
+    return String(value);
+}
+
+function escapeHtml(value) {
+    return toText(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function escapeJsString(value) {
+    return toText(value)
+        .replace(/\\/g, '\\\\')
+        .replace(/'/g, "\\'")
+        .replace(/\r/g, '\\r')
+        .replace(/\n/g, '\\n')
+        .replace(/\u2028/g, '\\u2028')
+        .replace(/\u2029/g, '\\u2029');
+}
+
+function clearChildren(el) {
+    if (!el) return;
+    while (el.firstChild) el.removeChild(el.firstChild);
+}
 
 function base64UrlDecode(input) {
     // base64url -> base64
@@ -305,7 +335,9 @@ async function uploadCVPdf() {
             const link = document.getElementById('cv_file_preview_link');
             link.href = data.location;
             link.classList.remove('hidden');
-            Swal.fire('สำเร็จ', 'อัปโหลดไฟล์ PDF เรียบร้อย', 'success');
+            
+            // Automatically save the CV to the profile in the database instantly
+            await submitMyCV(true);
         } else {
             Swal.fire('Error', data.error || 'Upload failed', 'error');
         }
@@ -314,8 +346,10 @@ async function uploadCVPdf() {
     }
 }
 
-async function submitMyCV() {
-    Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+async function submitMyCV(silent = false) {
+    if (!silent) {
+        Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    }
     try {
         const expInputs = document.querySelectorAll('.expertise-input');
         const expList = Array.from(expInputs).map(inp => inp.value.trim()).filter(val => val);
@@ -330,7 +364,11 @@ async function submitMyCV() {
         if(!res) return; // Error handled inside apiCall already
         
         if(res.success) {
-            Swal.fire('สำเร็จ', 'บันทึกข้อมูล CV เรียบร้อย', 'success');
+            if (silent) {
+                Swal.fire('สำเร็จ', 'อัปโหลดและบันทึกไฟล์ CV เรียบร้อยแล้ว', 'success');
+            } else {
+                Swal.fire('สำเร็จ', 'บันทึกข้อมูล CV เรียบร้อย', 'success');
+            }
         } else {
             Swal.fire('ผิดพลาด', res.message || 'ไม่สามารถบันทึกได้', 'error');
         }
@@ -386,11 +424,11 @@ async function loadPages() {
     const tbody = document.getElementById('pagesTableBody');
     tbody.innerHTML = pages.map(p => `
         <tr class="border-b hover:bg-gray-50 transition">
-            <td class="py-3 px-4 font-medium text-gray-800">${p.title}</td>
-            <td class="py-3 px-4 text-gray-500 text-sm font-mono">/${p.slug}</td>
+            <td class="py-3 px-4 font-medium text-gray-800">${escapeHtml(p.title)}</td>
+            <td class="py-3 px-4 text-gray-500 text-sm font-mono">/${escapeHtml(p.slug)}</td>
             <td class="py-3 px-4 text-gray-500 text-sm">${p.updated_at ? new Date(p.updated_at).toLocaleDateString() : '-'}</td>
             <td class="py-3 px-4 text-right space-x-2">
-                <button onclick="editPage(${p.id}, '${p.title}', '${p.slug}')" class="text-blue-600 hover:text-blue-800 font-medium text-sm">✎ Edit</button>
+                <button onclick="editPage(${p.id}, '${escapeJsString(p.title)}', '${escapeJsString(p.slug)}')" class="text-blue-600 hover:text-blue-800 font-medium text-sm">✎ Edit</button>
                 <button onclick="deletePage(${p.id})" class="text-red-600 hover:text-red-800 font-medium text-sm">🗑 Delete</button>
             </td>
         </tr>
@@ -570,12 +608,12 @@ function renderContentTable(items) {
                     ${item.type.toUpperCase()}
                 </span>
              </td>
-            <td class="py-3 px-4 font-medium text-gray-800">${item.title}</td>
-            <td class="py-3 px-4 text-center text-sm text-gray-500">${item.category || '-'}</td>
+            <td class="py-3 px-4 font-medium text-gray-800">${escapeHtml(item.title)}</td>
+            <td class="py-3 px-4 text-center text-sm text-gray-500">${escapeHtml(item.category || '-')}</td>
             <td class="py-3 px-4 text-sm text-gray-500">${item.created_at ? new Date(item.created_at).toLocaleDateString() : '-'}</td>
             <td class="py-3 px-4 text-right space-x-2">
-                <button onclick="editUnifiedContent(${item.id}, '${item.type}')" class="text-blue-600 hover:text-blue-800 font-medium text-sm">✎ Edit</button>
-                <button onclick="deleteUnifiedContent(${item.id}, '${item.type}')" class="text-red-600 hover:text-red-800 font-medium text-sm">🗑 Delete</button>
+                <button onclick="editUnifiedContent(${item.id}, '${escapeJsString(item.type)}')" class="text-blue-600 hover:text-blue-800 font-medium text-sm">✎ Edit</button>
+                <button onclick="deleteUnifiedContent(${item.id}, '${escapeJsString(item.type)}')" class="text-red-600 hover:text-red-800 font-medium text-sm">🗑 Delete</button>
             </td>
         </tr>
     `).join('');
@@ -779,7 +817,7 @@ async function loadTags() {
     const container = document.getElementById('tagsContainer');
     container.innerHTML = tags.map(t => `
         <div class="flex justify-between items-center bg-gray-50 p-3 rounded border">
-            <span class="font-medium text-gray-700">${t.name}</span>
+            <span class="font-medium text-gray-700">${escapeHtml(t.name)}</span>
             <button onclick="deleteTag(${t.id})" class="text-red-500 hover:text-red-700 text-lg leading-none">&times;</button>
         </div>
     `).join('');
@@ -803,21 +841,69 @@ async function deleteTag(id) {
 async function loadAppeals() {
     const appeals = await apiCall('/admin/api/appeals');
     const tbody = document.getElementById('appealsTableBody');
-    tbody.innerHTML = appeals.map(a => `
-        <tr class="border-b hover:bg-gray-50">
-            <td class="py-3 px-4 text-sm text-gray-500">${new Date(a.created_at).toLocaleDateString()}</td>
-            <td class="py-3 px-4 font-medium">${a.topic}</td>
-            <td class="py-3 px-4 text-gray-600">${a.sender_name || 'Anonymous'}</td>
-            <td class="py-3 px-4"><span class="px-2 py-1 rounded text-xs font-bold ${a.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-teal-100 text-teal-800'}">${a.status}</span></td>
-            <td class="py-3 px-4 text-right">
-                <button onclick="viewAppeal('${a.topic}', '${a.message}')" class="text-blue-600 hover:underline text-sm">View</button>
-                <button onclick="deleteAppeal(${a.id})" class="text-red-600 hover:underline text-sm ml-2">Delete</button>
-            </td>
-        </tr>
-    `).join('');
+    clearChildren(tbody);
+    _appealsById = new Map();
+    if (!Array.isArray(appeals)) return;
+
+    appeals.forEach(a => {
+        if (!a) return;
+        _appealsById.set(a.id, a);
+
+        const tr = document.createElement('tr');
+        tr.className = 'border-b hover:bg-gray-50';
+
+        const tdDate = document.createElement('td');
+        tdDate.className = 'py-3 px-4 text-sm text-gray-500';
+        tdDate.textContent = a.created_at ? new Date(a.created_at).toLocaleDateString() : '-';
+
+        const tdTopic = document.createElement('td');
+        tdTopic.className = 'py-3 px-4 font-medium';
+        tdTopic.textContent = toText(a.topic);
+
+        const tdSender = document.createElement('td');
+        tdSender.className = 'py-3 px-4 text-gray-600';
+        tdSender.textContent = a.sender_name ? toText(a.sender_name) : 'Anonymous';
+
+        const tdStatus = document.createElement('td');
+        tdStatus.className = 'py-3 px-4';
+        const statusSpan = document.createElement('span');
+        const statusVal = toText(a.status || '');
+        statusSpan.className =
+            'px-2 py-1 rounded text-xs font-bold ' +
+            (statusVal === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-teal-100 text-teal-800');
+        statusSpan.textContent = statusVal || '-';
+        tdStatus.appendChild(statusSpan);
+
+        const tdActions = document.createElement('td');
+        tdActions.className = 'py-3 px-4 text-right';
+
+        const viewBtn = document.createElement('button');
+        viewBtn.className = 'text-blue-600 hover:underline text-sm';
+        viewBtn.type = 'button';
+        viewBtn.textContent = 'View';
+        viewBtn.addEventListener('click', () => viewAppealById(a.id));
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'text-red-600 hover:underline text-sm ml-2';
+        delBtn.type = 'button';
+        delBtn.textContent = 'Delete';
+        delBtn.addEventListener('click', () => deleteAppeal(a.id));
+
+        tdActions.appendChild(viewBtn);
+        tdActions.appendChild(delBtn);
+
+        tr.appendChild(tdDate);
+        tr.appendChild(tdTopic);
+        tr.appendChild(tdSender);
+        tr.appendChild(tdStatus);
+        tr.appendChild(tdActions);
+        tbody.appendChild(tr);
+    });
 }
-function viewAppeal(topic, msg) {
-    Swal.fire({ title: topic, text: msg, width: 600 });
+function viewAppealById(id) {
+    const a = _appealsById.get(id);
+    if (!a) return;
+    Swal.fire({ title: toText(a.topic), text: toText(a.message), width: 600 });
 }
 async function deleteAppeal(id) {
     confirmAction('Delete Appeal?', async () => {
@@ -848,7 +934,7 @@ async function loadFaculty() {
 }
 
 function editFaculty(id) {
-    const f = id ? allFaculty.find(x => x.id === id) : { fname: '', lname: '', prefix: '', position: '', major: '', email: '', phone: '', image: '', admin_position: '', is_expert: false, expertise: '' };
+    const f = id ? allFaculty.find(x => x.id === id) : { fname: '', lname: '', prefix: '', position: '', major: '', email: '', phone: '', image: '', admin_position: '', is_expert: false, expertise: '', cv_file: '' };
 
     Swal.fire({
         title: id ? 'แก้ไขข้อมูลคณาจารย์' : 'เพิ่มคณาจารย์ใหม่',
@@ -870,6 +956,14 @@ function editFaculty(id) {
                     <div class="flex gap-2">
                         <input id="sw_image" class="swal2-input !m-0 flex-1" placeholder="URL รูปภาพ" value="${f.image || ''}">
                         <button onclick="openMediaSelector((url) => document.getElementById('sw_image').value = url)" class="bg-gray-200 px-3 rounded">เลือก</button>
+                    </div>
+                </div>
+                <div class="col-span-2">
+                    <label class="text-xs text-gray-500">ไฟล์ CV (PDF เท่านั้น)</label>
+                    <div class="flex gap-2">
+                        <input id="sw_cv_file" class="swal2-input !m-0 flex-1 bg-gray-50" placeholder="ไม่มีไฟล์ หรือ URL ของไฟล์ CV" value="${f.cv_file || ''}" readonly>
+                        <input type="file" id="sw_cv_file_input" accept=".pdf" class="hidden" onchange="uploadSwalCVPdf(this)">
+                        <button type="button" onclick="document.getElementById('sw_cv_file_input').click()" class="bg-gray-200 px-3 rounded text-xs font-semibold">อัปโหลด</button>
                     </div>
                 </div>
                 <input id="sw_admin_position" class="swal2-input !m-0 col-span-2" placeholder="ตำแหน่งบริหาร (ถ้ามี)" value="${f.admin_position || ''}">
@@ -899,6 +993,7 @@ function editFaculty(id) {
                 email: document.getElementById('sw_email').value,
                 phone: document.getElementById('sw_phone').value,
                 image: document.getElementById('sw_image').value,
+                cv_file: document.getElementById('sw_cv_file').value,
                 admin_position: document.getElementById('sw_admin_position').value,
                 is_expert: document.getElementById('sw_is_expert').checked,
                 expertise: document.getElementById('sw_expertise').value
@@ -913,6 +1008,44 @@ function editFaculty(id) {
             }
         }
     });
+}
+
+async function uploadSwalCVPdf(input) {
+    if (!input.files.length) return;
+    const file = input.files[0];
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+        return alert('กรุณาอัปโหลดไฟล์ PDF เท่านั้น');
+    }
+    
+    const origText = input.nextElementSibling.textContent;
+    input.nextElementSibling.textContent = 'กำลังอัปโหลด...';
+    input.nextElementSibling.disabled = true;
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    try {
+        const token = localStorage.getItem('admin_token');
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        const res = await fetch('/admin/api/upload', { method: 'POST', body: formData, headers });
+        if(res.status === 401) return handleAuthFailure();
+        if(res.status === 403) {
+            alert('Permission denied');
+            return;
+        }
+        
+        const data = await res.json();
+        if (data.location) {
+            document.getElementById('sw_cv_file').value = data.location;
+        } else {
+            alert('อัปโหลดล้มเหลว: ' + (data.error || ''));
+        }
+    } catch (e) {
+        alert('Error: ' + e.message);
+    } finally {
+        input.nextElementSibling.textContent = origText;
+        input.nextElementSibling.disabled = false;
+    }
 }
 
 async function deleteFaculty(id) {

@@ -5,10 +5,14 @@ import time  # <--- เพิ่ม import time แล้ว
 import numpy as np  
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-import google.generativeai as genai
+import litellm
 from app.logging_config import logger 
 from typing import List, Dict, Optional
 from app.config import settings
+from sentence_transformers import SentenceTransformer
+
+# โหลด Model สำหรับ Embedding ไว้ล่วงหน้า
+embedding_model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2', cache_folder="hf_cache")
 
 router = APIRouter(prefix="/api/v1", tags=["Chatbot AI"])
 
@@ -58,7 +62,7 @@ try:
 
     # Fallback: pickles only when explicitly allowed (debug/local migration).
     elif os.path.exists(meta_pkl_path) and os.path.exists(vector_pkl_path):
-        if settings.allow_unsafe_pickle_load or settings.debug:
+        if settings.allow_unsafe_pickle_load:
             logger.warning(
                 "⚠️ Unsafe pickle vector store load enabled. "
                 "This is vulnerable to RCE if files are untrusted. Prefer migrating to JSON/NPY."
@@ -128,19 +132,15 @@ async def get_chatbot_response(req: ChatRequest):
         if not gemini_key:
              return {"response": "พี่ AI ขัดข้องเรื่อง API Key ค่ะ ฝากแจ้งแอดมินทีนะคะ"}
 
-        genai.configure(api_key=gemini_key)
-
         # ---------------------------------------------------------
-        # 1. ทำ Embedding ด้วย Google Gemini API
+        # 1. ทำ Embedding ด้วย SentenceTransformer แบบ Local (รวดเร็วมาก)
         # ---------------------------------------------------------
         start_encode_time = time.time()
-        embedding_result = genai.embed_content(
-            model="models/text-embedding-004", 
-            content=search_query
-        )
-        query_embedding = np.array(embedding_result['embedding'])
+        
+        # ใช้โมเดล Local ที่ตรงกับฐานข้อมูลเป๊ะๆ
+        query_embedding = embedding_model.encode([search_query], convert_to_numpy=True)[0]
         encode_duration = time.time() - start_encode_time
-        logger.info(f"⏱️ [1] Time to encode vector (Gemini API): {encode_duration:.2f} seconds")
+        logger.info(f"⏱️ [1] Time to encode vector (Local MiniLM): {encode_duration:.2f} seconds")
 
         # ---------------------------------------------------------
         # 2. ค้นหาข้อมูลใน Vector Database (RAG)
@@ -173,41 +173,64 @@ async def get_chatbot_response(req: ChatRequest):
                     seen_pages.add(meta['source'])
             if len(final_contexts) >= 6: break
 
+        # ---------------------------------------------------------
+        # 3. เตรียมข้อมูลและประวัติการแชท
+        # ---------------------------------------------------------
         if not final_contexts:
-            return {"response": f"ไม่พบข้อมูลที่เกี่ยวข้องกับ '{user_msg}' ในฐานข้อมูล {target_code}"}
-
-        full_context_text = "\n\n---\n\n".join(final_contexts)
+            full_context_text = "ไม่มีข้อมูลอ้างอิงจากระบบฐานข้อมูลสำหรับคำถามนี้ (แนะนำให้ตอบกลับอย่างสุภาพ และพยายามสอบถามเพิ่มเติม หรือแจ้งให้ติดต่ออาจารย์)"
+        else:
+            full_context_text = "\n\n---\n\n".join(final_contexts)
         
-        # ---------------------------------------------------------
-        # 3. เรียกใช้ Gemini (แบบ Async)
-        # ---------------------------------------------------------
-        model = genai.GenerativeModel('models/gemini-3.1-flash-lite-preview')
-        
-        prompt = f"""
-คุณคือผู้ช่วยอัจฉริยะสาวประจำภาควิชา มหาวิทยาลัยนเรศวร
-หน้าที่: ตอบคำถามนิสิตเกี่ยวกับหลักสูตร {target_code}
-กฎการตอบ: 
-1. ใช้ข้อมูลจาก 'ข้อมูลอ้างอิง' เท่านั้น
-2. ในข้อมูลอ้างอิงอาจจะแสดงผลเป็นตารางหรือข้อความที่อ่านยาก ให้พยายามถอดรหัสรายวิชาออกมา
-3. ถ้าพบชื่อวิชาและรหัสวิชา ให้สรุปออกมาเป็นรายการ
-4. ถ้าไม่มีข้อมูลในนั้น ให้ตอบว่าไม่พบข้อมูลและแนะนำให้ติดต่ออาจารย์ที่ปรึกษา
-5. ตอบเป็นข้อๆ สั้นๆ ให้เข้าใจง่ายและสุภาพ
+        system_prompt = f"""คุณคือ "น้อง NRED" (อ่านว่า เอ็น-เรด) ผู้ช่วยอัจฉริยะสาวสุดน่ารักประจำภาควิชา มหาวิทยาลัยนเรศวร
+บุคลิก: น่ารัก สดใส ฉลาด สุภาพ เป็นกันเอง มีอารมณ์ขัน และพร้อมช่วยเหลือเสมอ
+หน้าที่: ตอบคำถามและให้คำแนะนำเกี่ยวกับหลักสูตร {target_code}
 
-ข้อมูลอ้างอิง:
+ลักษณะการพูด (Tone & Style):
+- ใช้คำลงท้ายน่ารักๆ เสมอ เช่น "ค่ะ", "นะคะ", "น้า", "จ้า", "ค่า"
+- แทนตัวเองว่า "น้อง NRED" 
+- "ปรับระดับภาษาให้ล้อตามคู่สนทนา": ถ้าผู้ใช้พิมพ์ทางการ ให้ตอบแบบสุภาพเรียบร้อย ถ้าผู้ใช้พิมพ์เล่น/คุยเป็นกันเอง ให้ตอบกลับแบบน่ารักๆ สดใสเหมือนเพื่อนหรือน้องสาว
+- สามารถใช้ Emoji น่ารักๆ ประกอบการสนทนาได้พอประมาณ (เช่น 🌟, 😊, 📚, ✌️, ✨)
+
+กฎเหล็กในการทำงาน:
+1. หากมี [ข้อมูลอ้างอิง] ให้ใช้ข้อมูลนั้นเป็นหลักในการตอบคำถาม เพื่อความถูกต้องแม่นยำ
+2. หากข้อมูลอ้างอิงเป็นตารางหรือข้อความที่อ่านยาก ให้ย่อยข้อมูลและจัดเรียงเป็นข้อๆ ให้สวยงามและอ่านง่าย
+3. หากคำถามเป็นเพียงการทักทาย หรือการคุยเล่นทั่วไป ให้ตอบกลับอย่างเป็นธรรมชาติ สดใส น่ารัก โดยไม่จำเป็นต้องอิงข้อมูลหลักสูตร
+4. หากคำถามเกี่ยวกับหลักสูตรแต่ไม่มีในข้อมูลอ้างอิง ให้แจ้งอย่างสุภาพและน่ารักว่าไม่มีข้อมูลในระบบ และแนะนำให้ติดต่ออาจารย์ที่ปรึกษา
+5. คิดวิเคราะห์ทีละขั้นตอน (Step-by-step) ก่อนตอบ เพื่อให้คำตอบมีตรรกะและครอบคลุม
+
+[ข้อมูลอ้างอิงสำหรับคำถามปัจจุบัน]
 {full_context_text}
-
-คำถามจากนิสิต: {user_msg}
 """
+        
+        # จัดเตรียมรูปแบบ Messages สำหรับ LiteLLM (System -> History -> User)
+        messages = [{"role": "system", "content": system_prompt}]
+        
+        # ใส่ประวัติการแชท (จำกัด 5 ข้อความล่าสุดเพื่อประหยัด Token และความเร็ว)
+        for h in req.history[-5:]:
+            role = "assistant" if h.get("sender") == "bot" else "user"
+            msg = h.get("text", "")
+            if msg:
+                messages.append({"role": role, "content": msg})
+        
+        # ใส่คำถามปัจจุบัน
+        messages.append({"role": "user", "content": user_msg})
+        
         start_gemini_time = time.time()
         
-        # เรียกแบบ Async ป้องกันเซิร์ฟเวอร์ค้าง
-        response = await model.generate_content_async(prompt)
+        # เรียกแบบ Async ผ่าน LiteLLM ด้วยโมเดลที่เร็วที่สุด
+        response = await litellm.acompletion(
+            model="gemini/gemini-3.1-flash-lite-preview",
+            messages=messages,
+            api_key=gemini_key,
+            temperature=0.3, # ลด Temp เพื่อให้ตอบแม่นยำและไม่หลุดกรอบ
+            max_tokens=800
+        )
         
         gemini_duration = time.time() - start_gemini_time
-        logger.info(f"⏱️ [2] Time waiting for Gemini API: {gemini_duration:.2f} seconds")
+        logger.info(f"⏱️ [2] Time waiting for LiteLLM (Gemini): {gemini_duration:.2f} seconds")
         logger.info(f"⏱️ [Total] Response Time: {(encode_duration + gemini_duration):.2f} seconds")
 
-        return {"response": response.text}
+        return {"response": response.choices[0].message.content}
             
     except Exception as e:
         logger.error(f"Chatbot Error: {e}", exc_info=True)

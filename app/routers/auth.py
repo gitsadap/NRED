@@ -1,10 +1,13 @@
 import os
 from datetime import datetime, timedelta
 from typing import Optional
+# pyrefly: ignore [missing-import]
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+# pyrefly: ignore [missing-import]
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
-from passlib.context import CryptContext
+# pyrefly: ignore [missing-import]
+import bcrypt
 from pydantic import BaseModel
 from app.config import settings
 from ldap3 import Server, Connection, ALL
@@ -13,7 +16,6 @@ from app.security.rate_limit import InMemoryRateLimiter
 
 router = APIRouter(prefix="/admin/api/auth", tags=["auth"])
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/admin/api/auth/token")
 
 login_rate_limiter = InMemoryRateLimiter(
@@ -26,11 +28,15 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    try:
+        return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
+    except Exception as e:
+        logger.error(f"Password verification error: {e}")
+        return False
 
-def get_password_hash(password):
-    return pwd_context.hash(password)
+def get_password_hash(password: str) -> str:
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()

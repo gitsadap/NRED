@@ -2,6 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import Setting, Menu, ContactInfo
 from app.logging_config import logger
+from app.security.html_sanitizer import sanitize_rich_html, sanitize_svg_icon
 import json
 import time
 from copy import deepcopy
@@ -23,7 +24,7 @@ async def get_global_context(db: AsyncSession):
         
         site_title = settings.get('site_title', 'Department of NRE')
         site_logo = settings.get('site_logo', '/assets/images/logo_new.png')
-        site_footer = settings.get('footer_text', '© 2024 Department of NRE. All Rights Reserved.')
+        site_footer = sanitize_rich_html(settings.get('footer_text', '© 2024 Department of NRE. All Rights Reserved.'))
 
         # Fetch All Menus
         menu_result = await db.execute(select(Menu))
@@ -84,7 +85,14 @@ async def get_global_context(db: AsyncSession):
         try:
             contact_res = await db.execute(select(ContactInfo).order_by(ContactInfo.order_index))
             all_contacts = contact_res.scalars().all()
-            contacts = [{"key": c.key, "value": c.value, "icon": c.icon} for c in all_contacts]
+            contacts = [
+                {
+                    "key": c.key,
+                    "value": sanitize_rich_html(c.value),
+                    "icon": sanitize_svg_icon(c.icon),
+                }
+                for c in all_contacts
+            ]
         except Exception as e:
             logger.error(f"Error fetching contacts: {e}")
             contacts = []

@@ -10,6 +10,7 @@ from app.database import get_db
 from app.dependencies import get_global_context
 from app.models import Page, News, Activity, Staff
 from app.logging_config import logger
+from app.security.html_sanitizer import sanitize_rich_html
 
 router = APIRouter()
 from pathlib import Path
@@ -289,6 +290,7 @@ async def show_news_detail(id: int, request: Request, db: AsyncSession = Depends
     
     context["request"] = request
     context["title"] = news_item.title + " - " + context["site_title"]
+    news_item.content = sanitize_rich_html(news_item.content)
     context["news"] = news_item
     return templates.TemplateResponse(request=request, name="news_single.html", context=context)
 
@@ -313,6 +315,7 @@ async def show_activity_detail(id: int, request: Request, db: AsyncSession = Dep
     
     context["request"] = request
     context["title"] = activity.title + " - " + context["site_title"]
+    activity.content = sanitize_rich_html(activity.content)
     context["activity"] = activity
     return templates.TemplateResponse(request=request, name="activity_single.html", context=context)
 
@@ -512,6 +515,10 @@ async def teacher_portal():
 async def show_executives(request: Request, db: AsyncSession = Depends(get_db)):
     context = await get_global_context(db)
     
+    # Fetch all CVs locally
+    cv_res = await db.execute(select(FacultyCV))
+    cv_map = {cv.user_id: cv.cv_file for cv in cv_res.scalars().all()}
+
     # Needs a combined list mapping similar to /faculty but filtering just executives
     result = await db.execute(select(Faculty).where(Faculty.admin_position != None).where(Faculty.admin_position != ''))
     faculty_rows = result.scalars().all()
@@ -525,6 +532,14 @@ async def show_executives(request: Request, db: AsyncSession = Depends(get_db)):
             elif img_val.startswith("/static"): img = img_val
             else: img = f"https://ww2.agi.nu.ac.th/personnel/upload/{img_val}"
             
+        cv_filename = cv_map.get(row.id)
+        cv_url = None
+        if cv_filename:
+            if cv_filename.startswith("/uploads/"):
+                cv_url = cv_filename
+            else:
+                cv_url = f"/uploads/{cv_filename}"
+
         faculty_list.append({
             'id': row.id,
             'prefix': row.prefix or '',
@@ -534,7 +549,8 @@ async def show_executives(request: Request, db: AsyncSession = Depends(get_db)):
             'position': row.position or '-',
             'email': row.email or '-',
             'phone': row.phone or '-',
-            'image': img
+            'image': img,
+            'cv_url': cv_url
         })
         
     faculty_list.sort(key=lambda x: 0 if x['admin_position'] and 'หัวหน้าภาควิชา' in x['admin_position'] and 'รอง' not in x['admin_position'] else 1)
@@ -550,6 +566,11 @@ async def show_executives(request: Request, db: AsyncSession = Depends(get_db)):
 @router.get("/support-staff", response_class=HTMLResponse)
 async def show_support_staff(request: Request, db: AsyncSession = Depends(get_db)):
     context = await get_global_context(db)
+    
+    # Fetch all CVs locally
+    cv_res = await db.execute(select(FacultyCV))
+    cv_map = {cv.user_id: cv.cv_file for cv in cv_res.scalars().all()}
+
     result = await db.execute(select(Faculty).where(Faculty.major == 'บุคลากรสายสนับสนุน'))
     faculty_rows = result.scalars().all()
     
@@ -562,6 +583,14 @@ async def show_support_staff(request: Request, db: AsyncSession = Depends(get_db
             elif img_val.startswith("/static"): img = img_val
             else: img = f"https://ww2.agi.nu.ac.th/personnel/upload/{img_val}"
             
+        cv_filename = cv_map.get(row.id)
+        cv_url = None
+        if cv_filename:
+            if cv_filename.startswith("/uploads/"):
+                cv_url = cv_filename
+            else:
+                cv_url = f"/uploads/{cv_filename}"
+
         faculty_list.append({
             'id': row.id,
             'prefix': row.prefix or '',
@@ -570,7 +599,8 @@ async def show_support_staff(request: Request, db: AsyncSession = Depends(get_db
             'position': row.position or '-',
             'email': row.email or '-',
             'phone': row.phone or '-',
-            'image': img
+            'image': img,
+            'cv_url': cv_url
         })
     
     context["request"] = request
@@ -635,15 +665,13 @@ async def show_page_raw(slug: str, request: Request, db: AsyncSession = Depends(
     if not page or not page.content:
         raise HTTPException(status_code=404, detail="Page not found")
         
-    content = page.content or ''
+    content = sanitize_rich_html(page.content or '')
     
-    # 💡 [TRICK] ค้นหาและแทนที่คลาส Sarabun ให้กลายเป็น font-sans อัตโนมัติ
-    content = content.replace("font-['Sarabun',sans-serif]", "font-sans")
+    # 💡 [TRICK] ค้นหาและแทนที่คลาส Sarabun/Kanit ให้กลายเป็นคลาสสากลเพื่อการแสดงผลสวยงามและรวดเร็ว
+    content = content.replace("font-['Sarabun',sans-serif]", "font-serif")
+    content = content.replace("font-['Kanit',sans-serif]", "font-sans")
     
-    # If it's already a full HTML document, return as-is
-    stripped = content.strip()
-    if stripped.lower().startswith('<!doctype') or stripped.lower().startswith('<html'):
-        return HTMLResponse(content=content)
+    # Treat stored content as an untrusted fragment and always wrap it in a controlled shell.
         
     # 💡 [FIXED] จัดโครงสร้าง HTML ให้แท็ก <meta> และ <link> เข้าไปอยู่ใน <head>
     wrapped = f"""<!DOCTYPE html>
@@ -653,21 +681,22 @@ async def show_page_raw(slug: str, request: Request, db: AsyncSession = Depends(
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="/assets/js/tailwind.js"></script>
     <script>
         tailwind.config = {{
             theme: {{
                 extend: {{
                     fontFamily: {{
-                        sans: ['Kanit', 'sans-serif']
+                        sans: ['Prompt', 'Kanit', 'sans-serif'],
+                        serif: ['Sarabun', 'sans-serif']
                     }}
                 }}
             }}
         }}
     </script>
     <style>
-        body {{ margin: 0; padding: 0; font-family: 'Kanit', sans-serif; background-color: transparent; }}
+        body {{ margin: 0; padding: 0; font-family: 'Prompt', 'Kanit', sans-serif; background-color: transparent; }}
     </style>
 </head>
 <body>
@@ -695,6 +724,8 @@ async def show_page(slug: str, request: Request, db: AsyncSession = Depends(get_
 
     context["request"] = request
     context["title"] = page.title + " - " + context["site_title"]
+    # Sanitize HTML before templates render with `|safe`.
+    page.content = sanitize_rich_html(page.content)
     context["page"] = page
     
     template_name = "page.html"

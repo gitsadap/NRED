@@ -1,10 +1,15 @@
 <?php
 header('Content-Type: application/json');
 
-$host = "10.10.58.16";
-$user = "gitsadap";
-$pw = "it[[{ko-hv,^]8ItgdK9i";
-$dbname = "db_user";
+$host = getenv("MYSQL_HOST") ?: "";
+$user = getenv("MYSQL_USER") ?: "";
+$pw = getenv("MYSQL_PASSWORD") ?: "";
+$dbname = getenv("MYSQL_DB") ?: "db_user";
+
+if (!$host || !$user || !$pw) {
+    echo json_encode(['status' => 'error', 'message' => 'Missing MYSQL_* environment variables']);
+    exit;
+}
 
 // Simple Logger stub if not exists
 if (!class_exists('Logger')) {

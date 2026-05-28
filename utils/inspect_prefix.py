@@ -1,12 +1,18 @@
 import asyncio
 import aiomysql
 import json
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 async def inspect():
-    host = "10.10.58.16"
-    user = "gitsadap"
-    pw = "it[[{ko-hv,^]8ItgdK9i"
-    dbname = "db_user"
+    host = os.getenv("MYSQL_HOST", "").strip()
+    user = os.getenv("MYSQL_USER", "").strip()
+    pw = os.getenv("MYSQL_PASSWORD", "").strip()
+    dbname = os.getenv("MYSQL_DB", "db_user").strip()
+    if not host or not user or not pw:
+        raise RuntimeError("Missing MYSQL_HOST/MYSQL_USER/MYSQL_PASSWORD environment variables")
 
     print(f"Connecting to {host}...")
     try:

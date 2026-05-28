@@ -10,7 +10,9 @@ PG_HOST = os.getenv("DB_HOST", "10.10.58.21")
 PG_USER = "agi"
 PG_PASS = os.getenv("DB_PASSWORD", "")
 PG_DB   = "nred"
-SERP_API_KEY = "27c618618b2c4d420a2b4a2bdf7efbf8754e67f82e3b2154a1ed9f3a354e2476"
+SERP_API_KEY = os.getenv("SERP_API_KEY", "").strip()
+if not SERP_API_KEY:
+    raise RuntimeError("Missing SERP_API_KEY environment variable")
 
 def fetch_author_id(query):
     url = f"https://serpapi.com/search.json"

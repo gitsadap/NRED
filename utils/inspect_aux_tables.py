@@ -1,12 +1,25 @@
 import asyncio
 import aiomysql
 import json
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+MYSQL_HOST = os.getenv("MYSQL_HOST", "").strip()
+MYSQL_PORT = int(os.getenv("MYSQL_PORT", "3306"))
+MYSQL_USER = os.getenv("MYSQL_USER", "").strip()
+MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD", "").strip()
+MYSQL_DB = os.getenv("MYSQL_DB", "db_user").strip()
 
 async def inspect():
     try:
-        conn = await aiomysql.connect(host='10.10.58.16', port=3306,
-                                      user='gitsadap', password='it[[{ko-hv,^]8ItgdK9i',
-                                      db='db_user', charset='tis620',
+        if not MYSQL_HOST or not MYSQL_USER or not MYSQL_PASSWORD:
+            raise RuntimeError("Missing MYSQL_HOST/MYSQL_USER/MYSQL_PASSWORD environment variables")
+
+        conn = await aiomysql.connect(host=MYSQL_HOST, port=MYSQL_PORT,
+                                      user=MYSQL_USER, password=MYSQL_PASSWORD,
+                                      db=MYSQL_DB, charset='tis620',
                                       cursorclass=aiomysql.DictCursor)
         async with conn.cursor() as cur:
             print("--- User Table columns ---")
