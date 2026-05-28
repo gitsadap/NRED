@@ -1,3 +1,4 @@
+# pyrefly: ignore [missing-import]
 from fastapi import HTTPException
 from app.logging_config import logger
 from typing import Any, Dict, Optional

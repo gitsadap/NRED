@@ -380,11 +380,12 @@
         // MISSION SWIPER CAROUSEL
         // ==========================================
         if (document.querySelector('.mission-swiper')) {
+            const missionSlides = document.querySelectorAll('.mission-swiper .swiper-slide');
             const missionSwiper = new Swiper('.mission-swiper', {
                 slidesPerView: 1.5,
                 spaceBetween: 20,
                 centeredSlides: false,
-                loop: true,
+                loop: missionSlides.length > 5,
                 grabCursor: true,
                 autoplay: {
                     delay: 2500,
@@ -404,11 +405,12 @@
         // SWIPER CAROUSEL (NEWS)
         // ==========================================
         if (document.querySelector('.newsSwiper')) {
+            const newsSlides = document.querySelectorAll('.newsSwiper .swiper-slide');
             const newsSwiper = new Swiper('.newsSwiper', {
                 slidesPerView: 1.2,
                 spaceBetween: 20,
                 grabCursor: true,
-                loop: true,
+                loop: newsSlides.length > 3,
                 autoplay: {
                     delay: 5000,
                     disableOnInteraction: false,
@@ -742,10 +744,11 @@
         // AWARDS SWIPER CAROUSEL
         // ==========================================
         if (document.querySelector('.awardsSwiper')) {
+            const awardsSlides = document.querySelectorAll('.awardsSwiper .swiper-slide');
             new Swiper('.awardsSwiper', {
                 slidesPerView: 1,
                 spaceBetween: 0,
-                loop: true,
+                loop: awardsSlides.length > 1,
                 grabCursor: true,
                 speed: 700,
                 autoplay: {
@@ -798,13 +801,16 @@
     class="hero-section relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-gray-900 via-slate-900 to-black text-white flex items-center justify-center font-outfit">
 
     <!-- Video Background -->
-    <div class="absolute inset-0 z-0">
-        <video autoplay loop muted playsinline class="w-full h-full object-cover opacity-60">
-            <source src="/assets/images/NRED-bg.mp4" type="video/mp4">
-        </video>
+    <div class="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+        <div
+            class="absolute top-1/2 left-1/2 w-[100vw] h-[56.25vw] min-h-[100vh] min-w-[177.77vh] -translate-x-1/2 -translate-y-1/2 opacity-60">
+            <iframe class="w-full h-full pointer-events-none"
+                src="https://www.youtube.com/embed/WS_KkKoyLGY?autoplay=1&mute=1&loop=1&playlist=WS_KkKoyLGY&controls=0&showinfo=0&rel=0&modestbranding=1&enablejsapi=1&iv_load_policy=3"
+                frameborder="0" allow="autoplay; encrypted-media" allowfullscreen>
+            </iframe>
+        </div>
         <div class="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/70"></div>
     </div>
-
     <!-- Animated Gradient Orbs -->
     <div class="absolute inset-0 z-0 gradient-mesh">
         <div class="absolute top-[-10%] left-[-5%] w-96 h-96 bg-green-500/20 rounded-full blur-3xl animate-float"></div>
