@@ -153,9 +153,13 @@ function initAdminApp() {
         // Hide CV update for Admins if they are NOT 'gitsadap'
         if (payload && payload.sub) {
             const username = payload.sub.toLowerCase();
+            console.log("Logged in as admin:", username);
             if (username !== 'gitsadap') {
                 const cvEl = document.getElementById('nav-cv_update');
-                if (cvEl) cvEl.style.display = 'none';
+                if (cvEl) cvEl.remove();
+                
+                const cvSection = document.getElementById('cv_update');
+                if (cvSection) cvSection.remove();
             }
         }
     }
