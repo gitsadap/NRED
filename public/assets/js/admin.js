@@ -152,6 +152,14 @@ function initAdminApp() {
     } else {
         // Hide CV update for Admins if they don't want to use it
         // Or keep it so admins can update their own CV too. Let's keep it visible.
+        // Hide CV update for specific admins: phonsawank, Sanonoif, Ittithepo
+        if (payload && payload.sub) {
+            const noCvUsers = ['phonsawank', 'sanonoif', 'ittithepo'];
+            if (noCvUsers.includes(payload.sub.toLowerCase())) {
+                const cvEl = document.getElementById('nav-cv_update');
+                if (cvEl) cvEl.style.display = 'none';
+            }
+        }
     }
 
     // Init TinyMCE
@@ -167,6 +175,17 @@ function initAdminApp() {
 
 // --- Navigation & Sections ---
 function showSection(sectionId) {
+    // Prevent specific admins from accessing cv_update
+    if (sectionId === 'cv_update') {
+        const payload = getUserPayload();
+        if (payload && payload.sub) {
+            const noCvUsers = ['phonsawank', 'sanonoif', 'ittithepo'];
+            if (noCvUsers.includes(payload.sub.toLowerCase())) {
+                sectionId = 'dashboard';
+            }
+        }
+    }
+
     document.querySelectorAll('.section-view').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('nav a').forEach(el => {
         // Reset styles but preserve display:none
@@ -205,31 +224,52 @@ function handleAuthFailure(reason = 'unauthorized') {
     window.location.href = '/admin/login';
 }
 
-async function uploadCVImage() {
+function previewCVImage(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.getElementById('cv_image_preview');
+            if (preview) {
+                preview.src = e.target.result;
+                preview.classList.remove('hidden');
+            }
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+async function uploadCVImageHelper() {
     const fileInput = document.getElementById('cv_image_file');
-    if(!fileInput.files.length) return Swal.fire('แจ้งเตือน', 'กรุณาเลือกไฟล์รูปภาพก่อน', 'warning');
+    if(!fileInput || !fileInput.files.length) return null;
     
     const formData = new FormData();
     formData.append('file', fileInput.files[0]);
     
+    const token = getValidTokenOrRedirect();
+    if (!token) throw new Error('Auth required');
+    const headers = { 'Authorization': `Bearer ${token}` };
+    
+    const res = await fetch('/admin/api/upload', { method: 'POST', body: formData, headers });
+    if(res.status === 401) {
+        handleAuthFailure();
+        throw new Error('Session expired');
+    }
+    if(res.status === 403) throw new Error('Permission denied');
+    
+    const data = await res.json();
+    if(data.location) {
+        return data.location;
+    } else {
+        throw new Error(data.error || 'Upload image failed');
+    }
+}
+
+async function uploadCVImage() {
     try {
-        // Note: this uses the new unified role-based token. We can use /admin/api/upload if it's protected by verify_user instead of verify_admin_role
-        // We will fallback to the public api if /admin/api/upload requires admin.
-        const token = getValidTokenOrRedirect();
-        if (!token) return;
-        const headers = { 'Authorization': `Bearer ${token}` };
-        
-        // Use generic upload endpoint
-        const res = await fetch('/admin/api/upload', { method: 'POST', body: formData, headers });
-        if(res.status === 401) return handleAuthFailure();
-        if(res.status === 403) return Swal.fire('Error', 'Permission denied', 'error');
-        
-        const data = await res.json();
-        if(data.location) {
-            document.getElementById('cv_image_url').value = data.location;
+        const url = await uploadCVImageHelper();
+        if (url) {
+            document.getElementById('cv_image_url').value = url;
             Swal.fire('สำเร็จ', 'อัปโหลดรูปภาพเรียบร้อย', 'success');
-        } else {
-            Swal.fire('Error', data.error || 'Upload failed', 'error');
         }
     } catch(e) {
         Swal.fire('Error', e.message, 'error');
@@ -308,38 +348,46 @@ function addExpertiseField(value) {
     container.appendChild(div);
 }
 
-async function uploadCVPdf() {
+async function uploadCVPdfHelper() {
     const fileInput = document.getElementById('cv_pdf_file');
-    if(!fileInput.files.length) return Swal.fire('แจ้งเตือน', 'กรุณาเลือกไฟล์ PDF ก่อน', 'warning');
+    if(!fileInput || !fileInput.files.length) return null;
     
     const file = fileInput.files[0];
     if(file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
-        return Swal.fire('แจ้งเตือน', 'กรุณาอัปโหลดไฟล์ PDF เท่านั้น', 'warning');
+        throw new Error('กรุณาอัปโหลดไฟล์ PDF เท่านั้น');
     }
     
     const formData = new FormData();
     formData.append('file', file);
     
-    Swal.fire({ title: 'กำลังอัปโหลด...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    const token = getValidTokenOrRedirect();
+    if (!token) throw new Error('Auth required');
+    const headers = { 'Authorization': `Bearer ${token}` };
+    
+    const res = await fetch('/admin/api/upload', { method: 'POST', body: formData, headers });
+    if(res.status === 401) {
+        handleAuthFailure();
+        throw new Error('Session expired');
+    }
+    if(res.status === 403) throw new Error('Permission denied');
+    
+    const data = await res.json();
+    if(data.location) {
+        return data.location;
+    } else {
+        throw new Error(data.error || 'Upload PDF failed');
+    }
+}
+
+async function uploadCVPdf() {
     try {
-        const token = getValidTokenOrRedirect();
-        if (!token) return;
-        const headers = { 'Authorization': `Bearer ${token}` };
-        const res = await fetch('/admin/api/upload', { method: 'POST', body: formData, headers });
-        if(res.status === 401) return handleAuthFailure();
-        if(res.status === 403) return Swal.fire('Error', 'Permission denied', 'error');
-        
-        const data = await res.json();
-        if(data.location) {
-            document.getElementById('cv_file_url').value = data.location;
+        const url = await uploadCVPdfHelper();
+        if (url) {
+            document.getElementById('cv_file_url').value = url;
             const link = document.getElementById('cv_file_preview_link');
-            link.href = data.location;
+            link.href = url;
             link.classList.remove('hidden');
-            
-            // Automatically save the CV to the profile in the database instantly
             await submitMyCV(true);
-        } else {
-            Swal.fire('Error', data.error || 'Upload failed', 'error');
         }
     } catch(e) {
         Swal.fire('Error', e.message, 'error');
@@ -348,9 +396,43 @@ async function uploadCVPdf() {
 
 async function submitMyCV(silent = false) {
     if (!silent) {
-        Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        Swal.fire({ title: 'กำลังบันทึกและอัปโหลดไฟล์...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
     }
     try {
+        // 1. Upload image if selected
+        try {
+            const imageUrl = await uploadCVImageHelper();
+            if (imageUrl) {
+                document.getElementById('cv_image_url').value = imageUrl;
+                const preview = document.getElementById('cv_image_preview');
+                if (preview) {
+                    preview.src = imageUrl;
+                    preview.classList.remove('hidden');
+                }
+            }
+        } catch (err) {
+            Swal.close();
+            Swal.fire('อัปโหลดรูปภาพผิดพลาด', err.message, 'error');
+            return;
+        }
+
+        // 2. Upload PDF if selected
+        try {
+            const pdfUrl = await uploadCVPdfHelper();
+            if (pdfUrl) {
+                document.getElementById('cv_file_url').value = pdfUrl;
+                const link = document.getElementById('cv_file_preview_link');
+                if (link) {
+                    link.href = pdfUrl;
+                    link.classList.remove('hidden');
+                }
+            }
+        } catch (err) {
+            Swal.close();
+            Swal.fire('อัปโหลดไฟล์ PDF ผิดพลาด', err.message, 'error');
+            return;
+        }
+
         const expInputs = document.querySelectorAll('.expertise-input');
         const expList = Array.from(expInputs).map(inp => inp.value.trim()).filter(val => val);
         
@@ -364,15 +446,20 @@ async function submitMyCV(silent = false) {
         if(!res) return; // Error handled inside apiCall already
         
         if(res.success) {
-            if (silent) {
-                Swal.fire('สำเร็จ', 'อัปโหลดและบันทึกไฟล์ CV เรียบร้อยแล้ว', 'success');
-            } else {
-                Swal.fire('สำเร็จ', 'บันทึกข้อมูล CV เรียบร้อย', 'success');
-            }
+            // Reset the file input values so they don't upload again next time if they just click Save again without changing files
+            const imgFile = document.getElementById('cv_image_file');
+            if (imgFile) imgFile.value = '';
+            const pdfFile = document.getElementById('cv_pdf_file');
+            if (pdfFile) pdfFile.value = '';
+            
+            Swal.close();
+            Swal.fire('สำเร็จ', 'บันทึกข้อมูลเรียบร้อยแล้ว', 'success');
         } else {
+            Swal.close();
             Swal.fire('ผิดพลาด', res.message || 'ไม่สามารถบันทึกได้', 'error');
         }
     } catch(e) {
+        Swal.close();
         Swal.fire('Error', e.message, 'error');
     }
 }
