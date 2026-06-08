@@ -1231,9 +1231,10 @@ function editFaculty(id) {
                 <input id="sw_phone" class="swal2-input !m-0" placeholder="เบอร์โทรศัพท์" value="${f.phone || ''}">
                 <div class="col-span-2">
                     <label class="text-xs text-gray-500">Image URL</label>
-                    <div class="flex gap-2">
+                    <div class="flex gap-2 items-center">
                         <input id="sw_image" class="swal2-input !m-0 flex-1" placeholder="URL รูปภาพ" value="${f.image || ''}">
-                        <button onclick="openMediaSelector((url) => document.getElementById('sw_image').value = url)" class="bg-gray-200 px-3 rounded">เลือก</button>
+                        <button onclick="openMediaSelector((url) => document.getElementById('sw_image').value = url)" class="bg-gray-200 px-3 py-2 rounded text-sm whitespace-nowrap">เลือก</button>
+                        <label class="bg-blue-100 text-blue-700 px-3 py-2 rounded text-sm font-bold cursor-pointer whitespace-nowrap">อัปโหลด<input type="file" accept="image/*" class="hidden" onchange="uploadAndSetHomeImage(this, 'sw_image', null)"></label>
                     </div>
                 </div>
                 <div class="col-span-2">
