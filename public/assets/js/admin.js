@@ -1112,30 +1112,6 @@ async function uploadAndSetHomeImage(inputEl, fieldId, previewId) {
     }
 }
 
-// --- Tag Logic ---
-async function loadTags() {
-    const tags = await apiCall('/admin/api/tags');
-    const container = document.getElementById('tagsContainer');
-    container.innerHTML = tags.map(t => `
-        <div class="flex justify-between items-center bg-gray-50 p-3 rounded border">
-            <span class="font-medium text-gray-700">${escapeHtml(t.name)}</span>
-            <button onclick="deleteTag(${t.id})" class="text-red-500 hover:text-red-700 text-lg leading-none">&times;</button>
-        </div>
-    `).join('');
-}
-async function addTag() {
-    const name = document.getElementById('newTagName').value;
-    if (!name) return;
-    await apiCall('/admin/api/tags', 'POST', { name });
-    document.getElementById('newTagName').value = '';
-    loadTags();
-}
-async function deleteTag(id) {
-    confirmAction('Delete Tag?', async () => {
-        await apiCall('/admin/api/tags/delete', 'POST', { id });
-        loadTags();
-    });
-}
 
 
 // --- Appeals Logic ---

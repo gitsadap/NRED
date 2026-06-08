@@ -63,10 +63,6 @@
                 class="block py-3 px-6 hover:bg-secondary cursor-pointer transition-colors border-l-4 border-transparent hover:border-accent">
                 <span class="mr-2">🧑‍🏫</span> แก้ไขข้อมูลส่วนตัว (CV)
             </a>
-            <a onclick="showSection('tags')" id="nav-tags"
-                class="block py-3 px-6 hover:bg-secondary cursor-pointer transition-colors border-l-4 border-transparent hover:border-accent">
-                <span class="mr-2">🏷</span> จัดการแท็ก (Tags)
-            </a>
             <a onclick="showSection('pages')" id="nav-pages"
                 class="block py-3 px-6 hover:bg-secondary cursor-pointer transition-colors border-l-4 border-transparent hover:border-accent">
                 <span class="mr-2">📄</span> หน้าเพจ (Pages)
@@ -458,45 +454,27 @@
                 <div id="unified-tags" class="unified-content hidden">
                     <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
                         <div class="flex justify-between items-center mb-6">
-                            <h2 class="text-xl font-bold text-gray-800">จัดการแท็ก</h2>
-                            <div class="flex gap-2">
-                                <input type="text" id="newTagName" placeholder="ชื่อแท็กใหม่"
-                                    class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-                                <button onclick="addTag()"
-                                    class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-secondary font-medium">เพิ่ม</button>
-                            </div>
+                            <h2 class="text-xl font-bold text-gray-800">จัดการแท็ก (Tags)</h2>
                         </div>
-                        <div id="tagsContainer" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                            <!-- JS Populated -->
+                        
+                        <div class="flex gap-4 mb-6">
+                            <input type="text" id="newTagName" placeholder="พิมพ์ชื่อแท็กใหม่" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                            <button onclick="saveTag()" class="bg-primary hover:bg-secondary text-white px-6 py-2 rounded-lg font-medium shadow transition">เพิ่มแท็ก</button>
                         </div>
-                    </div>
-                </div>
-            </div>
 
-            <!-- 6. Tags Management -->
-            <div id="tags" class="section-view hidden">
-                <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-xl font-bold text-gray-800">จัดการแท็ก (Tags)</h2>
-                    </div>
-                    
-                    <div class="flex gap-4 mb-6">
-                        <input type="text" id="newTagName" placeholder="พิมพ์ชื่อแท็กใหม่" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-                        <button onclick="saveTag()" class="bg-primary hover:bg-secondary text-white px-6 py-2 rounded-lg font-medium shadow transition">เพิ่มแท็ก</button>
-                    </div>
-
-                    <div class="overflow-x-auto rounded-lg border">
-                        <table class="w-full text-left border-collapse">
-                            <thead class="bg-gray-50 text-gray-600 text-sm uppercase">
-                                <tr>
-                                    <th class="py-3 px-4 font-semibold">ชื่อแท็ก</th>
-                                    <th class="py-3 px-4 text-right font-semibold">จัดการ</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tagsTableBody" class="divide-y divide-gray-100 bg-white">
-                                <!-- JS Populated -->
-                            </tbody>
-                        </table>
+                        <div class="overflow-x-auto rounded-lg border">
+                            <table class="w-full text-left border-collapse">
+                                <thead class="bg-gray-50 text-gray-600 text-sm uppercase">
+                                    <tr>
+                                        <th class="py-3 px-4 font-semibold">ชื่อแท็ก</th>
+                                        <th class="py-3 px-4 text-right font-semibold">จัดการ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tagsTableBody" class="divide-y divide-gray-100 bg-white">
+                                    <!-- JS Populated -->
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
