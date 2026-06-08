@@ -537,6 +537,15 @@ else:
 
 ALLOWED_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.gif', '.pdf', '.doc', '.docx', '.xls', '.xlsx'}
 
+def process_document_to_blob_local(file_path: str):
+    logger.info(f"Starting local background processing for document: {file_path}")
+    try:
+        if os.path.exists(file_path):
+            file_size = os.path.getsize(file_path)
+            logger.info(f"Document {file_path} size: {file_size} bytes.")
+    except Exception as e:
+        logger.error(f"Error processing document {file_path}: {e}")
+
 @teacher_router.post("/api/upload")
 async def upload_file(
     request: Request,
@@ -558,31 +567,22 @@ async def upload_file(
             return {"error": "Invalid filename"}
         unique_name = f"{uuid.uuid4().hex[:8]}_{safe_filename}"
         
+        max_bytes = int(getattr(app_settings, "max_file_size", 0) or 0)
+        if max_bytes <= 0:
+            max_bytes = 10 * 1024 * 1024  # 10MB safe default
+
+        content = await file.read()
+        written = len(content)
+        
+        if written > max_bytes:
+            logger.warning(
+                f"UPLOAD rejected too_large filename={safe_filename} bytes={written} max_bytes={max_bytes} username={user.get('username')} role={user.get('role')} request_id={request_id}"
+            )
+            return {"error": f"File too large. Max size is {max_bytes} bytes."}
+
         file_location = f"{UPLOAD_DIR}/{unique_name}"
         with open(file_location, "wb+") as file_object:
-            max_bytes = int(getattr(app_settings, "max_file_size", 0) or 0)
-            if max_bytes <= 0:
-                max_bytes = 10 * 1024 * 1024  # 10MB safe default
-
-            written = 0
-            while True:
-                chunk = await file.read(1024 * 1024)  # 1MB
-                if not chunk:
-                    break
-                written += len(chunk)
-                if written > max_bytes:
-                    try:
-                        file_object.close()
-                    finally:
-                        try:
-                            os.remove(file_location)
-                        except Exception:
-                            pass
-                    logger.warning(
-                        f"UPLOAD rejected too_large filename={safe_filename} bytes={written} max_bytes={max_bytes} username={user.get('username')} role={user.get('role')} request_id={request_id}"
-                    )
-                    return {"error": f"File too large. Max size is {max_bytes} bytes."}
-                file_object.write(chunk)
+            file_object.write(content)
         await file.close()
 
         logger.info(
@@ -591,7 +591,7 @@ async def upload_file(
             
         # Background optimize access and path-to-blob transformation using FastAPI BackgroundTasks
         try:
-            background_tasks.add_task(process_document_to_blob, file_location)
+            background_tasks.add_task(process_document_to_blob_local, file_location)
         except Exception as bg_err:
             logger.error(f"Error scheduling background document processing: {bg_err}")
             
