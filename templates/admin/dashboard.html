@@ -528,7 +528,11 @@
                                         <label class="block text-xs mb-1">รูปภาพ (Image URL)</label>
                                         <div class="flex gap-2">
                                             <input type="text" id="award_image_url" class="flex-1 border p-2 rounded">
-                                            <button type="button" onclick="openMediaSelector((url) => document.getElementById('award_image_url').value = url)" class="bg-gray-200 px-3 rounded text-sm font-bold">เลือกสื่อ</button>
+                                            <button type="button" onclick="openMediaSelector((url) => document.getElementById('award_image_url').value = url)" class="bg-gray-200 px-3 rounded text-sm font-bold whitespace-nowrap">เลือกสื่อ</button>
+                                            <label class="bg-blue-100 text-blue-700 px-3 py-1 rounded text-sm font-bold cursor-pointer flex items-center whitespace-nowrap">
+                                                อัปโหลด
+                                                <input type="file" accept="image/*" class="hidden" onchange="uploadAndSetHomeImage(this, 'award_image_url', null)">
+                                            </label>
                                         </div>
                                     </div>
                                 </div>
