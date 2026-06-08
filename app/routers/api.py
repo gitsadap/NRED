@@ -149,7 +149,7 @@ async def api_faculty_list(db: AsyncSession = Depends(get_db)):
     all_faculty = []
     for row in faculty_rows:
         img_val = row.image or ''
-        img = img_val if img_val.startswith(("http", "/static")) else (f"https://ww2.agi.nu.ac.th/personnel/upload/{img_val}" if img_val else "")
+        img = img_val if img_val.startswith(("http", "/static", "/uploads")) else (f"https://ww2.agi.nu.ac.th/personnel/upload/{img_val}" if img_val else "")
         cv_url = f"/uploads/{cv_map[row.id]}" if row.id in cv_map else None
         
         expertise = []
@@ -342,7 +342,7 @@ async def api_research_list(db: AsyncSession = Depends(get_db)):
     research_data = []
     for row in faculty_rows:
         img_val = row.image or ''
-        img = img_val if img_val.startswith(("http", "/static", "data:")) else (f"https://ww2.agi.nu.ac.th/personnel/upload/{img_val}" if img_val else "")
+        img = img_val if img_val.startswith(("http", "/static", "data:", "/uploads")) else (f"https://ww2.agi.nu.ac.th/personnel/upload/{img_val}" if img_val else "")
         
         scholar_results = []
         if row.scholar_data:

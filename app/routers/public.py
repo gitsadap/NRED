@@ -170,6 +170,7 @@ async def structure_page(request: Request, db: AsyncSession = Depends(get_db)):
         if img_val:
             if img_val.startswith("http"): img = img_val
             elif img_val.startswith("/static"): img = img_val
+            elif img_val.startswith("/uploads"): img = img_val
             else: img = f"https://ww2.agi.nu.ac.th/personnel/upload/{img_val}"
             
         executives.append({
@@ -390,6 +391,7 @@ async def show_faculty(request: Request, db: AsyncSession = Depends(get_db)):
             if img_val:
                 if img_val.startswith("http"): img = img_val
                 elif img_val.startswith("/static"): img = img_val
+                elif img_val.startswith("/uploads"): img = img_val
                 else: img = f"https://ww2.agi.nu.ac.th/personnel/upload/{img_val}"
             
             cv_filename = cv_map.get(row.id)
@@ -530,6 +532,7 @@ async def show_executives(request: Request, db: AsyncSession = Depends(get_db)):
         if img_val:
             if img_val.startswith("http"): img = img_val
             elif img_val.startswith("/static"): img = img_val
+            elif img_val.startswith("/uploads"): img = img_val
             else: img = f"https://ww2.agi.nu.ac.th/personnel/upload/{img_val}"
             
         cv_filename = cv_map.get(row.id)
@@ -581,6 +584,7 @@ async def show_support_staff(request: Request, db: AsyncSession = Depends(get_db
         if img_val:
             if img_val.startswith("http"): img = img_val
             elif img_val.startswith("/static"): img = img_val
+            elif img_val.startswith("/uploads"): img = img_val
             else: img = f"https://ww2.agi.nu.ac.th/personnel/upload/{img_val}"
             
         cv_filename = cv_map.get(row.id)
