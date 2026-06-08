@@ -94,7 +94,7 @@ async def home(request: Request, db: AsyncSession = Depends(get_db)):
 
 @router.get("/about", response_class=HTMLResponse)
 async def about_page(request: Request, db: AsyncSession = Depends(get_db)):
-    from app.models import Mission, Statistic, Faculty, Award, ContactInfo
+    from app.models import Mission, Statistic, Faculty, Award
     context = await get_global_context(db)
 
     # Missions / Vision / Values
@@ -129,10 +129,6 @@ async def about_page(request: Request, db: AsyncSession = Depends(get_db)):
     award_res = await db.execute(select(Award).order_by(Award.order_index))
     awards = award_res.scalars().all()
 
-    # Contact Info
-    contact_res = await db.execute(select(ContactInfo).order_by(ContactInfo.order_index))
-    contacts = contact_res.scalars().all()
-
     context["request"] = request
     context["title"] = "เกี่ยวกับภาควิชา - " + context["site_title"]
     context["missions"] = missions
@@ -142,7 +138,6 @@ async def about_page(request: Request, db: AsyncSession = Depends(get_db)):
     context["faculty_regular"] = faculty_regular
     context["faculty_count"] = len(faculty_all)
     context["awards"] = awards
-    context["contacts"] = contacts
     return templates.TemplateResponse(request=request, name="about.html", context=context)
 
 @router.get("/links", response_class=HTMLResponse)
