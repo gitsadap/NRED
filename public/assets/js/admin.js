@@ -164,11 +164,17 @@ function initAdminApp() {
         }
     }
 
-    // Init TinyMCE
+    // Init TinyMCE safely
     if (typeof tinymce !== 'undefined') {
-        tinymce.init({ ...tinyConfig, selector: '#content' });      // Page Editor
-        tinymce.init({ ...tinyConfig, selector: '#postContent' });  // Unified Editor
-        tinymce.init({ ...tinyConfig, selector: '#cv_editor' });    // CV Editor
+        if (document.querySelector('#content')) {
+            tinymce.init({ ...tinyConfig, selector: '#content' });
+        }
+        if (document.querySelector('#postContent')) {
+            tinymce.init({ ...tinyConfig, selector: '#postContent' });
+        }
+        if (document.querySelector('#cv_editor')) {
+            tinymce.init({ ...tinyConfig, selector: '#cv_editor' });
+        }
     }
 
     // Default Section
@@ -751,13 +757,13 @@ async function editPage(id, title, slug) {
                 updateHtmlPreview();
             } else {
                 switchEditorMode('wysiwyg');
-                tinymce.get('content').setContent(content);
+                safeSetTinyContent('content', content);
             }
         }
     } else {
         document.getElementById('rawHtmlContent').value = '';
         switchEditorMode('wysiwyg');
-        tinymce.get('content').setContent('');
+        safeSetTinyContent('content', '');
     }
 
     document.getElementById('editorTitle').textContent = id ? 'แก้ไขหน้าเพจ (Edit Page)' : 'สร้างหน้าใหม่ (New Page)';
@@ -785,7 +791,7 @@ function switchEditorMode(mode) {
         // Carry over changes from HTML to WYSIWYG if switching back
         if (!htmlWrapper.classList.contains('hidden')) {
             const rawContent = document.getElementById('rawHtmlContent').value;
-            if (rawContent && tinymce.get('content')) tinymce.get('content').setContent(rawContent);
+            if (rawContent) safeSetTinyContent('content', rawContent);
         }
         wysiwygWrapper.classList.remove('hidden');
         htmlWrapper.classList.add('hidden');
@@ -793,8 +799,8 @@ function switchEditorMode(mode) {
         btnHtml.className = 'px-3 py-1.5 rounded-md text-xs font-bold transition text-gray-500 hover:text-gray-700';
     } else {
         // Carry over changes from WYSIWYG to HTML if user typed there first
-        if (!wysiwygWrapper.classList.contains('hidden') && tinymce.get('content')) {
-            const wyContent = tinymce.get('content').getContent();
+        if (!wysiwygWrapper.classList.contains('hidden')) {
+            const wyContent = safeGetTinyContent('content');
             // Optional: Only overwrite if it contains something (so we don't overwrite DB copy when empty)
             if (wyContent) document.getElementById('rawHtmlContent').value = wyContent;
         }
@@ -827,7 +833,7 @@ async function savePage(e) {
         // page.html uses {{ page.content | safe }} which renders it correctly.
         content = document.getElementById('rawHtmlContent').value;
     } else {
-        content = tinymce.get('content').getContent();
+        content = safeGetTinyContent('content');
     }
 
     const data = {
@@ -912,7 +918,7 @@ function openUnifiedEditor() {
     // Default Reset
     document.getElementById('unifiedForm').reset();
     document.getElementById('postId').value = '';
-    tinymce.get('postContent').setContent('');
+    safeSetTinyContent('postContent', '');
     toggleFormFields();
 }
 
@@ -940,7 +946,7 @@ async function editUnifiedContent(id, type) {
     document.getElementById('postImage').value = item.image_url || '';
     document.getElementById('postTags').value = item.tags || '';
     document.getElementById('postEventDate').value = item.event_date ? item.event_date.split('T')[0] : '';
-    tinymce.get('postContent').setContent(item.content || '');
+    safeSetTinyContent('postContent', item.content || '');
 }
 
 async function saveUnifiedContent(e) {
@@ -950,7 +956,7 @@ async function saveUnifiedContent(e) {
         id: document.getElementById('postId').value ? parseInt(document.getElementById('postId').value) : null,
         type: type,
         title: document.getElementById('postTitle').value,
-        content: tinymce.get('postContent').getContent(),
+        content: safeGetTinyContent('postContent'),
         category: document.getElementById('postCategory').value,
         image: document.getElementById('postImage').value,
         tags: document.getElementById('postTags').value,
@@ -1844,3 +1850,19 @@ async function saveCurrentMenu() {
 }
 console.log("Admin.js loaded successfully.");
 window.switchHomeTab = switchHomeTab;
+function safeSetTinyContent(id, content) {
+    if (typeof tinymce !== 'undefined' && tinymce.get(id)) {
+        tinymce.get(id).setContent(content || '');
+    } else {
+        const el = document.getElementById(id);
+        if (el) el.value = content || '';
+    }
+}
+function safeGetTinyContent(id) {
+    if (typeof tinymce !== 'undefined' && tinymce.get(id)) {
+        return tinymce.get(id).getContent();
+    } else {
+        const el = document.getElementById(id);
+        return el ? el.value : '';
+    }
+}
