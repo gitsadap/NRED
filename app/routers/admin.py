@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Query, HTTPException, Request, status, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc
 from app.database import get_db
@@ -538,7 +538,12 @@ else:
 ALLOWED_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.gif', '.pdf', '.doc', '.docx', '.xls', '.xlsx'}
 
 @teacher_router.post("/api/upload")
-async def upload_file(request: Request, file: UploadFile = File(...), user: dict = Depends(get_current_user)):
+async def upload_file(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+    user: dict = Depends(get_current_user)
+):
     try:
         request_id = getattr(request.state, "request_id", None)
         # Validate File Extension
@@ -584,11 +589,11 @@ async def upload_file(request: Request, file: UploadFile = File(...), user: dict
             f"UPLOAD success filename={unique_name} bytes={written} username={user.get('username')} role={user.get('role')} request_id={request_id}"
         )
             
-        # Background optimize access and path-to-blob transformation using Celery
+        # Background optimize access and path-to-blob transformation using FastAPI BackgroundTasks
         try:
-            process_document_to_blob.delay(file_location)
-        except Exception as celery_err:
-            pass # ignore broker errors gracefully if redis is down
+            background_tasks.add_task(process_document_to_blob, file_location)
+        except Exception as bg_err:
+            logger.error(f"Error scheduling background document processing: {bg_err}")
             
         return {"location": f"/uploads/{unique_name}"} # TinyMCE expects 'location'
     except Exception as e:

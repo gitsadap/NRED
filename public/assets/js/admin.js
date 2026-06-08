@@ -344,7 +344,20 @@ async function uploadCVImageHelper() {
     const headers = { 'Authorization': `Bearer ${token}` };
     
     console.log("Sending POST fetch to /admin/api/upload for image...");
-    const res = await fetch('/admin/api/upload', { method: 'POST', body: formData, headers });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+    let res;
+    try {
+        res = await fetch('/admin/api/upload', { method: 'POST', body: formData, headers, signal: controller.signal });
+        clearTimeout(timeoutId);
+    } catch (err) {
+        clearTimeout(timeoutId);
+        if (err.name === 'AbortError') {
+            console.error("Fetch aborted: image upload took too long");
+            throw new Error('การเชื่อมต่อหมดเวลา (Timeout 15 วินาที) กรุณาตรวจสอบสถานะเซิร์ฟเวอร์หรือลองใหม่อีกครั้ง');
+        }
+        throw err;
+    }
     console.log("Fetch response received. Status:", res.status);
     
     if(res.status === 401) {
@@ -495,7 +508,20 @@ async function uploadCVPdfHelper() {
     const headers = { 'Authorization': `Bearer ${token}` };
     
     console.log("Sending POST fetch to /admin/api/upload for PDF...");
-    const res = await fetch('/admin/api/upload', { method: 'POST', body: formData, headers });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+    let res;
+    try {
+        res = await fetch('/admin/api/upload', { method: 'POST', body: formData, headers, signal: controller.signal });
+        clearTimeout(timeoutId);
+    } catch (err) {
+        clearTimeout(timeoutId);
+        if (err.name === 'AbortError') {
+            console.error("Fetch aborted: PDF upload took too long");
+            throw new Error('การเชื่อมต่อหมดเวลา (Timeout 15 วินาที) กรุณาตรวจสอบสถานะเซิร์ฟเวอร์หรือลองใหม่อีกครั้ง');
+        }
+        throw err;
+    }
     console.log("Fetch response received for PDF. Status:", res.status);
     
     if(res.status === 401) {
