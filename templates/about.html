@@ -44,6 +44,19 @@
 </section>
 
 <!-- ============================================================
+     CMS EDITABLE CONTENT
+     ============================================================ -->
+{% if about_page_content %}
+<section class="py-16 bg-white dark:bg-slate-900 relative z-20">
+    <div class="container mx-auto px-4">
+        <div class="prose prose-lg md:prose-xl dark:prose-invert max-w-4xl mx-auto font-outfit text-gray-700 dark:text-gray-300">
+            {{ about_page_content | safe }}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- ============================================================
      STATISTICS BAR
      ============================================================ -->
 {% if stats %}

@@ -94,8 +94,13 @@ async def home(request: Request, db: AsyncSession = Depends(get_db)):
 
 @router.get("/about", response_class=HTMLResponse)
 async def about_page(request: Request, db: AsyncSession = Depends(get_db)):
-    from app.models import Mission, Statistic, Faculty, Award
+    from app.models import Mission, Statistic, Faculty, Award, Page
     context = await get_global_context(db)
+    
+    # Fetch editable CMS content for 'about'
+    page_res = await db.execute(select(Page).where(Page.slug == "about"))
+    about_page_db = page_res.scalars().first()
+    context["about_page_content"] = about_page_db.content if about_page_db else ""
 
     # Missions / Vision / Values
     mission_res = await db.execute(select(Mission).order_by(Mission.order_index))
