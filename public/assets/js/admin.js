@@ -882,6 +882,7 @@ function switchUnifiedTab(tab) {
 
     if (tab === 'content') loadUnifiedContent();
     if (tab === 'tags') loadTags();
+    if (tab === 'awards') loadAwards();
 }
 
 let allContent = [];
@@ -1923,5 +1924,66 @@ function setSelectedTags(tagsString) {
     const tags = tagsString ? tagsString.split(',').map(t => t.trim()) : [];
     document.querySelectorAll('input[name="postTagCb"]').forEach(cb => {
         cb.checked = tags.includes(cb.value);
+    });
+}
+
+// --- Awards Management ---
+let currentAwards = [];
+
+async function loadAwards() {
+    const list = await apiCall('/admin/api/awards');
+    if (!list) return;
+    currentAwards = list;
+    
+    const tbody = document.getElementById('awardsTableBody');
+    if(!tbody) return;
+    tbody.innerHTML = list.map(item => `
+        <tr class="border-b hover:bg-gray-50 transition">
+            <td class="py-3 px-4 font-medium">${escapeHtml(item.title)}</td>
+            <td class="py-3 px-4 text-sm text-gray-500">${escapeHtml(item.description || '-')}</td>
+            <td class="py-3 px-4 text-right space-x-2">
+                <button onclick="editAward(${item.id})" class="text-blue-600 font-medium text-sm">✎</button>
+                <button onclick="deleteAward(${item.id})" class="text-red-500 font-medium text-sm">🗑</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function editAward(id) {
+    const item = id ? currentAwards.find(x => x.id === id) : {};
+    document.getElementById('awards_list_view').classList.add('hidden');
+    document.getElementById('awards_editor_view').classList.remove('hidden');
+    document.getElementById('award_id').value = id || '';
+    document.getElementById('award_title').value = item.title || '';
+    document.getElementById('award_description').value = item.description || '';
+    document.getElementById('award_image_url').value = item.image_url || '';
+}
+
+function cancelAwardEdit() {
+    document.getElementById('awards_list_view').classList.remove('hidden');
+    document.getElementById('awards_editor_view').classList.add('hidden');
+}
+
+async function saveAward() {
+    const idVal = document.getElementById('award_id').value;
+    const payload = {
+        id: idVal ? parseInt(idVal) : null,
+        title: document.getElementById('award_title').value,
+        description: document.getElementById('award_description').value,
+        image_url: document.getElementById('award_image_url').value
+    };
+    const res = await apiCall('/admin/api/awards', 'POST', payload);
+    if (res && res.success) {
+        cancelAwardEdit();
+        loadAwards();
+    } else {
+        Swal.fire('Error', res?.message || 'Failed to save', 'error');
+    }
+}
+
+async function deleteAward(id) {
+    confirmAction('Delete Award?', async () => {
+        await apiCall('/admin/api/awards/delete', 'POST', { id });
+        loadAwards();
     });
 }

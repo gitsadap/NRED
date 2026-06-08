@@ -330,6 +330,10 @@
                         class="unified-tab-btn px-6 py-3 font-bold text-gray-600 rounded-t-lg hover:bg-gray-50 transition border-b-2 border-transparent">
                         จัดการแท็ก (Tags)
                     </button>
+                    <button onclick="switchUnifiedTab('awards')" id="tab-u-awards"
+                        class="unified-tab-btn px-6 py-3 font-bold text-gray-600 rounded-t-lg hover:bg-gray-50 transition border-b-2 border-transparent">
+                        แสดงความยินดี (Awards)
+                    </button>
                 </div>
 
                 <!-- Unified: Content List -->
@@ -474,6 +478,61 @@
                                     <!-- JS Populated -->
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Unified: Awards -->
+                <div id="unified-awards" class="unified-content hidden">
+                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 min-h-[400px]">
+                        <div id="awards_list_view">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-xl font-bold text-gray-800">แสดงความยินดี (Awards)</h3>
+                                <button onclick="editAward(null)"
+                                    class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-secondary text-sm font-medium">+
+                                    เพิ่มรายการ</button>
+                            </div>
+                            <div class="overflow-x-auto rounded-lg border">
+                                <table class="w-full text-left">
+                                    <thead class="bg-gray-50 text-gray-600 text-sm uppercase">
+                                        <tr>
+                                            <th class="py-3 px-4">หัวข้อ (Title)</th>
+                                            <th class="py-3 px-4">รายละเอียด (Description)</th>
+                                            <th class="py-3 px-4 text-right">จัดการ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="awardsTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Awards Editor -->
+                        <div id="awards_editor_view" class="hidden">
+                            <h3 id="awards_editor_title" class="text-lg font-bold mb-4 border-b pb-2">เพิ่ม/แก้ไขรายการ</h3>
+                            <form onsubmit="event.preventDefault(); saveAward();">
+                                <input type="hidden" id="award_id">
+                                <div class="grid grid-cols-2 gap-4 mb-4">
+                                    <div class="col-span-2">
+                                        <label class="block text-xs mb-1">หัวข้อ (Title)</label>
+                                        <input type="text" id="award_title" class="w-full border p-2 rounded" required>
+                                    </div>
+                                    <div class="col-span-2">
+                                        <label class="block text-xs mb-1">รายละเอียด (Description)</label>
+                                        <textarea id="award_description" class="w-full border p-2 rounded h-24"></textarea>
+                                    </div>
+                                    <div class="col-span-2">
+                                        <label class="block text-xs mb-1">รูปภาพ (Image URL)</label>
+                                        <div class="flex gap-2">
+                                            <input type="text" id="award_image_url" class="flex-1 border p-2 rounded">
+                                            <button type="button" onclick="openMediaSelector((url) => document.getElementById('award_image_url').value = url)" class="bg-gray-200 px-3 rounded text-sm font-bold">เลือกสื่อ</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex justify-end gap-2 mt-4 pt-4 border-t">
+                                    <button type="button" onclick="cancelAwardEdit()" class="px-4 py-2 bg-gray-200 rounded text-sm font-medium">ยกเลิก</button>
+                                    <button type="submit" class="px-4 py-2 bg-primary text-white rounded text-sm font-bold shadow">บันทึก</button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -649,8 +708,6 @@
                         class="h-tab px-4 py-2 rounded-lg bg-gray-200 text-gray-600 font-bold">พันธกิจ</button>
                     <button onclick="switchHomeTab('stats')" id="h-tab-stats"
                         class="h-tab px-4 py-2 rounded-lg bg-gray-200 text-gray-600 font-bold">สถิติ</button>
-                    <button onclick="switchHomeTab('awards')" id="h-tab-awards"
-                        class="h-tab px-4 py-2 rounded-lg bg-gray-200 text-gray-600 font-bold">รางวัล/ประกาศ</button>
                     <button onclick="switchHomeTab('courses')" id="h-tab-courses"
                         class="h-tab px-4 py-2 rounded-lg bg-gray-200 text-gray-600 font-bold">วิดีโอหลักสูตร</button>
                 </div>
