@@ -139,6 +139,12 @@ function initAdminApp() {
     const payload = getUserPayload();
     let initialSection = 'dashboard';
     
+    // Fetch dashboard stats if admin
+    if (payload && payload.role !== 'teacher') {
+        loadDashboardStats();
+        loadTags();
+    }
+    
     // Role Based Access Control UI
     if (payload && payload.role === 'teacher') {
         initialSection = 'cv_update';
@@ -217,6 +223,7 @@ function showSection(sectionId) {
     if (sectionId === 'faculty') loadFaculty();
     if (sectionId === 'home_sections') switchHomeTab('banners');
     if (sectionId === 'media') loadMedia();
+    if (sectionId === 'tags') loadTags();
     if (sectionId === 'appeals') loadAppeals();
     if (sectionId === 'settings') loadSettings();
 }
@@ -919,6 +926,7 @@ function openUnifiedEditor() {
     document.getElementById('unifiedForm').reset();
     document.getElementById('postId').value = '';
     safeSetTinyContent('postContent', '');
+    setSelectedTags('');
     toggleFormFields();
 }
 
@@ -944,7 +952,7 @@ async function editUnifiedContent(id, type) {
     document.getElementById('postTitle').value = item.title;
     document.getElementById('postCategory').value = item.category || 'General';
     document.getElementById('postImage').value = item.image_url || '';
-    document.getElementById('postTags').value = item.tags || '';
+    setSelectedTags(item.tags || '');
     document.getElementById('postEventDate').value = item.event_date ? item.event_date.split('T')[0] : '';
     safeSetTinyContent('postContent', item.content || '');
 }
@@ -959,7 +967,7 @@ async function saveUnifiedContent(e) {
         content: safeGetTinyContent('postContent'),
         category: document.getElementById('postCategory').value,
         image: document.getElementById('postImage').value,
-        tags: document.getElementById('postTags').value,
+        tags: getSelectedTags(),
         event_date: document.getElementById('postEventDate').value
     };
 
@@ -1865,4 +1873,79 @@ function safeGetTinyContent(id) {
         const el = document.getElementById(id);
         return el ? el.value : '';
     }
+}
+
+// --- Tags Management ---
+let allTags = [];
+
+async function loadTags() {
+    const res = await apiCall('/admin/api/tags');
+    if (res) {
+        allTags = res;
+        renderTagsTable();
+        renderTagsCheckboxes();
+    }
+}
+
+function renderTagsTable() {
+    const tbody = document.getElementById('tagsTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = allTags.map(tag => `
+        <tr class="border-b hover:bg-gray-50 transition">
+            <td class="py-3 px-4 font-medium text-gray-800">${escapeHtml(tag.name)}</td>
+            <td class="py-3 px-4 text-right">
+                <button onclick="deleteTag(${tag.id})" class="text-red-600 hover:text-red-800 font-medium text-sm">🗑 ลบ</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+async function saveTag() {
+    const nameInput = document.getElementById('newTagName');
+    const name = nameInput.value.trim();
+    if (!name) return;
+    const res = await apiCall('/admin/api/tags', 'POST', { name });
+    if (res && res.success) {
+        nameInput.value = '';
+        await loadTags();
+    } else {
+        Swal.fire('Error', res?.message || 'Failed to add tag', 'error');
+    }
+}
+
+async function deleteTag(id) {
+    if (!confirm('Are you sure you want to delete this tag?')) return;
+    const res = await apiCall('/admin/api/tags/delete', 'POST', { id });
+    if (res && res.success) {
+        await loadTags();
+    }
+}
+
+function renderTagsCheckboxes() {
+    const container = document.getElementById('postTagsContainer');
+    if (!container) return;
+    
+    if (allTags.length === 0) {
+        container.innerHTML = '<span class="text-sm text-gray-400">ยังไม่มีแท็ก กรุณาไปสร้างแท็กก่อน</span>';
+        return;
+    }
+    
+    container.innerHTML = allTags.map(tag => `
+        <label class="inline-flex items-center gap-1 bg-gray-50 border border-gray-200 px-3 py-1 rounded-full cursor-pointer hover:bg-gray-100 transition">
+            <input type="checkbox" name="postTagCb" value="${escapeHtml(tag.name)}" class="text-primary rounded focus:ring-primary h-4 w-4">
+            <span class="text-sm text-gray-700">${escapeHtml(tag.name)}</span>
+        </label>
+    `).join('');
+}
+
+function getSelectedTags() {
+    const cbs = document.querySelectorAll('input[name="postTagCb"]:checked');
+    return Array.from(cbs).map(cb => cb.value).join(',');
+}
+
+function setSelectedTags(tagsString) {
+    const tags = tagsString ? tagsString.split(',').map(t => t.trim()) : [];
+    document.querySelectorAll('input[name="postTagCb"]').forEach(cb => {
+        cb.checked = tags.includes(cb.value);
+    });
 }
