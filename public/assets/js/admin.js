@@ -1982,8 +1982,8 @@ async function saveAward() {
 }
 
 async function deleteAward(id) {
-    confirmAction('Delete Award?', async () => {
-        await apiCall('/admin/api/awards/delete', 'POST', { id });
+    confirmAction('ลบรายการนี้ใช่หรือไม่?', async () => {
+        await apiCall(`/admin/api/generic/delete`, 'POST', { model: 'Award', id: id });
         loadAwards();
     });
 }
