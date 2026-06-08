@@ -224,6 +224,68 @@ function handleAuthFailure(reason = 'unauthorized') {
     window.location.href = '/admin/login';
 }
 
+function compressImage(file, maxWidth, maxHeight, quality) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = () => {
+                let width = img.width;
+                let height = img.height;
+
+                // Calculate new dimensions
+                if (width > height) {
+                    if (width > maxWidth) {
+                        height = Math.round((height * maxWidth) / width);
+                        width = maxWidth;
+                    }
+                } else {
+                    if (height > maxHeight) {
+                        width = Math.round((width * maxHeight) / height);
+                        height = maxHeight;
+                    }
+                }
+
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // Export to Blob
+                canvas.toBlob(
+                    (blob) => {
+                        if (blob) {
+                            // Re-wrap the blob in a File object to retain filename
+                            // Change extension to .jpg since canvas export is jpeg
+                            let name = file.name;
+                            const extIndex = name.lastIndexOf('.');
+                            if (extIndex !== -1) {
+                                name = name.substring(0, extIndex) + '.jpg';
+                            } else {
+                                name = name + '.jpg';
+                            }
+                            const compressedFile = new File([blob], name, {
+                                type: 'image/jpeg',
+                                lastModified: Date.now()
+                            });
+                            resolve(compressedFile);
+                        } else {
+                            reject(new Error("Canvas compression returned null blob"));
+                        }
+                    },
+                    'image/jpeg',
+                    quality
+                );
+            };
+            img.onerror = (err) => reject(err);
+        };
+        reader.onerror = (err) => reject(err);
+    });
+}
+
 function previewCVImage(input) {
     console.log("previewCVImage triggered");
     if (input.files && input.files[0]) {
@@ -252,9 +314,27 @@ async function uploadCVImageHelper() {
         return null;
     }
     
-    console.log("Image file detected:", fileInput.files[0].name, "size:", fileInput.files[0].size);
+    let fileToUpload = fileInput.files[0];
+    console.log("Original Image file detected:", fileToUpload.name, "size:", fileToUpload.size);
+    
+    // Automatically compress image in browser if it is an image
+    if (fileToUpload.type.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp)$/i.test(fileToUpload.name)) {
+        try {
+            console.log("Compressing image in browser (Limit 800px width/height, 75% quality)...");
+            const compressed = await compressImage(fileToUpload, 800, 800, 0.75);
+            if (compressed && compressed.size < fileToUpload.size) {
+                fileToUpload = compressed;
+                console.log("Image compressed successfully. New size:", fileToUpload.size, "name:", fileToUpload.name);
+            } else {
+                console.log("Compressed file is larger or null, uploading original");
+            }
+        } catch (compErr) {
+            console.error("Image compression failed, uploading original:", compErr);
+        }
+    }
+    
     const formData = new FormData();
-    formData.append('file', fileInput.files[0]);
+    formData.append('file', fileToUpload);
     
     const token = getValidTokenOrRedirect();
     if (!token) {
@@ -702,10 +782,7 @@ function updateHtmlPreview() {
     const raw = document.getElementById('rawHtmlContent').value;
     const frame = document.getElementById('htmlPreviewFrame');
     if (!frame) return;
-    const doc = frame.contentDocument || frame.contentWindow.document;
-    doc.open();
-    doc.write(raw);
-    doc.close();
+    frame.srcdoc = raw;
 }
 
 function clearHtmlEditor() {
