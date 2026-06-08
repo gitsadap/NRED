@@ -225,6 +225,7 @@ function handleAuthFailure(reason = 'unauthorized') {
 }
 
 function previewCVImage(input) {
+    console.log("previewCVImage triggered");
     if (input.files && input.files[0]) {
         const reader = new FileReader();
         reader.onload = function(e) {
@@ -232,6 +233,7 @@ function previewCVImage(input) {
             if (preview) {
                 preview.src = e.target.result;
                 preview.classList.remove('hidden');
+                console.log("Local image preview displayed successfully");
             }
         };
         reader.readAsDataURL(input.files[0]);
@@ -239,24 +241,58 @@ function previewCVImage(input) {
 }
 
 async function uploadCVImageHelper() {
+    console.log("uploadCVImageHelper execution started");
     const fileInput = document.getElementById('cv_image_file');
-    if(!fileInput || !fileInput.files.length) return null;
+    if(!fileInput) {
+        console.log("Error: cv_image_file input element not found in DOM");
+        return null;
+    }
+    if(!fileInput.files.length) {
+        console.log("No image file selected, skipping upload");
+        return null;
+    }
     
+    console.log("Image file detected:", fileInput.files[0].name, "size:", fileInput.files[0].size);
     const formData = new FormData();
     formData.append('file', fileInput.files[0]);
     
     const token = getValidTokenOrRedirect();
-    if (!token) throw new Error('Auth required');
+    if (!token) {
+        console.log("Error: Token validation failed");
+        throw new Error('Auth required');
+    }
     const headers = { 'Authorization': `Bearer ${token}` };
     
+    console.log("Sending POST fetch to /admin/api/upload for image...");
     const res = await fetch('/admin/api/upload', { method: 'POST', body: formData, headers });
+    console.log("Fetch response received. Status:", res.status);
+    
     if(res.status === 401) {
+        console.log("Unauthorized (401), redirecting...");
         handleAuthFailure();
         throw new Error('Session expired');
     }
-    if(res.status === 403) throw new Error('Permission denied');
+    if(res.status === 403) {
+        console.log("Forbidden (403)");
+        throw new Error('Permission denied');
+    }
     
-    const data = await res.json();
+    const text = await res.text();
+    console.log("Raw response text (first 200 chars):", text.substring(0, 200));
+    if (text.trim().startsWith('<')) {
+        console.error("Server returned HTML instead of JSON. Full response:", text);
+        const match = text.match(/<title>(.*?)<\/title>/i);
+        const title = match ? match[1] : "HTML Response";
+        throw new Error(`Server returned HTML (${title}). Status: ${res.status}`);
+    }
+    
+    if(!res.ok) {
+        console.log("HTTP error response:", res.status);
+        throw new Error(`Upload image failed with status ${res.status}`);
+    }
+    
+    const data = JSON.parse(text);
+    console.log("Parsed JSON response for image upload:", data);
     if(data.location) {
         return data.location;
     } else {
@@ -272,6 +308,7 @@ async function uploadCVImage() {
             Swal.fire('สำเร็จ', 'อัปโหลดรูปภาพเรียบร้อย', 'success');
         }
     } catch(e) {
+        console.error("uploadCVImage error:", e);
         Swal.fire('Error', e.message, 'error');
     }
 }
@@ -349,11 +386,21 @@ function addExpertiseField(value) {
 }
 
 async function uploadCVPdfHelper() {
+    console.log("uploadCVPdfHelper execution started");
     const fileInput = document.getElementById('cv_pdf_file');
-    if(!fileInput || !fileInput.files.length) return null;
+    if(!fileInput) {
+        console.log("Error: cv_pdf_file input element not found in DOM");
+        return null;
+    }
+    if(!fileInput.files.length) {
+        console.log("No PDF file selected, skipping upload");
+        return null;
+    }
     
     const file = fileInput.files[0];
+    console.log("PDF file detected:", file.name, "size:", file.size);
     if(file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+        console.log("Error: File is not a PDF");
         throw new Error('กรุณาอัปโหลดไฟล์ PDF เท่านั้น');
     }
     
@@ -361,17 +408,42 @@ async function uploadCVPdfHelper() {
     formData.append('file', file);
     
     const token = getValidTokenOrRedirect();
-    if (!token) throw new Error('Auth required');
+    if (!token) {
+        console.log("Error: Token validation failed");
+        throw new Error('Auth required');
+    }
     const headers = { 'Authorization': `Bearer ${token}` };
     
+    console.log("Sending POST fetch to /admin/api/upload for PDF...");
     const res = await fetch('/admin/api/upload', { method: 'POST', body: formData, headers });
+    console.log("Fetch response received for PDF. Status:", res.status);
+    
     if(res.status === 401) {
+        console.log("Unauthorized (401), redirecting...");
         handleAuthFailure();
         throw new Error('Session expired');
     }
-    if(res.status === 403) throw new Error('Permission denied');
+    if(res.status === 403) {
+        console.log("Forbidden (403)");
+        throw new Error('Permission denied');
+    }
     
-    const data = await res.json();
+    const text = await res.text();
+    console.log("Raw response text for PDF (first 200 chars):", text.substring(0, 200));
+    if (text.trim().startsWith('<')) {
+        console.error("Server returned HTML instead of JSON. Full response:", text);
+        const match = text.match(/<title>(.*?)<\/title>/i);
+        const title = match ? match[1] : "HTML Response";
+        throw new Error(`Server returned HTML (${title}). Status: ${res.status}`);
+    }
+    
+    if(!res.ok) {
+        console.log("HTTP error response for PDF:", res.status);
+        throw new Error(`Upload PDF failed with status ${res.status}`);
+    }
+    
+    const data = JSON.parse(text);
+    console.log("Parsed JSON response for PDF upload:", data);
     if(data.location) {
         return data.location;
     } else {
@@ -390,27 +462,34 @@ async function uploadCVPdf() {
             await submitMyCV(true);
         }
     } catch(e) {
+        console.error("uploadCVPdf error:", e);
         Swal.fire('Error', e.message, 'error');
     }
 }
 
 async function submitMyCV(silent = false) {
+    console.log("submitMyCV triggered, silent =", silent);
     if (!silent) {
         Swal.fire({ title: 'กำลังบันทึกและอัปโหลดไฟล์...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
     }
     try {
         // 1. Upload image if selected
         try {
+            console.log("Step 1: Checking and uploading profile image...");
             const imageUrl = await uploadCVImageHelper();
             if (imageUrl) {
+                console.log("Profile image uploaded successfully, URL:", imageUrl);
                 document.getElementById('cv_image_url').value = imageUrl;
                 const preview = document.getElementById('cv_image_preview');
                 if (preview) {
                     preview.src = imageUrl;
                     preview.classList.remove('hidden');
                 }
+            } else {
+                console.log("No new profile image uploaded (returned null)");
             }
         } catch (err) {
+            console.error("Image upload step failed:", err);
             Swal.close();
             Swal.fire('อัปโหลดรูปภาพผิดพลาด', err.message, 'error');
             return;
@@ -418,21 +497,28 @@ async function submitMyCV(silent = false) {
 
         // 2. Upload PDF if selected
         try {
+            console.log("Step 2: Checking and uploading PDF CV...");
             const pdfUrl = await uploadCVPdfHelper();
             if (pdfUrl) {
+                console.log("PDF CV uploaded successfully, URL:", pdfUrl);
                 document.getElementById('cv_file_url').value = pdfUrl;
                 const link = document.getElementById('cv_file_preview_link');
                 if (link) {
                     link.href = pdfUrl;
                     link.classList.remove('hidden');
                 }
+            } else {
+                console.log("No new PDF CV uploaded (returned null)");
             }
         } catch (err) {
+            console.error("PDF upload step failed:", err);
             Swal.close();
             Swal.fire('อัปโหลดไฟล์ PDF ผิดพลาด', err.message, 'error');
             return;
         }
 
+        // 3. Save profile details
+        console.log("Step 3: Preparing payload and calling backend API...");
         const expInputs = document.querySelectorAll('.expertise-input');
         const expList = Array.from(expInputs).map(inp => inp.value.trim()).filter(val => val);
         
@@ -442,10 +528,17 @@ async function submitMyCV(silent = false) {
             image: document.getElementById('cv_image_url').value,
             cv_file: document.getElementById('cv_file_url').value
         };
+        console.log("Payload:", payload);
+        
         const res = await apiCall('/admin/api/faculty/my-cv', 'POST', payload);
-        if(!res) return; // Error handled inside apiCall already
+        console.log("API response received:", res);
+        if(!res) {
+            console.log("API response is falsy (handled in apiCall)");
+            return; 
+        }
         
         if(res.success) {
+            console.log("CV details saved successfully, resetting file inputs");
             // Reset the file input values so they don't upload again next time if they just click Save again without changing files
             const imgFile = document.getElementById('cv_image_file');
             if (imgFile) imgFile.value = '';
@@ -455,10 +548,12 @@ async function submitMyCV(silent = false) {
             Swal.close();
             Swal.fire('สำเร็จ', 'บันทึกข้อมูลเรียบร้อยแล้ว', 'success');
         } else {
+            console.log("API save failed, message:", res.message);
             Swal.close();
             Swal.fire('ผิดพลาด', res.message || 'ไม่สามารถบันทึกได้', 'error');
         }
     } catch(e) {
+        console.error("Error during submitMyCV process:", e);
         Swal.close();
         Swal.fire('Error', e.message, 'error');
     }
