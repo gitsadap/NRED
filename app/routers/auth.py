@@ -181,17 +181,17 @@ async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequ
     role = "teacher" # Default role
     
     # 1. Fallback / Local Admin check
-    if form_data.username == settings.admin_username and verify_password(form_data.password, get_password_hash(settings.admin_password)):
+    if form_data.username.lower() == settings.admin_username.lower() and verify_password(form_data.password, get_password_hash(settings.admin_password)):
         is_authenticated = True
         role = "admin"
     else:
         # 2. Check if username is allowed in LDAP admin list
-        allowed_admins = [u.strip() for u in settings.admin_users_list.split(',')]
+        allowed_admins = [u.strip().lower() for u in settings.admin_users_list.split(',')]
         
         # 3. Perform LDAP Auth for ANY user to allow them as teacher
         if authenticate_ldap(form_data.username, form_data.password):
             is_authenticated = True
-            if form_data.username in allowed_admins:
+            if form_data.username.lower() in allowed_admins:
                 role = "admin"
                 
     if not is_authenticated:

@@ -150,12 +150,10 @@ function initAdminApp() {
         });
         document.getElementById('headerTitle').innerText = 'ระบบจัดการโปรไฟล์อาจารย์';
     } else {
-        // Hide CV update for Admins if they don't want to use it
-        // Or keep it so admins can update their own CV too. Let's keep it visible.
-        // Hide CV update for specific admins: phonsawank, Sanonoif, Ittithepo
+        // Hide CV update for Admins if they are NOT 'gitsadap'
         if (payload && payload.sub) {
-            const noCvUsers = ['phonsawank', 'sanonoif', 'ittithepo'];
-            if (noCvUsers.includes(payload.sub.toLowerCase())) {
+            const username = payload.sub.toLowerCase();
+            if (username !== 'gitsadap') {
                 const cvEl = document.getElementById('nav-cv_update');
                 if (cvEl) cvEl.style.display = 'none';
             }
@@ -179,8 +177,8 @@ function showSection(sectionId) {
     if (sectionId === 'cv_update') {
         const payload = getUserPayload();
         if (payload && payload.sub) {
-            const noCvUsers = ['phonsawank', 'sanonoif', 'ittithepo'];
-            if (noCvUsers.includes(payload.sub.toLowerCase())) {
+            const username = payload.sub.toLowerCase();
+            if (username !== 'gitsadap') {
                 sectionId = 'dashboard';
             }
         }
