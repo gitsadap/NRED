@@ -2071,11 +2071,12 @@ async function fetchStudentData() {
             // Also load province stats
             loadProvinceStats(baseYear);
         } else {
-            Swal.fire('Error', 'No data returned or error occurred', 'error');
+            const errorMsg = res && res.detail ? res.detail : 'ไม่สามารถดึงข้อมูลได้ (ไม่มีข้อมูลหรือเกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล)';
+            Swal.fire('Error', errorMsg, 'error');
         }
     } catch (e) {
         console.error(e);
-        Swal.fire('Error', 'Failed to fetch student data', 'error');
+        Swal.fire('Error', 'เกิดข้อผิดพลาดในการเรียก API: ' + e.message, 'error');
     } finally {
         loading.classList.add('hidden');
     }
