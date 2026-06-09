@@ -1,4 +1,4 @@
-utf-8from __future__ import annotations
+from __future__ import annotations
 
 from dataclasses import dataclass
 from html import escape as html_escape

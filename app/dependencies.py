@@ -1,4 +1,4 @@
-utf-8from sqlalchemy import select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import Setting, Menu, ContactInfo
 from app.logging_config import logger

@@ -1,4 +1,4 @@
-utf-8from app.celery_worker import celery_app
+from app.celery_worker import celery_app
 from app.logging_config import logger
 import os
 

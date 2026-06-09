@@ -1,4 +1,4 @@
-utf-8from sqlalchemy import text
+from sqlalchemy import text
 from app.database import engine
 from app.logging_config import logger
 import asyncio

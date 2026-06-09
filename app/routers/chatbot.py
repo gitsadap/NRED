@@ -1,4 +1,4 @@
-utf-8import os
+import os
 import pickle
 import json
 import time  

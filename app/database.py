@@ -1,4 +1,4 @@
-utf-8import os
+import os
 import time
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, declarative_base

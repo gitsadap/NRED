@@ -1,4 +1,4 @@
-utf-8from fastapi import APIRouter, Depends, Query, HTTPException, Request, status, BackgroundTasks
+from fastapi import APIRouter, Depends, Query, HTTPException, Request, status, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc
 from app.database import get_db
