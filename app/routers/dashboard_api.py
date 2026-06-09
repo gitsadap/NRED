@@ -85,9 +85,10 @@ def get_curriculum_stats(base_year: int = Query(2569, description="ปีเร�
         rows = cursor.fetchall()
         
         programs_data = {}
-        for r in rows:
-            prog = decode_thai(r.get('programname') or r.get('PROGRAMNAME'))
-            lev = decode_thai(r.get('levgroupname') or r.get('LEVGROUPNAME'))
+        for row_raw in rows:
+            r = {k.strip().lower(): v for k, v in row_raw.items()}
+            prog = decode_thai(r.get('programname') or '')
+            lev = decode_thai(r.get('levgroupname') or '')
             
             if not prog: continue
                 
@@ -269,15 +270,16 @@ def get_province_stats(base_year: int = Query(2569)):
         rows = cursor.fetchall()
         
         counts = {}
-        for r in rows:
-            prog = decode_thai(r.get('PROGRAMNAME') or r.get('programname'))
-            lev = decode_thai(r.get('LEVGROUPNAME') or r.get('levgroupname'))
+        for row_raw in rows:
+            r = {k.strip().lower(): v for k, v in row_raw.items()}
+            prog = decode_thai(r.get('programname') or '')
+            lev = decode_thai(r.get('levgroupname') or '')
             
             if not prog: continue
-                
-            prov_id = r.get('HOMEPROVINCEID')
+            
+            prov_id = r.get('homeprovinceid')
             if not prov_id or str(prov_id).strip() == '0' or str(prov_id).strip() == 'None':
-                prov_id = r.get('CONTACTPROVINCEID')
+                prov_id = r.get('contactprovinceid')
                 
             try:
                 pid = int(prov_id)
@@ -344,18 +346,21 @@ def get_province_students(base_year: int = Query(..., description="ปีกา�
         rows = cursor.fetchall()
         
         students = []
-        for r in rows:
-            prog = decode_thai(r.get('PROGRAMNAME') or r.get('programname'))
-            lev = decode_thai(r.get('LEVGROUPNAME') or r.get('levgroupname'))
-            prefix = decode_thai(r.get('PREFIXNAME') or r.get('prefixname') or '')
-            fname = decode_thai(r.get('STDNAME') or r.get('stdname') or '')
-            lname = decode_thai(r.get('STDSURNAME') or r.get('stdsurname') or '')
+        for row_raw in rows:
+            # Convert keys to lowercase and strip whitespaces to avoid case-sensitivity and padding issues
+            r = {k.strip().lower(): v for k, v in row_raw.items()}
+            
+            prog = decode_thai(r.get('programname') or '')
+            lev = decode_thai(r.get('levgroupname') or '')
+            prefix = decode_thai(r.get('prefixname') or '')
+            fname = decode_thai(r.get('stdname') or '')
+            lname = decode_thai(r.get('stdsurname') or '')
             
             if not prog: continue
                 
-            prov_id = r.get('HOMEPROVINCEID')
+            prov_id = r.get('homeprovinceid')
             if not prov_id or str(prov_id).strip() == '0' or str(prov_id).strip() == 'None':
-                prov_id = r.get('CONTACTPROVINCEID')
+                prov_id = r.get('contactprovinceid')
                 
             try:
                 pid = int(prov_id)
@@ -363,8 +368,10 @@ def get_province_students(base_year: int = Query(..., description="ปีกา�
                 pid = 0
                 
             if pid == province_id:
-                std_code = str(r.get('STDCODE') or r.get('stdcode') or '')
+                std_code = str(r.get('stdcode') or '')
                 full_name = f"{prefix}{fname} {lname}".strip()
+                
+                print("DEBUG STUDENT:", {"stdcode": std_code, "fullname": full_name, "raw": row_raw})
                 
                 students.append({
                     "stdcode": std_code,
