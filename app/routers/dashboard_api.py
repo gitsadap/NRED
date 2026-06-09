@@ -26,6 +26,16 @@ def get_student_db_connection():
         print(f"DB Connection Error: {e}")
         return None
 
+def decode_thai(text):
+    if not text or not isinstance(text, str):
+        return text
+    try:
+        # Pymssql on Windows might interpret TIS-620 as Latin-1.
+        # This reverses it back to the proper Thai text.
+        return text.encode('latin1').decode('cp874')
+    except Exception:
+        return text
+
 @router.get("/curriculum-stats")
 def get_curriculum_stats(base_year: int = Query(2569, description="ปีเริ่มต้นการค้นหา เช่น 2569")):
     conn = get_student_db_connection()
@@ -66,8 +76,8 @@ def get_curriculum_stats(base_year: int = Query(2569, description="ปีเร�
         
         programs_data = {}
         for r in rows:
-            prog = r.get('programname') or r.get('PROGRAMNAME')
-            lev = r.get('levgroupname') or r.get('LEVGROUPNAME')
+            prog = decode_thai(r.get('programname') or r.get('PROGRAMNAME'))
+            lev = decode_thai(r.get('levgroupname') or r.get('LEVGROUPNAME'))
             
             if not prog: continue
                 
@@ -250,8 +260,8 @@ def get_province_stats(base_year: int = Query(2569)):
         
         counts = {}
         for r in rows:
-            prog = r.get('PROGRAMNAME') or r.get('programname')
-            lev = r.get('LEVGROUPNAME') or r.get('levgroupname')
+            prog = decode_thai(r.get('PROGRAMNAME') or r.get('programname'))
+            lev = decode_thai(r.get('LEVGROUPNAME') or r.get('levgroupname'))
             
             if not prog: continue
                 
@@ -325,8 +335,11 @@ def get_province_students(base_year: int = Query(..., description="ปีกา�
         
         students = []
         for r in rows:
-            prog = r.get('PROGRAMNAME') or r.get('programname')
-            lev = r.get('LEVGROUPNAME') or r.get('levgroupname')
+            prog = decode_thai(r.get('PROGRAMNAME') or r.get('programname'))
+            lev = decode_thai(r.get('LEVGROUPNAME') or r.get('levgroupname'))
+            prefix = decode_thai(r.get('PREFIXNAME') or r.get('prefixname') or '')
+            fname = decode_thai(r.get('STDNAME') or r.get('stdname') or '')
+            lname = decode_thai(r.get('STDSURNAME') or r.get('stdsurname') or '')
             
             if not prog: continue
                 
@@ -340,21 +353,18 @@ def get_province_students(base_year: int = Query(..., description="ปีกา�
                 pid = 0
                 
             if pid == province_id:
-                std_code = r.get('STDCODE', '')
-                prefix = r.get('PREFIXNAME', '') or ''
-                name = r.get('STDNAME', '') or ''
-                surname = r.get('STDSURNAME', '') or ''
-                full_name = f"{prefix}{name} {surname}".strip()
+                std_code = str(r.get('STDCODE') or r.get('stdcode') or '')
+                full_name = f"{prefix}{fname} {lname}".strip()
                 
                 students.append({
-                    "stdcode": std_code,
-                    "fullname": full_name,
+                    "id": std_code,
+                    "name": full_name,
                     "program": prog,
                     "level": lev
                 })
                 
         # Sort by program then stdcode
-        students.sort(key=lambda x: (x["program"], x["stdcode"]))
+        students.sort(key=lambda x: (x["program"], x["id"]))
         
         return {
             "base_year": base_year,
