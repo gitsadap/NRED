@@ -51,6 +51,14 @@ def get_curriculum_stats(base_year: int = Query(2569, description="ปีเร�
                 PROGRAMNAME, LEVGROUPNAME, STDADMITYEAR, STDSTATUSID, STDFINISHDATE
             FROM [Agri].[View_Student4AgriFaculty]
             WHERE STDADMITYEAR BETWEEN %d AND %d
+              AND (
+                  PROGRAMNAME LIKE N'%%สิ่งแวดล้อม%%' OR
+                  PROGRAMNAME LIKE N'%%ภูมิศาสตร์%%' OR
+                  PROGRAMNAME LIKE N'%%ภูมิสารสนเทศ%%' OR
+                  PROGRAMNAME LIKE N'%%อวกาศ%%' OR
+                  PROGRAMNAME LIKE N'%%ทรัพยากรธรรมชาติ%%'
+              )
+              AND PROGRAMNAME NOT LIKE N'%%วิทยาศาสตร์การเกษตร%%'
         """ % (db_start_year, end_year)
         
         cursor.execute(query)
@@ -59,13 +67,9 @@ def get_curriculum_stats(base_year: int = Query(2569, description="ปีเร�
         programs_data = {}
         for r in rows:
             prog = r.get('programname') or r.get('PROGRAMNAME')
-            lev = r.get('levgroupname') or r.get('LEVGROUPNAME') or 'ปริญญาตรี'
+            lev = r.get('levgroupname') or r.get('LEVGROUPNAME')
+            
             if not prog: continue
-                
-            if not any(k in prog for k in ['สิ่งแวดล้อม', 'ภูมิศาสตร์', 'ภูมิสารสนเทศ', 'อวกาศ', 'ทรัพยากรธรรมชาติ']):
-                continue
-            if 'วิทยาศาสตร์การเกษตร' in prog:
-                continue
                 
             key = (lev, prog)
             if key not in programs_data:
@@ -232,6 +236,14 @@ def get_province_stats(base_year: int = Query(2569)):
             SELECT HOMEPROVINCEID, CONTACTPROVINCEID, LEVGROUPNAME, PROGRAMNAME
             FROM [Agri].[View_Student4AgriFaculty]
             WHERE STDADMITYEAR = %s
+              AND (
+                  PROGRAMNAME LIKE N'%%สิ่งแวดล้อม%%' OR
+                  PROGRAMNAME LIKE N'%%ภูมิศาสตร์%%' OR
+                  PROGRAMNAME LIKE N'%%ภูมิสารสนเทศ%%' OR
+                  PROGRAMNAME LIKE N'%%อวกาศ%%' OR
+                  PROGRAMNAME LIKE N'%%ทรัพยากรธรรมชาติ%%'
+              )
+              AND PROGRAMNAME NOT LIKE N'%%วิทยาศาสตร์การเกษตร%%'
         """, (base_year,))
         
         rows = cursor.fetchall()
@@ -241,12 +253,7 @@ def get_province_stats(base_year: int = Query(2569)):
             prog = r.get('PROGRAMNAME') or r.get('programname')
             lev = r.get('LEVGROUPNAME') or r.get('levgroupname')
             
-            # Filter exactly like curriculum-stats
             if not prog: continue
-            if not any(k in prog for k in ['สิ่งแวดล้อม', 'ภูมิศาสตร์', 'ภูมิสารสนเทศ', 'อวกาศ', 'ทรัพยากรธรรมชาติ']):
-                continue
-            if 'วิทยาศาสตร์การเกษตร' in prog:
-                continue
                 
             prov_id = r.get('HOMEPROVINCEID')
             if not prov_id or str(prov_id).strip() == '0' or str(prov_id).strip() == 'None':
@@ -303,6 +310,14 @@ def get_province_students(base_year: int = Query(..., description="ปีกา�
             SELECT STDCODE, PREFIXNAME, STDNAME, STDSURNAME, PROGRAMNAME, LEVGROUPNAME, HOMEPROVINCEID, CONTACTPROVINCEID
             FROM [Agri].[View_Student4AgriFaculty]
             WHERE STDADMITYEAR = %s
+              AND (
+                  PROGRAMNAME LIKE N'%%สิ่งแวดล้อม%%' OR
+                  PROGRAMNAME LIKE N'%%ภูมิศาสตร์%%' OR
+                  PROGRAMNAME LIKE N'%%ภูมิสารสนเทศ%%' OR
+                  PROGRAMNAME LIKE N'%%อวกาศ%%' OR
+                  PROGRAMNAME LIKE N'%%ทรัพยากรธรรมชาติ%%'
+              )
+              AND PROGRAMNAME NOT LIKE N'%%วิทยาศาสตร์การเกษตร%%'
         """
         
         cursor.execute(query, (base_year,))
@@ -313,12 +328,7 @@ def get_province_students(base_year: int = Query(..., description="ปีกา�
             prog = r.get('PROGRAMNAME') or r.get('programname')
             lev = r.get('LEVGROUPNAME') or r.get('levgroupname')
             
-            # Filter exactly like curriculum-stats
             if not prog: continue
-            if not any(k in prog for k in ['สิ่งแวดล้อม', 'ภูมิศาสตร์', 'ภูมิสารสนเทศ', 'อวกาศ', 'ทรัพยากรธรรมชาติ']):
-                continue
-            if 'วิทยาศาสตร์การเกษตร' in prog:
-                continue
                 
             prov_id = r.get('HOMEPROVINCEID')
             if not prov_id or str(prov_id).strip() == '0' or str(prov_id).strip() == 'None':
