@@ -271,9 +271,11 @@ async def api_external_stats(db: AsyncSession = Depends(get_db)):
         graduated_ids = {40}
         lost_ids = {21, 22, 50, 51, 52, 60}
         
+        from app.routers.dashboard_api import decode_thai
+        
         for row in rows:
-            level = row['level']
-            program = row['program']
+            level = decode_thai(row['level'])
+            program = decode_thai(row['program'])
             
             # Filter programs to match the department's specific curriculums exactly like the old API
             if not any(k in program for k in ['สิ่งแวดล้อม', 'ภูมิศาสตร์', 'ภูมิสารสนเทศ', 'อวกาศ', 'ทรัพยากรธรรมชาติ']):

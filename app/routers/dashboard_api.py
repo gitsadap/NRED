@@ -19,8 +19,7 @@ def get_student_db_connection():
             server=os.getenv('STUDENT_DB_SERVER'),
             user=os.getenv('STUDENT_DB_USER'),
             password=os.getenv('STUDENT_DB_PASS'),
-            database=os.getenv('STUDENT_DB_NAME'),
-            charset='utf8'
+            database=os.getenv('STUDENT_DB_NAME')
         )
     except Exception as e:
         print(f"DB Connection Error: {e}")
