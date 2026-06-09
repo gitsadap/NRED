@@ -374,7 +374,7 @@ def get_province_students(base_year: int = Query(..., description="ปีกา�
                 })
                 
         # Sort by program then stdcode
-        students.sort(key=lambda x: (x["program"], x["id"]))
+        students.sort(key=lambda x: (x["program"], x["stdcode"]))
         
         return {
             "base_year": base_year,
