@@ -231,13 +231,27 @@ async def get_chatbot_response(req: ChatRequest):
         start_gemini_time = time.time()
         
         
-        response = await litellm.acompletion(
-            model="gemini/gemini-3.1-flash-lite-preview",
-            messages=messages,
-            api_key=gemini_key,
-            temperature=0.3, 
-            max_tokens=800
-        )
+        try:
+            response = await litellm.acompletion(
+                model="gemini/gemini-3.1-flash-lite-preview",
+                messages=messages,
+                api_key=gemini_key,
+                temperature=0.3, 
+                max_tokens=800
+            )
+        except Exception as e:
+            logger.error(f"Fallback to gemini-2.5-flash due to error: {e}")
+            try:
+                response = await litellm.acompletion(
+                    model="gemini/gemini-2.5-flash",
+                    messages=messages,
+                    api_key=gemini_key,
+                    temperature=0.3, 
+                    max_tokens=800
+                )
+            except Exception as e2:
+                logger.error(f"All models failed: {e2}")
+                return {"response": "ขออภัยค่ะ ตอนนี้ระบบ AI มีผู้ใช้งานเยอะมากจนโควต้าเต็มชั่วคราว รบกวนทิ้งช่วงสัก 1-2 นาทีแล้วลองพิมพ์มาใหม่นะคะ 🙏"}
         
         gemini_duration = time.time() - start_gemini_time
         logger.info(f"⏱️ [2] Time waiting for LiteLLM (Gemini): {gemini_duration:.2f} seconds")
