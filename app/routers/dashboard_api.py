@@ -367,8 +367,8 @@ def get_province_students(base_year: int = Query(..., description="ปีกา�
                 full_name = f"{prefix}{fname} {lname}".strip()
                 
                 students.append({
-                    "id": std_code,
-                    "name": full_name,
+                    "stdcode": std_code,
+                    "fullname": full_name,
                     "program": prog,
                     "level": lev
                 })
