@@ -29,10 +29,21 @@ def get_student_db_connection():
 def decode_thai(text):
     if not text or not isinstance(text, str):
         return text
+        
+    # If the text already has Thai characters, it's correct.
+    if any('\u0e00' <= c <= '\u0e7f' for c in text):
+        return text
+        
     try:
-        # Pymssql on Windows might interpret TIS-620 as Latin-1.
-        # This reverses it back to the proper Thai text.
-        return text.encode('latin1').decode('cp874')
+        # Try to encode to cp1252 (Windows default encoding for non-unicode bytes)
+        try:
+            raw_bytes = text.encode('cp1252')
+        except UnicodeEncodeError:
+            # Fallback to latin1 with replace to avoid crashes
+            raw_bytes = text.encode('latin1', errors='replace')
+            
+        # Decode back to Thai using cp874 (TIS-620)
+        return raw_bytes.decode('cp874', errors='replace')
     except Exception:
         return text
 
