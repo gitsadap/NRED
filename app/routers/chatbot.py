@@ -12,7 +12,16 @@ from app.config import settings
 from sentence_transformers import SentenceTransformer
 
 # โหลด Model สำหรับ Embedding ไว้ล่วงหน้า
-embedding_model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2', cache_folder="hf_cache")
+try:
+    embedding_model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2', cache_folder="hf_cache", local_files_only=True)
+except Exception as e:
+    logger.error(f"❌ Failed to load SentenceTransformer (No internet or cache missing): {e}")
+    try:
+        # Fallback without local_files_only in case it needs to download
+        embedding_model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2', cache_folder="hf_cache")
+    except Exception as e2:
+        logger.error(f"❌ Fallback failed too: {e2}")
+        embedding_model = None
 
 router = APIRouter(prefix="/api/v1", tags=["Chatbot AI"])
 
@@ -119,8 +128,8 @@ async def get_chatbot_response(req: ChatRequest):
         return {"response": "กรุณาพิมพ์คำถามครับ"}
     
     # เช็คแค่ฐานข้อมูล Vector ว่าโหลดมาสำเร็จไหม (ไม่ต้องเช็ค ai_model แล้ว)
-    if doc_embeddings is None:
-        return {"response": "ขออภัยค่ะ ระบบฐานความรู้ยังไม่พร้อมใช้งาน (Vector missing)"}
+    if doc_embeddings is None or embedding_model is None:
+        return {"response": "ขออภัยค่ะ ระบบฐานความรู้ AI หรืออินเทอร์เน็ตยังไม่พร้อมใช้งานบนเซิร์ฟเวอร์ค่ะ"}
 
     try:
         # เตรียมคำถามก่อนส่งไปทำ Embedding
