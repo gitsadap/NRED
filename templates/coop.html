@@ -518,7 +518,7 @@
                 throw new Error(data.message || "เกิดข้อผิดพลาดจาก API");
             }
         } catch (e) {
-            console.error("Fetch Error:", e);
+            // Silently handled
             pageData.value.error = "ไม่สามารถเชื่อมต่อฐานข้อมูลได้ กรุณาลองใหม่อีกครั้ง";
             pageData.value.loading = false;
         }

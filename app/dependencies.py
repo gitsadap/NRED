@@ -1,4 +1,4 @@
-from sqlalchemy import select
+utf-8from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import Setting, Menu, ContactInfo
 from app.logging_config import logger
@@ -15,11 +15,11 @@ async def get_global_context(db: AsyncSession):
     """Get global context with proper error handling"""
     now = time.monotonic()
     if _global_context_cache["value"] is not None and now < _global_context_cache["expires_at"]:
-        # Return a copy so request-level mutations won't poison shared cache.
+        
         return deepcopy(_global_context_cache["value"])
 
     try:
-        # Fetch Settings
+        
         result = await db.execute(select(Setting))
         settings = {row.Setting.key: row.Setting.value for row in result}
         
@@ -27,7 +27,7 @@ async def get_global_context(db: AsyncSession):
         site_logo = settings.get('site_logo', '/assets/images/logo_new.png')
         site_footer = sanitize_rich_html(settings.get('footer_text', '© 2024 Department of NRE. All Rights Reserved.'))
 
-        # Fetch All Menus
+        
         menu_result = await db.execute(select(Menu))
         all_menus = menu_result.scalars().all()
         
@@ -41,7 +41,7 @@ async def get_global_context(db: AsyncSession):
 
         menu_items = menus.get('main', [])
         if not menu_items:
-            # Default Fallback
+            
             menu_items = [
                 {'label': 'เกี่ยวากับเรา', 'url': '/about'},
                 {'label': 'หลักสูตร', 'url': '/curriculum'},
@@ -53,7 +53,7 @@ async def get_global_context(db: AsyncSession):
                 {'label': 'อุทธรณ์ร้องทุกข์', 'url': '/appeals'}, 
             ]
         
-        # Parse JSON Settings for Home Page
+        
         try:
             hero_slider_images = json.loads(settings.get('hero_slider_images') or '[]')
         except json.JSONDecodeError:
@@ -82,7 +82,7 @@ async def get_global_context(db: AsyncSession):
             logger.warning("Invalid JSON in news_categories")
             news_categories = ["General", "Activity", "Research", "Announcement"]
 
-        # Fetch Contacts
+        
         try:
             contact_res = await db.execute(select(ContactInfo).order_by(ContactInfo.order_index))
             all_contacts = contact_res.scalars().all()
@@ -116,7 +116,7 @@ async def get_global_context(db: AsyncSession):
         
     except Exception as e:
         logger.error(f"Error in get_global_context: {e}")
-        # Return minimal context to prevent complete failure
+        
         return {
             "site_title": "Department of NRE",
             "site_logo": "/assets/images/logo_new.png",

@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+utf-8from pydantic import BaseModel
 from typing import Optional
 
 class AppealCreate(BaseModel):

@@ -125,7 +125,7 @@
                 Swal.fire({
                     icon: 'error',
                     title: 'เกิดข้อผิดพลาด',
-                    text: result.error || 'Unknown Error',
+                    text: result.detail || result.error || 'Unknown Error',
                     confirmButtonColor: '#d32f2f'
                 });
             }
@@ -136,7 +136,7 @@
                 text: 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้',
                 confirmButtonColor: '#d32f2f'
             });
-            console.error(err);
+            // Silently handled
         } finally {
             btn.innerText = originalText;
             btn.disabled = false;

@@ -1,4 +1,4 @@
-# pyrefly: ignore [missing-import]
+utf-8
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc, text, func
@@ -17,7 +17,7 @@ async def api_global_context(db: AsyncSession = Depends(get_db)):
     """ดึงข้อมูลการตั้งค่า, เมนู, และ Footer ที่ใช้ร่วมกันทุกหน้า"""
     context = await get_global_context(db)
     
-    # Remove large unneeded objects from context to make it pure JSON
+    
     if "request" in context:
          del context["request"]
     
@@ -26,7 +26,7 @@ async def api_global_context(db: AsyncSession = Depends(get_db)):
 @router.get("/home")
 async def api_home(db: AsyncSession = Depends(get_db)):
     """ดึงข้อมูลทั้งหมดสำหรับแสดงผลหน้ากแรก"""
-    # Latest News & Activities
+    
     news_res = await db.execute(select(News).order_by(desc(News.created_at)).limit(6))
     act_res = await db.execute(select(Activity).order_by(desc(Activity.created_at)).limit(6))
     
@@ -35,23 +35,23 @@ async def api_home(db: AsyncSession = Depends(get_db)):
     
     combined = sorted(news_items + activity_items, key=lambda x: x["created_at"] or getattr(x, 'id', 0), reverse=True)[:6]
     
-    # Banners
+    
     banner_res = await db.execute(select(Banner).where(Banner.is_active == 1).order_by(Banner.order_index))
     banners = [{"id": b.id, "title": b.title, "subtitle": b.subtitle, "image_url": b.image_url, "video_url": b.video_url} for b in banner_res.scalars().all()]
     
-    # Missions
+    
     mission_res = await db.execute(select(Mission).order_by(Mission.order_index))
     missions = [{"id": m.id, "title": m.title, "description": m.desc, "icon": m.icon, "color": m.color} for m in mission_res.scalars().all()]
     
-    # Courses
+    
     course_res = await db.execute(select(Course).order_by(Course.order_index))
     courses = [{"id": c.id, "name_th": c.title_th, "name_en": c.title_en, "youtube_url": c.video_url} for c in course_res.scalars().all()]
     
-    # Awards
+    
     award_res = await db.execute(select(Award).order_by(Award.order_index))
     awards = [{"id": a.id, "title": a.title, "description": a.description, "recipient": getattr(a, 'recipient', ''), "image_url": a.image_url, "icon": a.icon, "link_url": a.link_url} for a in award_res.scalars().all()]
     
-    # Stats
+    
     stat_res = await db.execute(select(Statistic).order_by(Statistic.order_index))
     stats = [{"label": s.label, "number": s.value, "suffix": s.suffix, "icon": s.icon} for s in stat_res.scalars().all()]
 
@@ -66,7 +66,7 @@ async def api_home(db: AsyncSession = Depends(get_db)):
             {'title': 'Geography', 'url': '/curriculum#geo', 'color': 'indigo', 'image': ''}
         ]
 
-    # If DB stats empty, use fallback from settings or defaults
+    
     if not stats:
         stats_json = settings_dict.get('stats_json')
         if stats_json:
@@ -181,8 +181,8 @@ async def api_faculty_list(db: AsyncSession = Depends(get_db)):
     experts = sorted([f for f in all_faculty if f['is_expert'] and not (f.get('admin_position') and f['admin_position'].strip())], key=lambda x: x['_weight'], reverse=True)
     others = [f for f in all_faculty]
     
-    # Process others group similarly to SSR logic...
-    # (Simplified for JSON response, frontend can group or backend groups here)
+    
+    
     faculty_groups = []
     if executives: faculty_groups.append({"name": "ผู้บริหารภาควิชา", "members": executives})
     if experts: faculty_groups.append({"name": "ผู้ทรงคุณวุฒิพิเศษ / ผู้เชี่ยวชาญ", "members": experts})
@@ -221,12 +221,12 @@ async def api_external_stats(db: AsyncSession = Depends(get_db)):
     import pymssql
     
     try:
-        # 1. ดึงข้อมูลจำนวนอาจารย์จาก Postgres (Local) เหมือนเดิม
+        
         faculty_count_stmt = select(func.count()).select_from(Faculty)
         faculty_count_res = await db.execute(faculty_count_stmt)
         total_faculty = faculty_count_res.scalar() or 0
 
-        # Calculate total publications (ผลงานตีพิมพ์ทั้งหมดบนหน้า /research)
+        
         total_research = 0
         research_res = await db.execute(select(Faculty.scholar_data).where(Faculty.scholar_data != None))
         for s_data in research_res.scalars().all():
@@ -238,7 +238,7 @@ async def api_external_stats(db: AsyncSession = Depends(get_db)):
                 except Exception:
                     pass
 
-        # 2. ดึงข้อมูลนิสิตจาก DB ภายในโดยตรงแทนการเรียก API ภายนอก
+        
         conn = pymssql.connect(
             server=os.getenv('STUDENT_DB_SERVER'),
             user=os.getenv('STUDENT_DB_USER'),
@@ -277,7 +277,7 @@ async def api_external_stats(db: AsyncSession = Depends(get_db)):
             level = decode_thai(row['level'])
             program = decode_thai(row['program'])
             
-            # Filter programs to match the department's specific curriculums exactly like the old API
+            
             if not any(k in program for k in ['สิ่งแวดล้อม', 'ภูมิศาสตร์', 'ภูมิสารสนเทศ', 'อวกาศ', 'ทรัพยากรธรรมชาติ']):
                 continue
             if 'วิทยาศาสตร์การเกษตร' in program:
@@ -303,7 +303,7 @@ async def api_external_stats(db: AsyncSession = Depends(get_db)):
                 data_summary[level]["programs"][program]["lost"] += count
                 total_lost += count
 
-        # Calculate success rates for programs
+        
         for level in data_summary:
             for prog, stats in data_summary[level]["programs"].items():
                 g = stats["graduated"]
@@ -338,7 +338,7 @@ async def api_external_stats(db: AsyncSession = Depends(get_db)):
     except Exception as e:
         logger.error(f"EXTERNAL-STATS error: {e}", exc_info=True)
         try:
-            # Fallback total_research in case of exception during fetching/parsing other components
+            
             total_research = 0
             research_res = await db.execute(select(Faculty.scholar_data).where(Faculty.scholar_data != None))
             for s_data in research_res.scalars().all():
@@ -372,10 +372,10 @@ def harden_scholar_data(data):
     elif isinstance(data, dict):
         cleaned = {}
         for k, v in data.items():
-            # 1. ลบฟิลด์ที่ไม่ได้ใช้งานเพื่อลดความเสี่ยง PII และลดขนาด JSON ลงมากกว่า 50%
+            
             if k in ("cites_id", "serpapi_link"):
                 continue
-            # 2. ป้องกัน ZAP ตรวจพบบัตรเครดิตแบบ False Positive โดย Mask ตัวเลขยาว 12-19 หลักตรงกลาง
+            
             if k == "link" or k == "thumbnail":
                 if isinstance(v, str):
                     def mask_digits(match):
@@ -449,7 +449,7 @@ async def get_coop_stats(db: AsyncSession = Depends(get_db)):
             m_name = "ทรัพยากรธรรมชาติและสิ่งแวดล้อม" if row.major == 1 else "ภูมิศาสตร์" if row.major == 2 else "อื่นๆ"
             majors_data.append({"name": m_name, "count": row.cnt})
 
-        # Top 10 บริษัท ของ ทรัพยากรธรรมชาติและสิ่งแวดล้อม (major = 1)
+        
         top_nre_rows = await db.execute(text("""
             SELECT c.company_name, COUNT(s.id) as cnt
             FROM public.coop_students s
@@ -459,7 +459,7 @@ async def get_coop_stats(db: AsyncSession = Depends(get_db)):
         """))
         top_nre = [{"name": r.company_name, "count": r.cnt} for r in top_nre_rows]
 
-        # Top 10 บริษัท ของ ภูมิศาสตร์ (major = 2)
+        
         top_geo_rows = await db.execute(text("""
             SELECT c.company_name, COUNT(s.id) as cnt
             FROM public.coop_students s
@@ -469,7 +469,7 @@ async def get_coop_stats(db: AsyncSession = Depends(get_db)):
         """))
         top_geo = [{"name": r.company_name, "count": r.cnt} for r in top_geo_rows]
 
-        # ดึงรายชื่อบริษัททั้งหมดสำหรับสร้างตาราง
+        
         all_comp_rows = await db.execute(text("SELECT co_code, company_name, address, phone FROM public.coop_companies ORDER BY co_code"))
         all_companies = [{"id": r.co_code, "name": r.company_name, "address": r.address or "-", "phone": r.phone or "-"} for r in all_comp_rows]
 

@@ -1,9 +1,7 @@
 /**
  * Admin Dashboard Logic
  */
-console.log("Admin.js loading...");
 
-// --- Auth / Session Helpers ---
 const AUTH_CLOCK_SKEW_SECONDS = 30; // tolerate minor client/server clock drift
 let authExpiryTimer = null;
 let _appealsById = new Map();
@@ -38,7 +36,6 @@ function clearChildren(el) {
 }
 
 function base64UrlDecode(input) {
-    // base64url -> base64
     const base64 = input.replace(/-/g, '+').replace(/_/g, '/');
     const padded = base64.padEnd(base64.length + (4 - (base64.length % 4)) % 4, '=');
     return atob(padded);
@@ -90,7 +87,6 @@ function getValidTokenOrRedirect() {
 }
 
 
-// --- Global Config & Init ---
 const tinyConfig = {
     plugins: 'link image code table lists media',
     toolbar: 'undo redo | blocks | bold italic | alignleft aligncenter alignright | bullist numlist | link image media | table code',
@@ -99,7 +95,6 @@ const tinyConfig = {
     image_title: true,
     automatic_uploads: true,
     file_picker_types: 'image',
-    // Custom Upload Logic for TinyMCE
     images_upload_handler: (blobInfo, progress) => new Promise((resolve, reject) => {
         const formData = new FormData();
         formData.append('file', blobInfo.blob(), blobInfo.filename());
@@ -124,7 +119,6 @@ const tinyConfig = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Check if authenticated
     const token = localStorage.getItem('admin_token');
     if (!token || isTokenExpired(token)) return handleAuthFailure('expired');
     scheduleAutoLogout(token);
@@ -139,13 +133,11 @@ function initAdminApp() {
     const payload = getUserPayload();
     let initialSection = 'dashboard';
     
-    // Update Header Profile
     if (payload && payload.sub) {
         document.getElementById('adminUsernameDisplay').innerText = payload.sub;
         const initial = payload.sub.charAt(0).toUpperCase();
         document.getElementById('adminProfileFallback').innerText = initial;
         
-        // Fetch profile image and real name asynchronously
         apiCall('/admin/api/faculty/my-cv')
             .then(res => {
                 if (res && res.success && res.faculty) {
@@ -162,19 +154,14 @@ function initAdminApp() {
                     }
                 }
             })
-            .catch(e => console.log("Profile data not found."));
     }
     
-    // Fetch dashboard stats if admin
     if (payload && payload.role !== 'teacher') {
-        // loadDashboardStats(); // TODO: Function not defined
         loadTags();
     }
     
-    // Role Based Access Control UI
     if (payload && payload.role === 'teacher') {
         initialSection = 'cv_update';
-        // Hide CMS menus for teachers
         const adminIds = ['nav-dashboard', 'nav-pages', 'nav-unified', 'nav-faculty', 'nav-home_sections', 'nav-media', 'nav-settings', 'nav-appeals'];
         adminIds.forEach(id => {
             const el = document.getElementById(id);
@@ -182,10 +169,8 @@ function initAdminApp() {
         });
         document.getElementById('headerTitle').innerText = 'ระบบจัดการโปรไฟล์อาจารย์';
     } else {
-        // Hide CV update for Admins if they are NOT 'gitsadap'
         if (payload && payload.sub) {
             const username = payload.sub.toLowerCase();
-            console.log("Logged in as admin:", username);
             if (username !== 'gitsadap') {
                 const cvEl = document.getElementById('nav-cv_update');
                 if (cvEl) cvEl.remove();
@@ -196,7 +181,6 @@ function initAdminApp() {
         }
     }
 
-    // Init TinyMCE safely
     if (typeof tinymce !== 'undefined') {
         if (document.querySelector('#content')) {
             tinymce.init({ ...tinyConfig, selector: '#content' });
@@ -209,13 +193,10 @@ function initAdminApp() {
         }
     }
 
-    // Default Section
     showSection(initialSection);
 }
 
-// --- Navigation & Sections ---
 function showSection(sectionId) {
-    // Prevent specific admins from accessing cv_update
     if (sectionId === 'cv_update') {
         const payload = getUserPayload();
         if (payload && payload.sub) {
@@ -228,7 +209,6 @@ function showSection(sectionId) {
 
     document.querySelectorAll('.section-view').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('nav a').forEach(el => {
-        // Reset styles but preserve display:none
         if (el.style.display !== 'none') {
             el.className = 'block py-3 px-6 hover:bg-slate-800 cursor-pointer transition-colors border-l-4 border-transparent hover:border-blue-500 text-slate-100';
         }
@@ -242,7 +222,6 @@ function showSection(sectionId) {
         activeNav.className = 'block py-3 px-6 bg-slate-800 cursor-pointer transition-colors border-l-4 border-blue-500 text-white shadow-inner';
     }
 
-    // Load Data on Switch
     if (sectionId === 'cv_update') loadMyCV();
     if (sectionId === 'pages') loadPages();
     if (sectionId === 'unified') switchUnifiedTab('content');
@@ -255,13 +234,11 @@ function showSection(sectionId) {
     if (sectionId === 'student_data') fetchStudentData();
 }
 
-// --- API Helpers ---
 function handleAuthFailure(reason = 'unauthorized') {
     try {
         localStorage.removeItem('admin_token');
         sessionStorage.setItem('auth_failure_reason', reason);
     } catch (e) {
-        // ignore
     }
     window.location.href = '/admin/login';
 }
@@ -277,7 +254,6 @@ function compressImage(file, maxWidth, maxHeight, quality) {
                 let width = img.width;
                 let height = img.height;
 
-                // Calculate new dimensions
                 if (width > height) {
                     if (width > maxWidth) {
                         height = Math.round((height * maxWidth) / width);
@@ -296,12 +272,9 @@ function compressImage(file, maxWidth, maxHeight, quality) {
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
 
-                // Export to Blob
                 canvas.toBlob(
                     (blob) => {
                         if (blob) {
-                            // Re-wrap the blob in a File object to retain filename
-                            // Change extension to .jpg since canvas export is jpeg
                             let name = file.name;
                             const extIndex = name.lastIndexOf('.');
                             if (extIndex !== -1) {
@@ -329,7 +302,6 @@ function compressImage(file, maxWidth, maxHeight, quality) {
 }
 
 function previewCVImage(input) {
-    console.log("previewCVImage triggered");
     if (input.files && input.files[0]) {
         const reader = new FileReader();
         reader.onload = function(e) {
@@ -337,7 +309,6 @@ function previewCVImage(input) {
             if (preview) {
                 preview.src = e.target.result;
                 preview.classList.remove('hidden');
-                console.log("Local image preview displayed successfully");
             }
         };
         reader.readAsDataURL(input.files[0]);
@@ -345,30 +316,22 @@ function previewCVImage(input) {
 }
 
 async function uploadCVImageHelper() {
-    console.log("uploadCVImageHelper execution started");
     const fileInput = document.getElementById('cv_image_file');
     if(!fileInput) {
-        console.log("Error: cv_image_file input element not found in DOM");
         return null;
     }
     if(!fileInput.files.length) {
-        console.log("No image file selected, skipping upload");
         return null;
     }
     
     let fileToUpload = fileInput.files[0];
-    console.log("Original Image file detected:", fileToUpload.name, "size:", fileToUpload.size);
     
-    // Automatically compress image in browser if it is an image
     if (fileToUpload.type.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp)$/i.test(fileToUpload.name)) {
         try {
-            console.log("Compressing image in browser (Limit 800px width/height, 75% quality)...");
             const compressed = await compressImage(fileToUpload, 800, 800, 0.75);
             if (compressed && compressed.size < fileToUpload.size) {
                 fileToUpload = compressed;
-                console.log("Image compressed successfully. New size:", fileToUpload.size, "name:", fileToUpload.name);
             } else {
-                console.log("Compressed file is larger or null, uploading original");
             }
         } catch (compErr) {
             console.error("Image compression failed, uploading original:", compErr);
@@ -380,12 +343,10 @@ async function uploadCVImageHelper() {
     
     const token = getValidTokenOrRedirect();
     if (!token) {
-        console.log("Error: Token validation failed");
         throw new Error('Auth required');
     }
     const headers = { 'Authorization': `Bearer ${token}` };
     
-    console.log("Sending POST fetch to /admin/api/upload for image...");
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
     let res;
@@ -400,20 +361,16 @@ async function uploadCVImageHelper() {
         }
         throw err;
     }
-    console.log("Fetch response received. Status:", res.status);
     
     if(res.status === 401) {
-        console.log("Unauthorized (401), redirecting...");
         handleAuthFailure();
         throw new Error('Session expired');
     }
     if(res.status === 403) {
-        console.log("Forbidden (403)");
         throw new Error('Permission denied');
     }
     
     const text = await res.text();
-    console.log("Raw response text (first 200 chars):", text.substring(0, 200));
     if (text.trim().startsWith('<')) {
         console.error("Server returned HTML instead of JSON. Full response:", text);
         const match = text.match(/<title>(.*?)<\/title>/i);
@@ -422,12 +379,10 @@ async function uploadCVImageHelper() {
     }
     
     if(!res.ok) {
-        console.log("HTTP error response:", res.status);
         throw new Error(`Upload image failed with status ${res.status}`);
     }
     
     const data = JSON.parse(text);
-    console.log("Parsed JSON response for image upload:", data);
     if(data.location) {
         return data.location;
     } else {
@@ -473,7 +428,6 @@ async function loadMyCV() {
             } else if (res.faculty.expertise) {
                 try {
                     let rawExp = String(res.faculty.expertise);
-                    // Convert python single-quoted list to valid JSON if it's a python string
                     let fixedJson = rawExp.replace(/'/g, '"');
                     expertiseList = JSON.parse(fixedJson);
                     if (!Array.isArray(expertiseList)) expertiseList = [expertiseList];
@@ -521,21 +475,16 @@ function addExpertiseField(value) {
 }
 
 async function uploadCVPdfHelper() {
-    console.log("uploadCVPdfHelper execution started");
     const fileInput = document.getElementById('cv_pdf_file');
     if(!fileInput) {
-        console.log("Error: cv_pdf_file input element not found in DOM");
         return null;
     }
     if(!fileInput.files.length) {
-        console.log("No PDF file selected, skipping upload");
         return null;
     }
     
     const file = fileInput.files[0];
-    console.log("PDF file detected:", file.name, "size:", file.size);
     if(file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
-        console.log("Error: File is not a PDF");
         throw new Error('กรุณาอัปโหลดไฟล์ PDF เท่านั้น');
     }
     
@@ -544,12 +493,10 @@ async function uploadCVPdfHelper() {
     
     const token = getValidTokenOrRedirect();
     if (!token) {
-        console.log("Error: Token validation failed");
         throw new Error('Auth required');
     }
     const headers = { 'Authorization': `Bearer ${token}` };
     
-    console.log("Sending POST fetch to /admin/api/upload for PDF...");
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
     let res;
@@ -564,20 +511,16 @@ async function uploadCVPdfHelper() {
         }
         throw err;
     }
-    console.log("Fetch response received for PDF. Status:", res.status);
     
     if(res.status === 401) {
-        console.log("Unauthorized (401), redirecting...");
         handleAuthFailure();
         throw new Error('Session expired');
     }
     if(res.status === 403) {
-        console.log("Forbidden (403)");
         throw new Error('Permission denied');
     }
     
     const text = await res.text();
-    console.log("Raw response text for PDF (first 200 chars):", text.substring(0, 200));
     if (text.trim().startsWith('<')) {
         console.error("Server returned HTML instead of JSON. Full response:", text);
         const match = text.match(/<title>(.*?)<\/title>/i);
@@ -586,12 +529,10 @@ async function uploadCVPdfHelper() {
     }
     
     if(!res.ok) {
-        console.log("HTTP error response for PDF:", res.status);
         throw new Error(`Upload PDF failed with status ${res.status}`);
     }
     
     const data = JSON.parse(text);
-    console.log("Parsed JSON response for PDF upload:", data);
     if(data.location) {
         return data.location;
     } else {
@@ -616,17 +557,13 @@ async function uploadCVPdf() {
 }
 
 async function submitMyCV(silent = false) {
-    console.log("submitMyCV triggered, silent =", silent);
     if (!silent) {
         Swal.fire({ title: 'กำลังบันทึกและอัปโหลดไฟล์...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
     }
     try {
-        // 1. Upload image if selected
         try {
-            console.log("Step 1: Checking and uploading profile image...");
             const imageUrl = await uploadCVImageHelper();
             if (imageUrl) {
-                console.log("Profile image uploaded successfully, URL:", imageUrl);
                 document.getElementById('cv_image_url').value = imageUrl;
                 const preview = document.getElementById('cv_image_preview');
                 if (preview) {
@@ -634,7 +571,6 @@ async function submitMyCV(silent = false) {
                     preview.classList.remove('hidden');
                 }
             } else {
-                console.log("No new profile image uploaded (returned null)");
             }
         } catch (err) {
             console.error("Image upload step failed:", err);
@@ -643,12 +579,9 @@ async function submitMyCV(silent = false) {
             return;
         }
 
-        // 2. Upload PDF if selected
         try {
-            console.log("Step 2: Checking and uploading PDF CV...");
             const pdfUrl = await uploadCVPdfHelper();
             if (pdfUrl) {
-                console.log("PDF CV uploaded successfully, URL:", pdfUrl);
                 document.getElementById('cv_file_url').value = pdfUrl;
                 const link = document.getElementById('cv_file_preview_link');
                 if (link) {
@@ -656,7 +589,6 @@ async function submitMyCV(silent = false) {
                     link.classList.remove('hidden');
                 }
             } else {
-                console.log("No new PDF CV uploaded (returned null)");
             }
         } catch (err) {
             console.error("PDF upload step failed:", err);
@@ -665,8 +597,6 @@ async function submitMyCV(silent = false) {
             return;
         }
 
-        // 3. Save profile details
-        console.log("Step 3: Preparing payload and calling backend API...");
         const expInputs = document.querySelectorAll('.expertise-input');
         const expList = Array.from(expInputs).map(inp => inp.value.trim()).filter(val => val);
         
@@ -676,18 +606,13 @@ async function submitMyCV(silent = false) {
             image: document.getElementById('cv_image_url').value,
             cv_file: document.getElementById('cv_file_url').value
         };
-        console.log("Payload:", payload);
         
         const res = await apiCall('/admin/api/faculty/my-cv', 'POST', payload);
-        console.log("API response received:", res);
         if(!res) {
-            console.log("API response is falsy (handled in apiCall)");
             return; 
         }
         
         if(res.success) {
-            console.log("CV details saved successfully, resetting file inputs");
-            // Reset the file input values so they don't upload again next time if they just click Save again without changing files
             const imgFile = document.getElementById('cv_image_file');
             if (imgFile) imgFile.value = '';
             const pdfFile = document.getElementById('cv_pdf_file');
@@ -696,7 +621,6 @@ async function submitMyCV(silent = false) {
             Swal.close();
             Swal.fire('สำเร็จ', 'บันทึกข้อมูลเรียบร้อยแล้ว', 'success');
         } else {
-            console.log("API save failed, message:", res.message);
             Swal.close();
             Swal.fire('ผิดพลาด', res.message || 'ไม่สามารถบันทึกได้', 'error');
         }
@@ -747,7 +671,6 @@ async function confirmAction(message, actionFn) {
     if (result.isConfirmed) await actionFn();
 }
 
-// --- Pages Logic ---
 async function loadPages() {
     const pages = await apiCall('/admin/api/pages');
     if (!pages) return;
@@ -770,17 +693,14 @@ async function editPage(id, title, slug) {
     document.getElementById('title').value = title || '';
     document.getElementById('slug').value = slug || '';
 
-    // Fetch content to load into editor
     if (id) {
         const pages = await apiCall('/admin/api/pages');
         const page = pages.find(p => p.id === id);
         if (page) {
             const content = page.content || '';
             
-            // ALWAYS populate the raw HTML textarea so it is available if switched
             document.getElementById('rawHtmlContent').value = content;
             
-            // Auto-detect full HTML document vs rich-text content
             const isFullHtml = content.trim().toLowerCase().startsWith('<!doctype') ||
                 content.trim().toLowerCase().startsWith('<html') ||
                 content.includes('bg-gradient') || 
@@ -810,7 +730,6 @@ function closePageEditor() {
     document.getElementById('pageEditorView').classList.add('hidden');
 }
 
-// ─── HTML Editor Mode ─────────────────────────────────────────────────────────
 let currentEditorMode = 'wysiwyg'; // 'wysiwyg' | 'html'
 
 function switchEditorMode(mode) {
@@ -822,7 +741,6 @@ function switchEditorMode(mode) {
     if (!wysiwygWrapper) return; // guard if editor not visible yet
 
     if (mode === 'wysiwyg') {
-        // Carry over changes from HTML to WYSIWYG if switching back
         if (!htmlWrapper.classList.contains('hidden')) {
             const rawContent = document.getElementById('rawHtmlContent').value;
             if (rawContent) safeSetTinyContent('content', rawContent);
@@ -832,10 +750,8 @@ function switchEditorMode(mode) {
         btnWysiwyg.className = 'px-3 py-1.5 rounded-md text-xs font-bold transition bg-white text-gray-800 shadow';
         btnHtml.className = 'px-3 py-1.5 rounded-md text-xs font-bold transition text-gray-500 hover:text-gray-700';
     } else {
-        // Carry over changes from WYSIWYG to HTML if user typed there first
         if (!wysiwygWrapper.classList.contains('hidden')) {
             const wyContent = safeGetTinyContent('content');
-            // Optional: Only overwrite if it contains something (so we don't overwrite DB copy when empty)
             if (wyContent) document.getElementById('rawHtmlContent').value = wyContent;
         }
         wysiwygWrapper.classList.add('hidden');
@@ -863,8 +779,6 @@ async function savePage(e) {
 
     let content = '';
     if (currentEditorMode === 'html') {
-        // Store the full HTML document as-is.
-        // page.html uses {{ page.content | safe }} which renders it correctly.
         content = document.getElementById('rawHtmlContent').value;
     } else {
         content = safeGetTinyContent('content');
@@ -895,7 +809,6 @@ async function deletePage(id) {
 }
 
 
-// --- Unified Content (News & Activities) ---
 function switchUnifiedTab(tab) {
     document.querySelectorAll('.unified-content').forEach(el => el.classList.add('hidden'));
     document.getElementById(`unified-${tab}`).classList.remove('hidden');
@@ -950,7 +863,6 @@ function renderContentTable(items) {
 function openUnifiedEditor() {
     document.getElementById('contentListView').classList.add('hidden');
     document.getElementById('contentEditorView').classList.remove('hidden');
-    // Default Reset
     document.getElementById('unifiedForm').reset();
     document.getElementById('postId').value = '';
     safeSetTinyContent('postContent', '');
@@ -964,8 +876,6 @@ function closeUnifiedEditor() {
 }
 
 function toggleFormFields() {
-    // Dynamic fields based on type? Currently they are mostly same.
-    // Maybe change Category options based on type.
 }
 
 async function editUnifiedContent(id, type) {
@@ -1017,7 +927,6 @@ async function deleteUnifiedContent(id, type) {
 }
 
 
-// --- Media Logic ---
 async function loadMedia() {
     const files = await apiCall('/admin/api/media');
     const container = document.getElementById('mediaGallery');
@@ -1080,7 +989,6 @@ async function deleteMedia(filename) {
     });
 }
 
-// Media Selector Modal Helpers
 let mediaCallback = null;
 function openMediaSelector(cb) {
     mediaCallback = cb;
@@ -1106,7 +1014,6 @@ function selectMedia(url) {
     closeMediaSelector();
 }
 
-// Upload file and set image field + preview
 async function uploadAndSetHomeImage(inputEl, fieldId, previewId) {
     const file = inputEl.files[0];
     if (!file) return;
@@ -1130,7 +1037,6 @@ async function uploadAndSetHomeImage(inputEl, fieldId, previewId) {
                 preview.src = data.location;
                 preview.classList.remove('hidden');
             }
-            // Also refresh media selector grid if open
             loadMediaSelectorGrid();
         } else {
             Swal.fire({ icon: 'error', title: 'อัพโหลดไม่สำเร็จ', text: data.error || 'Unknown error' });
@@ -1142,7 +1048,6 @@ async function uploadAndSetHomeImage(inputEl, fieldId, previewId) {
 
 
 
-// --- Appeals Logic ---
 async function loadAppeals() {
     const appeals = await apiCall('/admin/api/appeals');
     const tbody = document.getElementById('appealsTableBody');
@@ -1218,7 +1123,6 @@ async function deleteAppeal(id) {
 }
 
 
-// --- Faculty Management ---
 let allFaculty = [];
 async function loadFaculty() {
     const list = await apiCall('/admin/api/faculty');
@@ -1362,12 +1266,10 @@ async function deleteFaculty(id) {
 }
 
 
-// --- Home Sections Management (Dynamic) ---
 let currentHomeTab = 'banners';
 let currentHomeItems = [];
 
 function switchHomeTab(tab) {
-    console.log("Switching home tab to:", tab);
     currentHomeTab = tab;
     document.querySelectorAll('.h-tab').forEach(btn => {
         btn.className = 'h-tab px-4 py-2 rounded-lg bg-gray-100 text-gray-500 font-medium hover:bg-gray-200 transition';
@@ -1506,13 +1408,11 @@ async function saveHomeItem(e) {
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData.entries());
 
-    // Convert numeric fields
     if (data.id) data.id = parseInt(data.id);
     else data.id = null;
     if (data.order_index) data.order_index = parseInt(data.order_index);
     if (data.value) data.value = parseInt(data.value);
 
-    // Checkbox special handle
     if (data.is_active !== undefined) data.is_active = 1;
     else if (currentHomeTab === 'banners') data.is_active = 0;
 
@@ -1543,7 +1443,6 @@ async function deleteHomeItem(id) {
 }
 
 
-// --- Settings & Menu Logic ---
 
 function switchSettingsTab(tab) {
     document.querySelectorAll('.settings-tab-content').forEach(el => el.classList.add('hidden'));
@@ -1646,17 +1545,14 @@ function addContactRow() {
 }
 
 
-// Variables for JSON Editors
 let heroImages = [], quickButtons = [], featureItems = [], statItems = [], currentMenus = [], activeMenuName = '';
 
 async function loadSettings() {
     const settings = await apiCall('/admin/api/settings');
     if (settings) {
-        // General
         if (settings.site_title) document.getElementById('setting_site_title').value = settings.site_title;
         if (settings.footer_text) document.getElementById('setting_footer_text').value = settings.footer_text;
 
-        // Home Configs
         heroImages = JSON.parse(settings.hero_slider_images || '[]');
         quickButtons = JSON.parse(settings.quick_buttons_json || '[]');
         featureItems = JSON.parse(settings.home_features_json || '[]');
@@ -1673,27 +1569,17 @@ function renderHomeEditors() {
         <div class="flex gap-2 mb-2"><input class="flex-1 border rounded px-2" value="${url}" onchange="heroImages[${i}]=this.value; renderHomeEditors()"> <button onclick="heroImages.splice(${i},1); renderHomeEditors()" class="text-red-500">x</button></div>
     `).join('');
 
-    // Simplification: We can expand these editors same as dashboard.html logic if needed. 
-    // For now assuming basic text areas or implementing full UI if requested. 
-    // Given file size limits, I'll rely on a generic JSON editor approach or the detailed UI if space permits.
-    // Let's stick to the JSON hidden field sync for now to save space in this file, 
-    // but fully implement the UI in dashboard.html or here? 
-    // Best practice: The UI rendering logic should be here.
 }
 
-// Save Settings
 async function saveSettings(formId) {
     const formData = new FormData(document.getElementById(formId));
-    // Sync JSONs
     formData.set('hero_slider_images', JSON.stringify(heroImages));
-    // ... others
 
     const data = Object.fromEntries(formData.entries());
     await apiCall('/admin/api/settings', 'POST', data);
     Swal.fire('Saved', '', 'success');
 }
 
-// Menu Groups
 async function createNewMenu() {
     const { value: menuName } = await Swal.fire({
         title: 'New Menu Name',
@@ -1806,7 +1692,6 @@ function parseMenuNodes(container) {
     return result;
 }
 
-// Global Menu State
 let editingMenuData = [];
 function addMenuItem() {
     const menu = currentMenus.find(m => m.name === activeMenuName);
@@ -1861,7 +1746,6 @@ async function saveCurrentMenu() {
     const res = await apiCall('/admin/api/menus', 'POST', { name: menu.name, data_json: menu.data_json });
     if (res && res.success) Swal.fire('Menu Saved', '', 'success');
 }
-console.log("Admin.js loaded successfully.");
 window.switchHomeTab = switchHomeTab;
 function safeSetTinyContent(id, content) {
     if (typeof tinymce !== 'undefined' && tinymce.get(id)) {
@@ -1880,7 +1764,6 @@ function safeGetTinyContent(id) {
     }
 }
 
-// --- Tags Management ---
 let allTags = [];
 
 async function loadTags() {
@@ -1955,7 +1838,6 @@ function setSelectedTags(tagsString) {
     });
 }
 
-// --- Awards Management ---
 let currentAwards = [];
 
 async function loadAwards() {
@@ -2016,7 +1898,6 @@ async function deleteAward(id) {
     });
 }
 
-// --- Student Data Logic ---
 function switchStudentTab(tabName) {
     document.querySelectorAll('.student-tab-content').forEach(el => el.classList.add('hidden'));
     document.querySelectorAll('.student-tab-btn').forEach(btn => {
@@ -2039,17 +1920,13 @@ async function fetchStudentData() {
     const loading = document.getElementById('studentDataLoading');
     const content = document.getElementById('studentDataContent');
     
-    // Update headers dynamically for all 5 tabs
     const tabPrefixes = ['admitted', 'active', 'lost', 'grad', 'retention'];
     tabPrefixes.forEach(prefix => {
         for (let i = 1; i <= 5; i++) {
             const th = document.getElementById(`th_${prefix}_${i}`);
             if (th) {
-                // i=5 is baseYear - 4 (oldest), i=1 is baseYear (newest)
                 const y = baseYear - (5 - i);
                 if (prefix === 'grad') {
-                    // For graduation, indicate the cohort code beneath the year
-                    // e.g. Year 2565 corresponds to cohort 2562 (y - 3)
                     const cohortCode = (y - 3).toString().substring(2);
                     th.innerHTML = `ปี ${y}<br><span class="text-xs text-gray-500 font-normal">(รหัส ${cohortCode})</span>`;
                 } else {
@@ -2068,7 +1945,6 @@ async function fetchStudentData() {
             renderStudentData(res.data, baseYear);
             content.classList.remove('hidden');
             
-            // Also load province stats
             loadProvinceStats(baseYear);
         } else {
             const errorMsg = res && res.detail ? res.detail : 'ไม่สามารถดึงข้อมูลได้ (ไม่มีข้อมูลหรือเกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล)';
@@ -2096,7 +1972,6 @@ function renderStudentData(data, baseYear) {
     let htmlGraduation = '';
     let htmlRetention = '';
     
-    // Years array from newest to oldest to match the left-to-right headers (5, 4, 3, 2, 1)
     const years = [baseYear, baseYear - 1, baseYear - 2, baseYear - 3, baseYear - 4];
     
     for (const [level, items] of Object.entries(grouped)) {
@@ -2117,7 +1992,6 @@ function renderStudentData(data, baseYear) {
             const grad_rate = item.grad_rate || {};
             const ret_rate = item.retention_rate || {};
             
-            // 1. Admitted (by admit_year)
             htmlAdmitted += `
                 <tr class="border-b hover:bg-gray-50 transition">
                     <td class="py-3 px-4 text-sm">${escapeHtml(item.program)}</td>
@@ -2125,7 +1999,6 @@ function renderStudentData(data, baseYear) {
                 </tr>
             `;
             
-            // 2. Active (by admit_year)
             htmlActive += `
                 <tr class="border-b hover:bg-gray-50 transition">
                     <td class="py-3 px-4 text-sm">${escapeHtml(item.program)}</td>
@@ -2133,14 +2006,11 @@ function renderStudentData(data, baseYear) {
                 </tr>
             `;
             
-            // 3. Lost (by admit_year)
             htmlLost += `
                 <tr class="border-b hover:bg-gray-50 transition">
                     <td class="py-3 px-4 text-sm border-r">${escapeHtml(item.program)}</td>
                     ${years.map(y => {
                         const l = lost[y] || {total: 0, y1: 0, y2: 0, y3: 0, y4: 0, other: 0};
-                        // Note: Because Javascript sometimes receives an integer if no data is found (due to backend initialization bugs if any), 
-                        // make sure we handle it robustly.
                         const isObj = typeof l === 'object';
                         const t = isObj ? l.total : (l || 0);
                         const y1 = isObj ? l.y1 : 0;
@@ -2159,7 +2029,6 @@ function renderStudentData(data, baseYear) {
                 </tr>
             `;
             
-            // 4. Graduation (by finish_year)
             htmlGraduation += `
                 <tr class="border-b hover:bg-gray-50 transition">
                     <td class="py-3 px-4 text-sm">${escapeHtml(item.program)}</td>
@@ -2167,7 +2036,6 @@ function renderStudentData(data, baseYear) {
                 </tr>
             `;
             
-            // 5. Retention (by admit_year)
             htmlRetention += `
                 <tr class="border-b hover:bg-gray-50 transition">
                     <td class="py-3 px-4 text-sm">${escapeHtml(item.program)}</td>
@@ -2186,7 +2054,6 @@ function renderStudentData(data, baseYear) {
     document.getElementById('tbody_retention').innerHTML = htmlRetention || emptyRow;
 }
 
-// --- Province Stats & Map Logic ---
 async function loadProvinceStats(baseYear) {
     document.getElementById('province_year_label').innerText = baseYear;
     const tbody = document.getElementById('province_table_body');
@@ -2207,7 +2074,6 @@ async function loadProvinceStats(baseYear) {
                 `).join('');
             }
             
-            // Load and draw Google GeoChart
             if(typeof google !== 'undefined' && google.charts) {
                 google.charts.load('current', {
                     'packages':['geochart'],
@@ -2286,7 +2152,6 @@ function drawProvinceMap(provinceData) {
     data.addColumn('string', 'Province');
     data.addColumn('number', 'Students');
 
-    // GeoChart maps standard ISO 3166-2:TH codes
     const mapData = provinceData
         .filter(item => item.id.startsWith('TH-'))
         .map(item => [item.id, item.count]);
@@ -2306,7 +2171,6 @@ function drawProvinceMap(provinceData) {
     var chart = new google.visualization.GeoChart(document.getElementById('province_map_container'));
     chart.draw(data, options);
     
-    // Make map responsive on resize
     window.addEventListener('resize', () => {
         chart.draw(data, options);
     });

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Query
+utf-8from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 from typing import List, Dict, Optional
 import math
@@ -29,19 +29,19 @@ def decode_thai(text):
     if not text or not isinstance(text, str):
         return text
         
-    # If the text already has Thai characters, it's correct.
+    
     if any('\u0e00' <= c <= '\u0e7f' for c in text):
         return text
         
     try:
-        # Try to encode to cp1252 (Windows default encoding for non-unicode bytes)
+        
         try:
             raw_bytes = text.encode('cp1252')
         except UnicodeEncodeError:
-            # Fallback to latin1 with replace to avoid crashes
+            
             raw_bytes = text.encode('latin1', errors='replace')
             
-        # Decode back to Thai using cp874 (TIS-620)
+        
         return raw_bytes.decode('cp874', errors='replace')
     except Exception:
         return text
@@ -57,13 +57,13 @@ def get_curriculum_stats(base_year: int = Query(2569, description="ปีเร�
     end_year = base_year
     
     try:
-        # Status groups
+        
         active_ids = {10, 11, 12}
         graduated_ids = {40}
         lost_ids = {21, 22, 50, 51, 52, 60}
         
-        # We need older data to calculate graduation rate.
-        # e.g., Graduation in base_year requires cohort from base_year - 3 or 4.
+        
+        
         db_start_year = base_year - 8
         
         query = """
@@ -94,7 +94,7 @@ def get_curriculum_stats(base_year: int = Query(2569, description="ปีเร�
                 
             key = (lev, prog)
             if key not in programs_data:
-                # Initialize cohorts from db_start_year to end_year
+                
                 programs_data[key] = {
                     "cohorts": { y: {"admitted": 0, "active": 0, "graduated": 0, "lost_cohort": 0} for y in range(db_start_year, end_year + 1) },
                     "graduates_by_year": { y: 0 for y in range(start_year, end_year + 1) },
@@ -116,7 +116,7 @@ def get_curriculum_stats(base_year: int = Query(2569, description="ปีเร�
                 if st in active_ids:
                     cohort["active"] += 1
             
-            # Handle graduates by finish year
+            
             if st in graduated_ids and finish_date:
                 try:
                     if hasattr(finish_date, 'year'):
@@ -136,9 +136,9 @@ def get_curriculum_stats(base_year: int = Query(2569, description="ปีเร�
                 except Exception:
                     pass
             
-            # Handle lost (dropouts) by dropout academic year
+            
             elif st in lost_ids:
-                # Need to determine dropout academic year
+                
                 dy = None
                 if finish_date:
                     try:
@@ -153,7 +153,7 @@ def get_curriculum_stats(base_year: int = Query(2569, description="ปีเร�
                     except Exception:
                         pass
                 
-                # If dy is valid and within range
+                
                 if dy and start_year <= dy <= end_year:
                     yl = dy - admit_year + 1
                     lost_record = p_data["lost_by_year"][dy]
@@ -168,7 +168,7 @@ def get_curriculum_stats(base_year: int = Query(2569, description="ปีเร�
                         lost_record["y4"] += 1
                     else:
                         lost_record["other"] += 1
-                # To still support cohort-based attrition rate
+                
                 if start_year <= admit_year <= end_year:
                     if "lost_cohort" not in p_data["cohorts"][admit_year]:
                         p_data["cohorts"][admit_year]["lost_cohort"] = 0
@@ -179,7 +179,7 @@ def get_curriculum_stats(base_year: int = Query(2569, description="ปีเร�
             cohorts = data["cohorts"]
             grad_years = data["graduates_by_year"]
             
-            # Format output correctly
+            
             out = {
                 "level": lev,
                 "program": prog,
@@ -192,7 +192,7 @@ def get_curriculum_stats(base_year: int = Query(2569, description="ปีเร�
                 "retention_rate": {}
             }
             
-            # Calculate metrics for the last 5 years
+            
             for y in range(start_year, end_year + 1):
                 c = cohorts[y]
                 total = c["admitted"]
@@ -200,20 +200,20 @@ def get_curriculum_stats(base_year: int = Query(2569, description="ปีเร�
                 out["admitted"][str(y)] = total
                 out["active"][str(y)] = c["active"]
                 
-                # Lost data is grouped by dropout academic year
+                
                 out["lost"][str(y)] = data["lost_by_year"][y]
                 
-                # Attrition rate uses the cohort's own dropouts
+                
                 lost_total_cohort = c.get("lost_cohort", 0)
                 out["attrition_rate"][str(y)] = round((lost_total_cohort / total * 100), 2) if total > 0 else 0
                 out["retention_rate"][str(y)] = round(((c["active"] + c["graduated"]) / total * 100), 2) if total > 0 else 0
                 
-                # Graduation is based on Finish Year, dividing by Cohort y-3
+                
                 grad_count = grad_years[y]
                 out["graduated"][str(y)] = grad_count
                 
                 cohort_for_grad = cohorts.get(y - 3, {})
-                # Deduct lost students (ลาออก/ย้ายสาขา) from the denominator as requested
+                
                 lost_for_grad = cohort_for_grad.get("lost_cohort", 0)
                 grad_denominator = cohort_for_grad.get("admitted", 0) - lost_for_grad
                 out["grad_rate"][str(y)] = round((grad_count / grad_denominator * 100), 2) if grad_denominator > 0 else 0
@@ -327,7 +327,7 @@ def get_province_students(base_year: int = Query(..., description="ปีกา�
     try:
         cursor = conn.cursor(as_dict=True)
         
-        # Build query
+        
         query = """
             SELECT STDCODE, PREFIXNAME, STDNAME, STDSURNAME, PROGRAMNAME, LEVGROUPNAME, HOMEPROVINCEID, CONTACTPROVINCEID
             FROM [Agri].[View_Student4AgriFaculty]
@@ -347,7 +347,7 @@ def get_province_students(base_year: int = Query(..., description="ปีกา�
         
         students = []
         for row_raw in rows:
-            # Convert keys to lowercase and strip whitespaces to avoid case-sensitivity and padding issues
+            
             r = {k.strip().lower(): v for k, v in row_raw.items()}
             
             prog = decode_thai(r.get('programname') or '')
@@ -371,8 +371,6 @@ def get_province_students(base_year: int = Query(..., description="ปีกา�
                 std_code = str(r.get('stdcode') or '')
                 full_name = f"{prefix}{fname} {lname}".strip()
                 
-                print("DEBUG STUDENT:", {"stdcode": std_code, "fullname": full_name, "raw": row_raw})
-                
                 students.append({
                     "stdcode": std_code,
                     "fullname": full_name,
@@ -380,7 +378,7 @@ def get_province_students(base_year: int = Query(..., description="ปีกา�
                     "level": lev
                 })
                 
-        # Sort by program then stdcode
+        
         students.sort(key=lambda x: (x["program"], x["stdcode"]))
         
         return {

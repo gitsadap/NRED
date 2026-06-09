@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+utf-8from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
@@ -44,21 +44,21 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         response = await call_next(request)
 
-        # Basic hardening headers
+        
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
         response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
         response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
         response.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
 
-        # Only set HSTS when served over HTTPS (avoid breaking local HTTP dev)
+        
         if request.url.scheme == "https":
             response.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
 
-        # Prevent caching admin pages (tokens live client-side; avoid caching sensitive admin HTML)
+        
         if request.url.path.startswith("/admin"):
             response.headers.setdefault("Cache-Control", "no-store")
 
-        # CSP can break built-in API docs UIs; skip for docs/redoc/openapi
+        
         if not (
             request.url.path.startswith("/api/docs")
             or request.url.path.startswith("/api/redoc")
@@ -66,8 +66,8 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         ):
             is_admin_page = request.url.path.startswith("/admin")
             
-            # แยกสิทธิ์โดเมนภายนอก: หน้าบ้านจะปลอดภัยสูงสุดโดยไม่มี CDN ภายนอกส่วนเกิน
-            # ส่วนแอดมินหลังบ้านจะผ่อนปรนเฉพาะ cdnjs เพื่อใช้งาน TinyMCE
+            
+            
             style_src_domains = "https://fonts.googleapis.com"
             script_src_domains = ""
             
@@ -104,7 +104,7 @@ def _is_db_connectivity_error(exc: Exception) -> bool:
         return False
     if isinstance(exc, (OperationalError, socket.gaierror, ConnectionError, TimeoutError, OSError)):
         return True
-    # Walk chained exceptions to catch wrapped asyncpg/socket errors.
+    
     cursor = exc.__cause__ or exc.__context__
     depth = 0
     while cursor is not None and depth < 6:
@@ -211,7 +211,7 @@ async def database_unavailable_handler(request: Request, exc: Exception):
 cors_allow_origins = _parse_cors_allow_origins(settings.cors_allow_origins)
 cors_allow_credentials = bool(settings.cors_allow_credentials)
 if cors_allow_origins == ["*"]:
-    # Spec: wildcard origin cannot be used with credentials.
+    
     cors_allow_credentials = False
 
 app.add_middleware(
@@ -226,7 +226,7 @@ app.add_middleware(
 from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent
 
-# Mount Static Files with proper error handling
+
 static_dirs = [
     ("assets", "public/assets"),
     ("uploads", "public/uploads"),
@@ -242,12 +242,12 @@ for mount_point, directory in static_dirs:
     else:
         logger.warning(f"Static directory not found: {directory}")
 
-# Templates
+
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
-# Import routers
+
 from app.routers import public, appeals, admin, api, chatbot, auth, dashboard_api
-# Redirect routes
+
 from fastapi.responses import RedirectResponse
 
 @app.get("/admin")
@@ -262,7 +262,7 @@ app.include_router(appeals.router)
 app.include_router(api.router)
 app.include_router(chatbot.router)
 app.include_router(dashboard_api.router, prefix="/api/dashboard")
-app.include_router(public.router)  # Public router has catch-all, so it MUST be last
+app.include_router(public.router)  
 
 @app.on_event("startup")
 async def startup_event():

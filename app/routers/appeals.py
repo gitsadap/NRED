@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+utf-8from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.models import Appeal
@@ -15,7 +15,7 @@ async def submit_appeal(appeal_data: AppealCreate, db: AsyncSession = Depends(ge
     new_appeal = Appeal(
         topic=appeal_data.topic,
         message=appeal_data.message,
-        is_anonymous=1 if appeal_data.is_anonymous else 0, # SQLite uses 0/1 for bool
+        is_anonymous=1 if appeal_data.is_anonymous else 0, 
         sender_name=appeal_data.sender_name if not appeal_data.is_anonymous else None,
         email=appeal_data.email if not appeal_data.is_anonymous else None,
         status="pending"

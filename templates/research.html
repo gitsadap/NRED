@@ -349,7 +349,7 @@
                         }
                     } catch (err) {
                         error.value = err.message;
-                        console.error("API Error:", err);
+                        // API Error handled silently
                     } finally {
                         loading.value = false;
                         nextTick(() => {

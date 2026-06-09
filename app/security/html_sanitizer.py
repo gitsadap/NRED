@@ -1,4 +1,4 @@
-from __future__ import annotations
+utf-8from __future__ import annotations
 
 from dataclasses import dataclass
 from html import escape as html_escape
@@ -6,10 +6,10 @@ from typing import Iterable, Optional
 from urllib.parse import urlparse
 
 try:
-    from bs4 import BeautifulSoup, Comment  # type: ignore
-except Exception:  # pragma: no cover
-    BeautifulSoup = None  # type: ignore
-    Comment = None  # type: ignore
+    from bs4 import BeautifulSoup, Comment  
+except Exception:  
+    BeautifulSoup = None  
+    Comment = None  
 
 
 @dataclass(frozen=True)
@@ -22,7 +22,7 @@ class SanitizerConfig:
 RICH_HTML_CONFIG = SanitizerConfig(
     allowed_tags=frozenset(
         {
-            # Structure / text
+            
             "section",
             "article",
             "header",
@@ -55,7 +55,7 @@ RICH_HTML_CONFIG = SanitizerConfig(
             "ul",
             "ol",
             "li",
-            # Tables
+            
             "table",
             "thead",
             "tbody",
@@ -64,12 +64,12 @@ RICH_HTML_CONFIG = SanitizerConfig(
             "th",
             "td",
             "caption",
-            # Media / embeds
+            
             "img",
             "figure",
             "figcaption",
             "iframe",
-            # Links
+            
             "a",
         }
     ),
@@ -137,7 +137,7 @@ def _is_safe_url(url: str, *, allow_data_images: bool, context: str) -> bool:
         return False
     url = str(url).strip()
 
-    # Allow same-page anchors and relative URLs.
+    
     if url.startswith("#") or url.startswith("/"):
         return True
 
@@ -150,7 +150,7 @@ def _is_safe_url(url: str, *, allow_data_images: bool, context: str) -> bool:
     if scheme == "data":
         if not allow_data_images:
             return False
-        # Only allow data images for <img src>.
+        
         if context != "img_src":
             return False
         return url.lower().startswith("data:image/")
@@ -165,17 +165,17 @@ def _sanitize_tag_attributes(tag, *, cfg: SanitizerConfig) -> None:
     for attr_name in list(attrs.keys()):
         lower_attr = attr_name.lower()
 
-        # Drop all inline JS event handlers.
+        
         if lower_attr.startswith("on"):
             tag.attrs.pop(attr_name, None)
             continue
 
-        # Block inline HTML injection vectors.
+        
         if lower_attr in {"srcdoc"}:
             tag.attrs.pop(attr_name, None)
             continue
 
-        # URL-bearing attributes
+        
         if lower_attr in {"href", "src"}:
             value = attrs.get(attr_name)
             url_value = value[0] if isinstance(value, list) and value else value
@@ -184,7 +184,7 @@ def _sanitize_tag_attributes(tag, *, cfg: SanitizerConfig) -> None:
                 tag.attrs.pop(attr_name, None)
                 continue
 
-            # Restrict iframe sources to known safe hosts.
+            
             if name == "iframe" and lower_attr == "src":
                 parsed = urlparse(str(url_value))
                 host = (parsed.hostname or "").lower()
@@ -192,7 +192,7 @@ def _sanitize_tag_attributes(tag, *, cfg: SanitizerConfig) -> None:
                     tag.attrs.pop(attr_name, None)
                     continue
 
-        # Keep only safe/expected attributes (drop anything else).
+        
         allowed_global = {"class", "id", "title", "style"}
         allowed_by_tag = {
             "a": {"href", "title", "target", "rel"},
@@ -210,7 +210,7 @@ def _sanitize_tag_attributes(tag, *, cfg: SanitizerConfig) -> None:
             "table": {"border", "cellpadding", "cellspacing"},
             "th": {"colspan", "rowspan", "scope"},
             "td": {"colspan", "rowspan"},
-            # SVG (icons)
+            
             "svg": {"xmlns", "viewbox", "fill", "stroke", "stroke-width", "width", "height", "class", "aria-hidden"},
             "path": {"d", "fill", "stroke", "stroke-width", "fill-rule", "clip-rule"},
             "circle": {"cx", "cy", "r", "fill", "stroke", "stroke-width"},
@@ -228,7 +228,7 @@ def _sanitize_tag_attributes(tag, *, cfg: SanitizerConfig) -> None:
         if lower_attr not in {a.lower() for a in allowed}:
             tag.attrs.pop(attr_name, None)
 
-    # Security hardening for links opened in new tabs.
+    
     if name == "a":
         target = (tag.attrs.get("target") or "").strip().lower()
         if target == "_blank":
@@ -251,15 +251,15 @@ def sanitize_html_fragment(html: Optional[str], *, cfg: SanitizerConfig = RICH_H
 
     raw = str(html)
 
-    if BeautifulSoup is None:  # pragma: no cover
-        # Safe fallback: escape everything (prevents XSS but removes formatting).
+    if BeautifulSoup is None:  
+        
         return html_escape(raw)
 
     soup = BeautifulSoup(raw, "html.parser")
 
-    # Remove comments
+    
     try:
-        for comment in soup.find_all(string=lambda s: isinstance(s, Comment)):  # type: ignore[arg-type]
+        for comment in soup.find_all(string=lambda s: isinstance(s, Comment)):  
             comment.extract()
     except Exception:
         pass
@@ -277,7 +277,7 @@ def sanitize_html_fragment(html: Optional[str], *, cfg: SanitizerConfig = RICH_H
 
         _sanitize_tag_attributes(tag, cfg=cfg)
 
-    # Return fragment only (avoid adding <html><body> wrappers).
+    
     return "".join(str(node) for node in soup.contents)
 
 

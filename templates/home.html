@@ -623,7 +623,7 @@
                 }
             })
             .catch(err => {
-                console.error("Error fetching stats:", err);
+                // Error handled silently
                 const container = document.getElementById("stats-container");
                 if (container) container.innerHTML = "<div class='col-span-4 text-center text-gray-400'>Unable to load stats.</div>";
             });
@@ -1679,7 +1679,7 @@
                     }
                 }
             } catch (err) {
-                console.error("Failed to fetch Weather", err);
+                // Silently ignore
                 const statusEl = document.getElementById('aqi-status');
                 if (statusEl) statusEl.innerText = 'Unavailable';
             }

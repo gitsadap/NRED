@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query, HTTPException, Request, status, BackgroundTasks
+utf-8from fastapi import APIRouter, Depends, Query, HTTPException, Request, status, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc
 from app.database import get_db
@@ -9,7 +9,7 @@ from typing import Optional, List, Dict, Any
 from app.routers.auth import verify_admin_role, get_current_user
 from app.security.html_sanitizer import sanitize_rich_html, sanitize_svg_icon
 
-# Pydantic Schemas for Admin Actions
+
 class PageCreate(BaseModel):
     id: Optional[int] = None
     slug: str
@@ -23,7 +23,7 @@ class NewsCreate(BaseModel):
     image: Optional[str] = None
     category: Optional[str] = "General"
     tags: Optional[str] = None
-    event_date: Optional[str] = None # ISO Format or YYYY-MM-DD
+    event_date: Optional[str] = None 
 
 
 class ActivityCreate(BaseModel):
@@ -48,14 +48,14 @@ class StaffCreate(BaseModel):
 
 
 class DeleteRequest(BaseModel):
-    id: int # or filename for media
+    id: int 
 
 class SettingsUpdate(BaseModel):
     settings: Dict[str, str]
 
 class MenuCreate(BaseModel):
     name: str
-    data_json: str # We receive stringified JSON
+    data_json: str 
 
 class BannerCreate(BaseModel):
     id: Optional[int] = None
@@ -115,7 +115,7 @@ class FacultyCreate(BaseModel):
     major: Optional[str] = None
     admin_position: Optional[str] = None
     is_expert: Optional[bool] = False
-    expertise: Optional[str] = None # Expect JSON string or raw text
+    expertise: Optional[str] = None 
     cv_file: Optional[str] = None
 
 class ContactInfoCreate(BaseModel):
@@ -153,7 +153,7 @@ teacher_router = APIRouter(
     dependencies=[Depends(get_current_user)]
 )
 
-# API Endpoints used by Dashboard
+
 
 @router.get("/api/pages")
 async def get_admin_pages(db: AsyncSession = Depends(get_db)):
@@ -185,11 +185,11 @@ async def delete_appeal(req: DeleteRequest, db: AsyncSession = Depends(get_db)):
         return {"success": True}
     return {"success": False, "message": "Not found"}
 
-# TODO: Add POST/PUT/DELETE endpoints for full functionality
 
-# Models moved to top
 
-# --- Pages API ---
+
+
+
 
 @router.post("/api/pages")
 async def save_page(page: PageCreate, db: AsyncSession = Depends(get_db)):
@@ -200,9 +200,9 @@ async def save_page(page: PageCreate, db: AsyncSession = Depends(get_db)):
             db_page.title = page.title
             db_page.slug = page.slug
             db_page.content = sanitize_rich_html(page.content)
-            # db_page.updated_at = func.now() # Auto updated
+            
     else:
-        # Check slug
+        
         result = await db.execute(select(Page).where(Page.slug == page.slug))
         if result.scalars().first():
              return {"success": False, "message": "Slug already exists"}
@@ -228,13 +228,13 @@ async def delete_page(req: DeleteRequest, db: AsyncSession = Depends(get_db)):
         return {"success": True}
     return {"success": False, "message": "Not found"}
 
-# --- News API ---
+
 
 @router.post("/api/news")
 async def save_news(news: NewsCreate, db: AsyncSession = Depends(get_db)):
     from datetime import datetime
     
-    # helper for date parsing
+    
     evt_date = None
     if news.event_date:
         try:
@@ -277,7 +277,7 @@ async def delete_news(req: DeleteRequest, db: AsyncSession = Depends(get_db)):
         return {"success": True}
     return {"success": False, "message": "Not found"}
 
-# --- Activities API ---
+
 
 @router.post("/api/activities")
 async def save_activity(act: ActivityCreate, db: AsyncSession = Depends(get_db)):
@@ -315,12 +315,12 @@ async def delete_activity(req: DeleteRequest, db: AsyncSession = Depends(get_db)
         return {"success": True}
     return {"success": False, "message": "Not found"}
 
-# --- Unified Content Endpoints ---
+
 from app.models import Tag
 
 class ContentCreate(BaseModel):
     id: Optional[int] = None
-    type: str = "news" # news or activity
+    type: str = "news" 
     title: str
     content: str
     image: Optional[str] = None
@@ -330,11 +330,11 @@ class ContentCreate(BaseModel):
 
 @router.get("/api/content/all")
 async def get_all_content(db: AsyncSession = Depends(get_db)):
-    # Fetch News
+    
     n_res = await db.execute(select(News).order_by(desc(News.created_at)))
     news = n_res.scalars().all()
     
-    # Fetch Activities
+    
     a_res = await db.execute(select(Activity).order_by(desc(Activity.created_at)))
     acts = a_res.scalars().all()
     
@@ -364,7 +364,7 @@ async def get_all_content(db: AsyncSession = Depends(get_db)):
             "content": a.content
         })
         
-    # Sort by created_at desc
+    
     combined.sort(key=lambda x: x['created_at'] or x['id'], reverse=True)
     return combined
 
@@ -442,7 +442,7 @@ async def delete_unified_content(item: ContentDelete, db: AsyncSession = Depends
     await db.commit()
     return {"success": True}
 
-# --- Tag Endpoints ---
+
 class TagCreate(BaseModel):
     name: str
 
@@ -471,7 +471,7 @@ async def delete_tag(tag: TagDelete, db: AsyncSession = Depends(get_db)):
     await db.commit()
     return {"success": True}
 
-# --- Staff API ---
+
 
 from app.models import Staff
 
@@ -516,7 +516,7 @@ async def delete_staff(req: DeleteRequest, db: AsyncSession = Depends(get_db)):
         return {"success": True}
     return {"success": False, "message": "Not found"}
 
-# --- Media API ---
+
 
 from fastapi import UploadFile, File
 import shutil
@@ -532,7 +532,7 @@ if not os.environ.get("VERCEL"):
     if not os.path.exists(UPLOAD_DIR):
         os.makedirs(UPLOAD_DIR)
 else:
-    # ถ้าอยู่บน Vercel ให้ใช้โฟลเดอร์ /tmp แทน (เป็นที่เดียวที่ Vercel ยอมให้เขียนไฟล์ชั่วคราวได้)
+    
     UPLOAD_DIR = "/tmp"
 
 ALLOWED_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.gif', '.pdf', '.doc', '.docx', '.xls', '.xlsx'}
@@ -555,13 +555,13 @@ async def upload_file(
 ):
     try:
         request_id = getattr(request.state, "request_id", None)
-        # Validate File Extension
+        
         _, ext = os.path.splitext(file.filename)
         ext = ext.lower()
         if ext not in ALLOWED_EXTENSIONS:
             return {"error": f"File type not allowed. Allowed types: {', '.join(ALLOWED_EXTENSIONS)}"}
 
-        # Sanitize filename & add unique ID to prevent collisions
+        
         safe_filename = secure_filename(file.filename)
         if not safe_filename:
             return {"error": "Invalid filename"}
@@ -569,7 +569,7 @@ async def upload_file(
         
         max_bytes = int(getattr(app_settings, "max_file_size", 0) or 0)
         if max_bytes <= 0:
-            max_bytes = 10 * 1024 * 1024  # 10MB safe default
+            max_bytes = 10 * 1024 * 1024  
 
         content = await file.read()
         written = len(content)
@@ -589,13 +589,13 @@ async def upload_file(
             f"UPLOAD success filename={unique_name} bytes={written} username={user.get('username')} role={user.get('role')} request_id={request_id}"
         )
             
-        # Background optimize access and path-to-blob transformation using FastAPI BackgroundTasks
+        
         try:
             background_tasks.add_task(process_document_to_blob_local, file_location)
         except Exception as bg_err:
             logger.error(f"Error scheduling background document processing: {bg_err}")
             
-        return {"location": f"/uploads/{unique_name}"} # TinyMCE expects 'location'
+        return {"location": f"/uploads/{unique_name}"} 
     except Exception as e:
         request_id = getattr(request.state, "request_id", None)
         logger.error(
@@ -616,7 +616,7 @@ async def get_media_files():
 async def delete_media_file(req: Dict[str, str]):
     filename = req.get("filename")
     if not filename: return {"success": False}
-    # Prevent path traversal
+    
     if filename != os.path.basename(filename) or "/" in filename or "\\" in filename:
         return {"success": False, "message": "Invalid filename"}
     file_path = os.path.join(UPLOAD_DIR, filename)
@@ -628,9 +628,9 @@ async def delete_media_file(req: Dict[str, str]):
             return {"success": False, "message": "Delete failed"}
     return {"success": False, "message": "File not found"}
 
-# --- Settings & Menu API (Basic) ---
-# A full implementation would parse the complex JSONs. 
-# For now, we allow reading/writing the raw Settings table.
+
+
+
 
 from app.models import Setting
 
@@ -645,7 +645,7 @@ async def update_settings(settings: Dict[str, str], db: AsyncSession = Depends(g
         safe_value = value
         if key in {"footer_text"}:
             safe_value = sanitize_rich_html(value)
-        # Upsert
+        
         result = await db.execute(select(Setting).where(Setting.key == key))
         setting_item = result.scalars().first()
         if setting_item:
@@ -655,7 +655,7 @@ async def update_settings(settings: Dict[str, str], db: AsyncSession = Depends(g
     await db.commit()
     return {"success": True}
 
-# --- Menu API ---
+
 
 @router.get("/api/menus")
 async def get_menus(db: AsyncSession = Depends(get_db)):
@@ -665,7 +665,7 @@ async def get_menus(db: AsyncSession = Depends(get_db)):
 
 @router.post("/api/menus")
 async def save_menu(menu: MenuCreate, db: AsyncSession = Depends(get_db)):
-    # Upsert
+    
     result = await db.execute(select(Menu).where(Menu.name == menu.name))
     db_menu = result.scalars().first()
     if db_menu:
@@ -689,7 +689,7 @@ async def delete_menu(req: Dict[str, str], db: AsyncSession = Depends(get_db)):
     return {"success": False, "message": "Not found"}
 
 
-# --- Banner API ---
+
 from app.models import Banner
 
 @router.get("/api/banners")
@@ -724,7 +724,7 @@ async def delete_banner(req: DeleteRequest, db: AsyncSession = Depends(get_db)):
     await db.commit()
     return {"success": True}
 
-# --- Missions API ---
+
 from app.models import Mission
 
 @router.get("/api/missions")
@@ -752,7 +752,7 @@ async def save_mission(item: MissionCreate, db: AsyncSession = Depends(get_db)):
     await db.commit()
     return {"success": True}
 
-# --- Courses API ---
+
 from app.models import Course
 
 @router.get("/api/courses")
@@ -781,7 +781,7 @@ async def save_course(item: CourseCreate, db: AsyncSession = Depends(get_db)):
     await db.commit()
     return {"success": True}
 
-# --- Stats API ---
+
 from app.models import Statistic
 
 @router.get("/api/stats")
@@ -809,7 +809,7 @@ async def save_stat(item: StatCreate, db: AsyncSession = Depends(get_db)):
     await db.commit()
     return {"success": True}
 
-# --- Awards API ---
+
 from app.models import Award
 
 @router.get("/api/awards")
@@ -840,7 +840,7 @@ async def save_award(item: AwardCreate, db: AsyncSession = Depends(get_db)):
     await db.commit()
     return {"success": True}
 
-# --- Faculty Management API ---
+
 from app.models import Faculty
 from sqlalchemy import delete
 
@@ -881,7 +881,7 @@ async def save_faculty(item: FacultyCreate, db: AsyncSession = Depends(get_db)):
         try:
             parsed_expertise = json.loads(item.expertise)
         except Exception:
-            parsed_expertise = item.expertise # Fallback
+            parsed_expertise = item.expertise 
             
     if item.id:
         res = await db.execute(select(Faculty).where(Faculty.id == item.id))
@@ -909,9 +909,9 @@ async def save_faculty(item: FacultyCreate, db: AsyncSession = Depends(get_db)):
         )
         db.add(obj)
         
-    await db.flush() # Make sure obj.id is generated if new faculty
+    await db.flush() 
     
-    # Save the Faculty CV if provided
+    
     cv_file_url = item.cv_file
     if cv_file_url is not None:
         cv_file_url = cv_file_url.strip()
@@ -935,7 +935,7 @@ async def delete_faculty(req: DeleteRequest, db: AsyncSession = Depends(get_db))
     await db.commit()
     return {"success": True}
 
-# --- Contact Info API ---
+
 from app.models import ContactInfo
 
 @router.get("/api/contact")
@@ -1031,7 +1031,7 @@ async def save_my_cv(payload: dict, request: Request, user: dict = Depends(get_c
     
     faculty.position = payload.get("position")
     
-    # Parse the JSON string from frontend into a Python list so asyncpg correctly binds it as JSONB
+    
     expertise_str = payload.get("expertise", "[]")
     try:
         faculty.expertise = json.loads(expertise_str) if expertise_str else []
@@ -1040,7 +1040,7 @@ async def save_my_cv(payload: dict, request: Request, user: dict = Depends(get_c
         
     faculty.image = payload.get("image")
 
-    # Basic URL validation to prevent storing dangerous schemes (e.g., javascript:)
+    
     image_val = (faculty.image or "").strip()
     if image_val:
         if image_val.startswith(("/uploads/", "/static/")):
@@ -1053,7 +1053,7 @@ async def save_my_cv(payload: dict, request: Request, user: dict = Depends(get_c
     cv_file_url = payload.get("cv_file")
     if cv_file_url:
         cv_file_url = str(cv_file_url).strip()
-        # Only allow internal uploads for CV PDFs
+        
         if cv_file_url.startswith("/uploads/"):
             cv_name = cv_file_url[len("/uploads/"):]
         else:

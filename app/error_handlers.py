@@ -1,4 +1,4 @@
-# pyrefly: ignore [missing-import]
+utf-8
 from fastapi import HTTPException
 from app.logging_config import logger
 from typing import Any, Dict, Optional

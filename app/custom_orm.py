@@ -1,4 +1,4 @@
-from sqlalchemy import select, update, delete
+utf-8from sqlalchemy import select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import TypeVar, Type, List, Optional, Any, Dict
 from sqlalchemy.inspection import inspect

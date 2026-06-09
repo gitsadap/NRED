@@ -1,4 +1,4 @@
-
+utf-8
 from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql import func
@@ -19,7 +19,7 @@ class Staff(ModelBase):
     email = Column(String, nullable=True)
     image = Column(String, nullable=True)
     expertise = Column(String, nullable=True)
-    type = Column(String, default="faculty") # faculty, executive, support
+    type = Column(String, default="faculty") 
     order_index = Column(Integer, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
@@ -70,7 +70,7 @@ class News(ModelBase):
     content = Column(Text, nullable=False)
     image_url = Column(String, nullable=True)
     category = Column(String, default="General")
-    tags = Column(String, nullable=True) # Comma-separated tags
+    tags = Column(String, nullable=True) 
     event_date = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
@@ -80,16 +80,16 @@ class Activity(ModelBase):
     title = Column(String, nullable=False)
     content = Column(Text, nullable=False)
     image_url = Column(String, nullable=True)
-    category = Column(String, default="Activity") # Added for consistency
-    tags = Column(String, nullable=True) # Added for consistency
+    category = Column(String, default="Activity") 
+    tags = Column(String, nullable=True) 
     event_date = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 class FacultyCV(ModelBase):
     __tablename__ = "faculty_cv"
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, unique=True, nullable=False) # Maps to external DB user_id
-    cv_file = Column(String, nullable=False) # Filename in /uploads
+    user_id = Column(Integer, unique=True, nullable=False) 
+    cv_file = Column(String, nullable=False) 
 
 class Banner(ModelBase):
     __tablename__ = "banners"
@@ -109,8 +109,8 @@ class Mission(ModelBase):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False)
     desc = Column(Text, nullable=True)
-    icon = Column(String, nullable=False) # e.g. 'academic-cap', 'globe'
-    color = Column(String, default="green") # green, blue, cyan, etc.
+    icon = Column(String, nullable=False) 
+    color = Column(String, default="green") 
     order_index = Column(Integer, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
@@ -120,7 +120,7 @@ class Course(ModelBase):
     id = Column(Integer, primary_key=True, index=True)
     title_th = Column(String, nullable=False)
     title_en = Column(String, nullable=True)
-    video_url = Column(String, nullable=False) # YouTube ID or URL
+    video_url = Column(String, nullable=False) 
     description = Column(Text, nullable=True)
     color_theme = Column(String, default="green")
     order_index = Column(Integer, default=0)
@@ -132,7 +132,7 @@ class Statistic(ModelBase):
     id = Column(Integer, primary_key=True, index=True)
     label = Column(String, nullable=False)
     value = Column(Integer, nullable=False)
-    suffix = Column(String, nullable=True) # e.g. '+'
+    suffix = Column(String, nullable=True) 
     icon = Column(String, nullable=True)
     order_index = Column(Integer, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -144,8 +144,8 @@ class Award(ModelBase):
     title = Column(String, nullable=False)
     description = Column(Text, nullable=True)
     icon = Column(String, nullable=True) 
-    image_url = Column(String, nullable=True) # Added for full banner images
-    color_theme = Column(String, default="yellow") # yellow, blue, purple
+    image_url = Column(String, nullable=True) 
+    color_theme = Column(String, default="yellow") 
     link_url = Column(String, nullable=True)
     order_index = Column(Integer, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -153,7 +153,7 @@ class Award(ModelBase):
 class ContactInfo(ModelBase):
     __tablename__ = "contact_info"
     __table_args__ = {"schema": "api"}
-    key = Column(String, primary_key=True) # address, phone, email, facebook, etc.
+    key = Column(String, primary_key=True) 
     value = Column(Text, nullable=True)
     icon = Column(String, nullable=True)
     order_index = Column(Integer, default=0)
@@ -175,8 +175,8 @@ class Faculty(ModelBase):
     major = Column(String, nullable=True)
     admin_position = Column(String, nullable=True)
     is_expert = Column(Boolean, default=False)
-    expertise = Column(JSONB, nullable=True) # Maps precisely to postgres JSONB
-    scholar_id = Column(String, nullable=True) # Google Scholar Author ID
+    expertise = Column(JSONB, nullable=True) 
+    scholar_id = Column(String, nullable=True) 
     scholar_data = Column(JSONB, nullable=True) 
     cited = Column(JSONB, nullable=True) 
     updated_at = Column(DateTime(timezone=True), server_default=func.now())

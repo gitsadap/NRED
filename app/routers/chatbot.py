@@ -1,7 +1,7 @@
-import os
+utf-8import os
 import pickle
 import json
-import time  # <--- เพิ่ม import time แล้ว
+import time  
 import numpy as np  
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -11,13 +11,13 @@ from typing import List, Dict, Optional
 from app.config import settings
 from sentence_transformers import SentenceTransformer
 
-# โหลด Model สำหรับ Embedding ไว้ล่วงหน้า
+
 try:
     embedding_model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2', cache_folder="hf_cache", local_files_only=True)
 except Exception as e:
     logger.error(f"❌ Failed to load SentenceTransformer (No internet or cache missing): {e}")
     try:
-        # Fallback without local_files_only in case it needs to download
+        
         embedding_model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2', cache_folder="hf_cache")
     except Exception as e2:
         logger.error(f"❌ Fallback failed too: {e2}")
@@ -43,11 +43,11 @@ def get_program_code(level: str, program: str) -> str:
     }
     return mapping.get((level, program))
 
-# Load Models
+
 base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 hf_cache_dir = os.path.join(base_dir, "hf_cache")
 
-# ลบ ai_model ออกไปเลย เพราะไม่ได้ใช้รันบนเซิร์ฟเวอร์แล้ว
+
 doc_embeddings = None
 documents_meta = []
 
@@ -60,7 +60,7 @@ try:
     
     loaded = False
 
-    # Prefer safe formats (JSON + NPY) to avoid unsafe deserialization.
+    
     if os.path.exists(meta_json_path) and os.path.exists(vector_npy_path):
         with open(meta_json_path, "r", encoding="utf-8") as f:
             documents_meta = json.load(f)
@@ -69,7 +69,7 @@ try:
         loaded = True
         logger.info("✅ Chatbot vector store loaded (safe JSON/NPY)")
 
-    # Fallback: pickles only when explicitly allowed (debug/local migration).
+    
     elif os.path.exists(meta_pkl_path) and os.path.exists(vector_pkl_path):
         if settings.allow_unsafe_pickle_load:
             logger.warning(
@@ -127,33 +127,33 @@ async def get_chatbot_response(req: ChatRequest):
     if not user_msg: 
         return {"response": "กรุณาพิมพ์คำถามครับ"}
     
-    # เช็คแค่ฐานข้อมูล Vector ว่าโหลดมาสำเร็จไหม (ไม่ต้องเช็ค ai_model แล้ว)
+    
     if doc_embeddings is None or embedding_model is None:
         return {"response": "ขออภัยค่ะ ระบบฐานความรู้ AI หรืออินเทอร์เน็ตยังไม่พร้อมใช้งานบนเซิร์ฟเวอร์ค่ะ"}
 
     try:
-        # เตรียมคำถามก่อนส่งไปทำ Embedding
+        
         search_query = expand_query(user_msg)
         target_code = get_program_code(req.level, req.program)
         
-        # เช็ค API Key
+        
         gemini_key = settings.gemini_api_key or os.getenv("GEMINI_API_KEY")
         if not gemini_key:
              return {"response": "พี่ AI ขัดข้องเรื่อง API Key ค่ะ ฝากแจ้งแอดมินทีนะคะ"}
 
-        # ---------------------------------------------------------
-        # 1. ทำ Embedding ด้วย SentenceTransformer แบบ Local (รวดเร็วมาก)
-        # ---------------------------------------------------------
+        
+        
+        
         start_encode_time = time.time()
         
-        # ใช้โมเดล Local ที่ตรงกับฐานข้อมูลเป๊ะๆ
+        
         query_embedding = embedding_model.encode([search_query], convert_to_numpy=True)[0]
         encode_duration = time.time() - start_encode_time
         logger.info(f"⏱️ [1] Time to encode vector (Local MiniLM): {encode_duration:.2f} seconds")
 
-        # ---------------------------------------------------------
-        # 2. ค้นหาข้อมูลใน Vector Database (RAG)
-        # ---------------------------------------------------------
+        
+        
+        
         indices = [i for i, m in enumerate(documents_meta) if m.get("program_code") == target_code]
         if not indices:
             return {"response": f"ขออภัยค่ะ ยังไม่มีข้อมูลของหลักสูตร {target_code}"}
@@ -161,14 +161,14 @@ async def get_chatbot_response(req: ChatRequest):
         filtered_embeddings = doc_embeddings[indices]
         filtered_meta = [documents_meta[i] for i in indices]
 
-        # คำนวณ Cosine Similarity ด้วย Numpy
+        
         norm_query = np.linalg.norm(query_embedding)
         norm_filtered = np.linalg.norm(filtered_embeddings, axis=1)
         denom = norm_filtered * norm_query
         denom[denom == 0] = 1e-9
         scores = np.dot(filtered_embeddings, query_embedding) / denom
         
-        # เลือก Top 15 ที่ใกล้เคียงที่สุด
+        
         top_indices = np.argsort(scores)[::-1][:15]
         
         seen_pages = set()
@@ -182,9 +182,9 @@ async def get_chatbot_response(req: ChatRequest):
                     seen_pages.add(meta['source'])
             if len(final_contexts) >= 6: break
 
-        # ---------------------------------------------------------
-        # 3. เตรียมข้อมูลและประวัติการแชท
-        # ---------------------------------------------------------
+        
+        
+        
         if not final_contexts:
             full_context_text = "ไม่มีข้อมูลอ้างอิงจากระบบฐานข้อมูลสำหรับคำถามนี้ (แนะนำให้ตอบกลับอย่างสุภาพ และพยายามสอบถามเพิ่มเติม หรือแจ้งให้ติดต่ออาจารย์)"
         else:
@@ -211,27 +211,27 @@ async def get_chatbot_response(req: ChatRequest):
 {full_context_text}
 """
         
-        # จัดเตรียมรูปแบบ Messages สำหรับ LiteLLM (System -> History -> User)
+        
         messages = [{"role": "system", "content": system_prompt}]
         
-        # ใส่ประวัติการแชท (จำกัด 5 ข้อความล่าสุดเพื่อประหยัด Token และความเร็ว)
+        
         for h in req.history[-5:]:
             role = "assistant" if h.get("sender") == "bot" else "user"
             msg = h.get("text", "")
             if msg:
                 messages.append({"role": role, "content": msg})
         
-        # ใส่คำถามปัจจุบัน
+        
         messages.append({"role": "user", "content": user_msg})
         
         start_gemini_time = time.time()
         
-        # เรียกแบบ Async ผ่าน LiteLLM ด้วยโมเดลที่เร็วที่สุด
+        
         response = await litellm.acompletion(
             model="gemini/gemini-3.1-flash-lite-preview",
             messages=messages,
             api_key=gemini_key,
-            temperature=0.3, # ลด Temp เพื่อให้ตอบแม่นยำและไม่หลุดกรอบ
+            temperature=0.3, 
             max_tokens=800
         )
         

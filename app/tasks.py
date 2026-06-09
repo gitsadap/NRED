@@ -1,4 +1,4 @@
-from app.celery_worker import celery_app
+utf-8from app.celery_worker import celery_app
 from app.logging_config import logger
 import os
 
@@ -13,7 +13,7 @@ def process_document_to_blob(file_path: str):
         if os.path.exists(file_path):
             file_size = os.path.getsize(file_path)
             logger.info(f"Document {file_path} size: {file_size} bytes.")
-            # Advanced logic: store to a blob storage like S3 or Database BLOB table
+            
             
         return {"status": "success", "path": file_path, "message": "Processed document path as blob."}
     except Exception as e:

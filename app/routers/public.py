@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, Depends, HTTPException
+utf-8from fastapi import APIRouter, Request, Depends, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,18 +21,18 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 async def home(request: Request, db: AsyncSession = Depends(get_db)):
     context = await get_global_context(db)
     
-    # Fetch Latest News (Limit 6)
+    
     news_res = await db.execute(select(News).order_by(desc(News.created_at)).limit(6))
     news_items = news_res.scalars().all()
 
-    # Fetch Latest Activities (Limit 6)
+    
     act_res = await db.execute(select(Activity).order_by(desc(Activity.created_at)).limit(6))
     activity_items = act_res.scalars().all()
 
-    # Combine
+    
     combined = []
     for n in news_items:
-        # Add transient attribute for display logic (handled in template)
+        
         n.display_type = "News"
         combined.append(n)
         
@@ -40,33 +40,33 @@ async def home(request: Request, db: AsyncSession = Depends(get_db)):
         a.display_type = "Activity" 
         combined.append(a)
     
-    # Sort by date descending
+    
     combined.sort(key=lambda x: x.created_at or x.id, reverse=True)
     
-    # Take top 6
+    
     unified_updates = combined[:6]
 
 
-    # Fetch Banner (Hero)
+    
     from app.models import Banner, Mission, Course, Award, Statistic, ContactInfo
     
     banner_res = await db.execute(select(Banner).where(Banner.is_active == 1).order_by(Banner.order_index))
     banners = banner_res.scalars().all()
     hero_banner = banners[0] if banners else None
 
-    # Fetch Missions
+    
     mission_res = await db.execute(select(Mission).order_by(Mission.order_index))
     mission_items = mission_res.scalars().all()
 
-    # Fetch Courses (Video Grid)
+    
     course_res = await db.execute(select(Course).order_by(Course.order_index))
     courses = course_res.scalars().all()
 
-    # Fetch Awards (Hall of Fame)
+    
     award_res = await db.execute(select(Award).order_by(Award.order_index))
     awards = award_res.scalars().all()
 
-    # Fetch Statistics
+    
     stat_res = await db.execute(select(Statistic).order_by(Statistic.order_index))
     stats = stat_res.scalars().all()
 
@@ -77,7 +77,7 @@ async def home(request: Request, db: AsyncSession = Depends(get_db)):
     context["is_home"] = True 
     context["unified_updates"] = unified_updates
     
-    # Pass dynamic content
+    
     context["hero_banner"] = hero_banner
     context["mission_items"] = mission_items
     context["courses"] = courses
@@ -97,31 +97,31 @@ async def about_page(request: Request, db: AsyncSession = Depends(get_db)):
     from app.models import Mission, Statistic, Faculty, Award, Page
     context = await get_global_context(db)
     
-    # Fetch editable CMS content for 'about'
+    
     page_res = await db.execute(select(Page).where(Page.slug == "about"))
     about_page_db = page_res.scalars().first()
     context["about_page_content"] = about_page_db.content if about_page_db else ""
 
-    # Missions / Vision / Values
+    
     mission_res = await db.execute(select(Mission).order_by(Mission.order_index))
     missions = mission_res.scalars().all()
 
-    # Statistics
+    
     stat_res = await db.execute(select(Statistic).order_by(Statistic.order_index))
     stats = stat_res.scalars().all()
 
-    # Faculty members (grouped)
+    
     fac_res = await db.execute(select(Faculty).order_by(Faculty.id))
     faculty_all = fac_res.scalars().all()
 
     def exec_sort_key(f):
         pos = (f.admin_position or '').strip()
         if 'หัวหน้าภาควิชา' in pos and 'รอง' not in pos:
-            return 0  # Head first
+            return 0  
         elif 'รองหัวหน้า' in pos:
-            return 1  # Deputy heads second
+            return 1  
         else:
-            return 2  # Others last
+            return 2  
 
     executives = sorted(
         [f for f in faculty_all if f.admin_position],
@@ -130,7 +130,7 @@ async def about_page(request: Request, db: AsyncSession = Depends(get_db)):
     experts = [f for f in faculty_all if f.is_expert]
     faculty_regular = [f for f in faculty_all if not f.admin_position and not f.is_expert]
 
-    # Awards / Achievements
+    
     award_res = await db.execute(select(Award).order_by(Award.order_index))
     awards = award_res.scalars().all()
 
@@ -158,7 +158,7 @@ async def structure_page(request: Request, db: AsyncSession = Depends(get_db)):
     context["request"] = request
     context["title"] = "โครงสร้างการบริหารงานภาควิชา - " + context["site_title"]
     
-    # Fetch executives from Faculty
+    
     from app.models import Faculty
     result = await db.execute(select(Faculty).where(Faculty.admin_position != None).where(Faculty.admin_position != ''))
     rows = result.scalars().all()
@@ -182,7 +182,7 @@ async def structure_page(request: Request, db: AsyncSession = Depends(get_db)):
             'image': img
         })
         
-    # Sort: Head of Department first
+    
     executives.sort(key=lambda x: 0 if x['admin_position'] == 'หัวหน้าภาควิชา' else 1)
     
     context["executives"] = executives
@@ -194,7 +194,7 @@ async def appeals_page(request: Request, db: AsyncSession = Depends(get_db)):
     context = await get_global_context(db)
     context["request"] = request
     context["title"] = "ร้องเรียน/อุทธรณ์ - " + context["site_title"]
-    # We will need appeals.html
+    
     return templates.TemplateResponse(request=request, name="appeals.html", context=context)
 
 
@@ -206,11 +206,11 @@ async def show_news(request: Request, category: str = None, tag: str = None, db:
 
     context = await get_global_context(db)
 
-    # Fetch Tags for filter
+    
     tag_res = await db.execute(select(Tag).order_by(Tag.name))
     tags = tag_res.scalars().all()
 
-    # Fetch News
+    
     news_query = select(News).order_by(desc(News.created_at))
     if category:
         news_query = news_query.where(News.category == category)
@@ -219,7 +219,7 @@ async def show_news(request: Request, category: str = None, tag: str = None, db:
     news_result = await db.execute(news_query)
     news_items = news_result.scalars().all()
 
-    # Fetch Activities
+    
     act_query = select(Activity).order_by(desc(Activity.created_at))
     if category:
         act_query = act_query.where(Activity.category == category)
@@ -228,7 +228,7 @@ async def show_news(request: Request, category: str = None, tag: str = None, db:
     act_result = await db.execute(act_query)
     activities = act_result.scalars().all()
 
-    # Fetch Awards (แสดงความยินดี)
+    
     from app.models import Award
     award_items = []
     if not tag and (not category or category == "แสดงความยินดี"):
@@ -236,7 +236,7 @@ async def show_news(request: Request, category: str = None, tag: str = None, db:
         aw_res = await db.execute(aw_query)
         award_items = aw_res.scalars().all()
 
-    # Merge and sort by created_at
+    
     combined = []
     for n in news_items:
         combined.append({
@@ -262,7 +262,7 @@ async def show_news(request: Request, category: str = None, tag: str = None, db:
         })
     combined.sort(key=lambda x: x["created_at"], reverse=True)
 
-    # Distinct categories from all fetched items
+    
     categories = sorted(set(
         [n.category for n in news_items if n.category] +
         [a.category for a in activities if a.category] +
@@ -276,7 +276,7 @@ async def show_news(request: Request, category: str = None, tag: str = None, db:
     context["categories"] = categories
     context["current_category"] = category
     context["current_tag"] = tag
-    # keep backward compat
+    
     context["news_list"] = news_items
     return templates.TemplateResponse(request=request, name="news.html", context=context)
 
@@ -332,38 +332,38 @@ from app.models import Faculty, FacultyCV
 async def show_faculty(request: Request, db: AsyncSession = Depends(get_db)):
     context = await get_global_context(db)
     
-    # Fetch all CVs locally
+    
     cv_res = await db.execute(select(FacultyCV))
     cv_map = {cv.user_id: cv.cv_file for cv in cv_res.scalars().all()}
     
     faculty_groups = []
     
     try:
-        # Fetch Faculty from DB
+        
         result = await db.execute(select(Faculty).order_by(Faculty.id))
         faculty_rows = result.scalars().all()
         
-        # Helper to calculate position weight
+        
         def get_position_weight(person):
-            # Check position string for keywords
+            
             pos = (person.position or "").strip()
             prefix = (person.prefix or "").strip()
             text = f"{pos} {prefix}"
             
             if "ศาสตราจารย์" in text and "รอง" not in text and "ผู้ช่วย" not in text:
-                return 5 # Professor
+                return 5 
             if "รองศาสตราจารย์" in text:
-                return 4 # Assoc Prof
+                return 4 
             if "ผู้ช่วยศาสตราจารย์" in text:
-                return 3 # Asst Prof
+                return 3 
             if "อาจารย์" in text:
-                return 2 # Lecturer
-            return 1 # Other
+                return 2 
+            return 1 
 
-        # Process all rows into a list of dicts with calculated weight
+        
         all_faculty = []
         for row in faculty_rows:
-            # Name Logic
+            
             prefix = row.prefix or ''
             fname = row.fname
             lname = row.lname
@@ -385,7 +385,7 @@ async def show_faculty(request: Request, db: AsyncSession = Depends(get_db)):
                  
                  display_name_en = f"{prefix_en} {fname_en} {lname_en}".strip()
 
-            # Image Logic
+            
             img_val = row.image or ''
             img = ""
             if img_val:
@@ -397,13 +397,13 @@ async def show_faculty(request: Request, db: AsyncSession = Depends(get_db)):
             cv_filename = cv_map.get(row.id)
             cv_url = None
             if cv_filename:
-                # To handle both old uploads (filename only) and new uploads (/uploads/... format)
+                
                 if cv_filename.startswith("/uploads/"):
                     cv_url = cv_filename
                 else:
                     cv_url = f"/uploads/{cv_filename}"
             
-            # Expertise Logic
+            
             expertise = []
             if row.expertise:
                 if isinstance(row.expertise, list):
@@ -418,7 +418,7 @@ async def show_faculty(request: Request, db: AsyncSession = Depends(get_db)):
                         else:
                              expertise = [str(loaded)]
                     except:
-                        # Treat as simple string split by newline or comma if needed, or just single item
+                        
                         expertise = [row.expertise]
 
             major_val = row.major
@@ -445,7 +445,7 @@ async def show_faculty(request: Request, db: AsyncSession = Depends(get_db)):
             })
 
 
-        # Separate Executives and Experts
+        
         executives = [f for f in all_faculty if f.get('admin_position') and f['admin_position'].strip()]
         experts = [f for f in all_faculty if f['is_expert'] and not (f.get('admin_position') and f['admin_position'].strip())]
         
@@ -455,8 +455,8 @@ async def show_faculty(request: Request, db: AsyncSession = Depends(get_db)):
             f_copy['admin_position'] = None
             others.append(f_copy)
         
-        # Sort Executives
-        # Head > Deputy
+        
+        
         executives.sort(key=lambda x: 0 if x['admin_position'] and 'หัวหน้าภาควิชา' in x['admin_position'] and 'รอง' not in x['admin_position'] else 1)
         
         if executives:
@@ -465,7 +465,7 @@ async def show_faculty(request: Request, db: AsyncSession = Depends(get_db)):
                 "members": executives
             })
 
-        # Sort Experts
+        
         experts.sort(key=lambda x: x['_weight'], reverse=True)
         
         if experts:
@@ -474,11 +474,11 @@ async def show_faculty(request: Request, db: AsyncSession = Depends(get_db)):
                 "members": experts
             })
             
-        # Group Others by Major
-        # Get unique majors
+        
+        
         majors = set(f['major'] for f in others if f['major'])
             
-        # Sort majors alphabetically, but push specific ones to the end
+        
         def major_sort_key(m):
             if m == 'บุคลากรสายสนับสนุน': return (2, m)
             return (0, m)
@@ -488,7 +488,7 @@ async def show_faculty(request: Request, db: AsyncSession = Depends(get_db)):
             group_members = [f for f in others if f['major'] == m]
             
             if group_members:
-                # Sort by weight desc, then name asc
+                
                 group_members.sort(key=lambda x: (-x['_weight'], x['fname']))
                 faculty_groups.append({
                     "name": m,
@@ -509,19 +509,19 @@ async def show_faculty(request: Request, db: AsyncSession = Depends(get_db)):
 
 @router.get("/teacher-portal", response_class=HTMLResponse)
 async def teacher_portal():
-    # Deprecated insecure flow (public upload without auth) was removed.
-    # Teachers should login and use the CV update section in the Admin/Teacher dashboard.
+    
+    
     return RedirectResponse(url="/admin/login", status_code=302)
 
 @router.get("/executives", response_class=HTMLResponse)
 async def show_executives(request: Request, db: AsyncSession = Depends(get_db)):
     context = await get_global_context(db)
     
-    # Fetch all CVs locally
+    
     cv_res = await db.execute(select(FacultyCV))
     cv_map = {cv.user_id: cv.cv_file for cv in cv_res.scalars().all()}
 
-    # Needs a combined list mapping similar to /faculty but filtering just executives
+    
     result = await db.execute(select(Faculty).where(Faculty.admin_position != None).where(Faculty.admin_position != ''))
     faculty_rows = result.scalars().all()
     
@@ -562,7 +562,7 @@ async def show_executives(request: Request, db: AsyncSession = Depends(get_db)):
     context["title"] = "ผู้บริหาร - " + context["site_title"]
     context["heading"] = "ผู้บริหาร"
     context["description"] = "คณะผู้บริหารภาควิชาฯ"
-    # To use the same faculty.html, we pass them as a group
+    
     context["faculty_groups"] = [{"name": "ผู้บริหาร", "members": faculty_list}]
     return templates.TemplateResponse(request=request, name="faculty.html", context=context)
 
@@ -570,7 +570,7 @@ async def show_executives(request: Request, db: AsyncSession = Depends(get_db)):
 async def show_support_staff(request: Request, db: AsyncSession = Depends(get_db)):
     context = await get_global_context(db)
     
-    # Fetch all CVs locally
+    
     cv_res = await db.execute(select(FacultyCV))
     cv_map = {cv.user_id: cv.cv_file for cv in cv_res.scalars().all()}
 
@@ -671,13 +671,13 @@ async def show_page_raw(slug: str, request: Request, db: AsyncSession = Depends(
         
     content = sanitize_rich_html(page.content or '')
     
-    # 💡 [TRICK] ค้นหาและแทนที่คลาส Sarabun/Kanit ให้กลายเป็นคลาสสากลเพื่อการแสดงผลสวยงามและรวดเร็ว
+    
     content = content.replace("font-['Sarabun',sans-serif]", "font-serif")
     content = content.replace("font-['Kanit',sans-serif]", "font-sans")
     
-    # Treat stored content as an untrusted fragment and always wrap it in a controlled shell.
+    
         
-    # 💡 [FIXED] จัดโครงสร้าง HTML ให้แท็ก <meta> และ <link> เข้าไปอยู่ใน <head>
+    
     wrapped = f"""<!DOCTYPE html>
 <html lang="th">
 <head>
@@ -688,19 +688,19 @@ async def show_page_raw(slug: str, request: Request, db: AsyncSession = Depends(
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="/assets/js/tailwind.js"></script>
     <script>
-        tailwind.config = {{
-            theme: {{
-                extend: {{
-                    fontFamily: {{
+        tailwind.config = { 
+            theme: { 
+                extend: { 
+                    fontFamily: { 
                         sans: ['Prompt', 'Kanit', 'sans-serif'],
                         serif: ['Sarabun', 'sans-serif']
-                    }}
-                }}
-            }}
-        }}
+                    } 
+                } 
+            } 
+        } 
     </script>
     <style>
-        body {{ margin: 0; padding: 0; font-family: 'Prompt', 'Kanit', sans-serif; background-color: transparent; }}
+        body {  margin: 0; padding: 0; font-family: 'Prompt', 'Kanit', sans-serif; background-color: transparent; } 
     </style>
 </head>
 <body>
@@ -711,37 +711,37 @@ async def show_page_raw(slug: str, request: Request, db: AsyncSession = Depends(
 
 @router.get("/{slug}", response_class=HTMLResponse)
 async def show_page(slug: str, request: Request, db: AsyncSession = Depends(get_db)):
-    # Skip assets/uploads strings if they accidentally get here (though StaticFiles should catch them if valid)
+    
     if slug in ["assets", "uploads", "favicon.ico"]:
         raise HTTPException(status_code=404)
 
     context = await get_global_context(db)
     
-    # Query Page
+    
     result = await db.execute(select(Page).where(Page.slug == slug, Page.is_published == 1))
     page = result.scalars().first()
     
     if not page:
-        # 404
-        # return templates.TemplateResponse("404.html", context, status_code=404)
+        
+        
         raise HTTPException(status_code=404, detail="Page not found")
 
     context["request"] = request
     context["title"] = page.title + " - " + context["site_title"]
-    # Sanitize HTML before templates render with `|safe`.
+    
     page.content = sanitize_rich_html(page.content)
     context["page"] = page
     
     template_name = "page.html"
     if page.template and page.template != "page":
-         # Fallback check if template exists
-         # For now default to page.html
+         
+         
          pass
 
     return templates.TemplateResponse(request=request, name=template_name, context=context)
 
 @router.get("/api/curriculum-stats-proxy")
 async def get_curriculum_stats_proxy(db: AsyncSession = Depends(get_db)):
-    # Redirect to the new internal endpoint
+    
     from fastapi.responses import RedirectResponse
     return RedirectResponse(url="/api/v1/external-stats")

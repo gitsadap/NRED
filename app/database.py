@@ -1,4 +1,4 @@
-import os
+utf-8import os
 import time
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, declarative_base
@@ -6,19 +6,19 @@ from sqlalchemy import text
 from fastapi import HTTPException
 from app.config import settings
 
-# ตรวจสอบว่า DATABASE_URL เป็น postgresql+asyncpg://...
+
 DATABASE_URL = settings.database_url
 
-# สร้าง Engine พร้อมปิด Statement Cache อย่างถาวรสำหรับ Supabase/PgBouncer
+
 engine = create_async_engine(
     DATABASE_URL,
     echo=settings.debug,
-    pool_size=3,           # ปรับลดลงเหลือ 3 เพื่อความเสถียรบน Vercel Free
+    pool_size=3,           
     max_overflow=5,
     pool_pre_ping=True,
     pool_recycle=1800,
     connect_args={
-        # บรรทัดเหล่านี้สำคัญมาก ห้ามขาดตัวใดตัวหนึ่งครับ
+        
         "prepared_statement_cache_size": 0,
         "statement_cache_size": 0, 
         "command_timeout": 60,
@@ -43,7 +43,7 @@ async def get_db():
     global _LAST_DB_HEALTHCHECK_AT
     async with SessionLocal() as session:
         try:
-            # Fail gracefully when DB is unreachable, but avoid pinging on every request.
+            
             now = time.monotonic()
             if now - _LAST_DB_HEALTHCHECK_AT >= _DB_HEALTHCHECK_INTERVAL_SECONDS:
                 await session.execute(text("SELECT 1"))

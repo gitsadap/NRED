@@ -1,12 +1,12 @@
-import os
+utf-8import os
 from datetime import datetime, timedelta
 from typing import Optional
-# pyrefly: ignore [missing-import]
+
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-# pyrefly: ignore [missing-import]
+
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
-# pyrefly: ignore [missing-import]
+
 import bcrypt
 from pydantic import BaseModel
 from app.config import settings
@@ -66,8 +66,8 @@ def authenticate_ldap(username, password):
         tls = getattr(ssl, "PROTOCOL_TLS", getattr(ssl, "PROTOCOL_TLSv1_2"))
         import ldap3
 
-        # --- TLS hardening ---
-        # Default: require TLS + certificate validation in production (DEBUG=False).
+        
+        
         require_tls = (
             settings.ldap_require_tls
             if settings.ldap_require_tls is not None
@@ -90,8 +90,8 @@ def authenticate_ldap(username, password):
             ca_certs_file=settings.ldap_tls_ca_cert_file,
         )
         
-        # PHP Script checks if bind works, or uses StartTLS if error 8 occurs.
-        # Initialize server with the TLS config (it won't use SSL initially since use_ssl=False)
+        
+        
         ldap_url = (settings.ldap_server or "").strip()
         use_ssl = False
         ldap_host = ldap_url
@@ -110,7 +110,7 @@ def authenticate_ldap(username, password):
             connect_timeout=settings.ldap_timeout,
         )
         
-        # Python ldap3 handles StartTLS natively. Setting auto_referrals=False matches LDAP_OPT_REFERRALS=0
+        
         conn = Connection(
             server,
             user=user_dn,
@@ -120,7 +120,7 @@ def authenticate_ldap(username, password):
         )
         
         try:
-            # Enforce StartTLS on ldap:// in production unless explicitly disabled.
+            
             if require_tls and not use_ssl:
                 if not conn.open():
                     return False
@@ -128,7 +128,7 @@ def authenticate_ldap(username, password):
                     return False
 
             if not conn.bind():
-                # ldap3 stores response details in conn.result. Error 8 is strongerAuthRequired.
+                
                 if (
                     (not use_ssl)
                     and conn.result
@@ -137,7 +137,7 @@ def authenticate_ldap(username, password):
                         or "strongerAuthRequired" in str(conn.result.get("description", ""))
                     )
                 ):
-                    # Try StartTLS fallback
+                    
                     if not conn.start_tls():
                         return False
                     if not conn.bind():
@@ -160,7 +160,7 @@ async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequ
     client_ip = get_client_ip(request)
     request_id = getattr(request.state, "request_id", None)
 
-    # Rate limit (per IP and per username+IP)
+    
     keys = [
         f"ip:{client_ip}",
         f"userip:{(form_data.username or '').lower()}:{client_ip}",
@@ -178,24 +178,24 @@ async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequ
             )
 
     is_authenticated = False
-    role = "teacher" # Default role
+    role = "teacher" 
     
-    # 1. Fallback / Local Admin check
+    
     if form_data.username.lower() == settings.admin_username.lower() and verify_password(form_data.password, get_password_hash(settings.admin_password)):
         is_authenticated = True
         role = "admin"
     else:
-        # 2. Check if username is allowed in LDAP admin list
+        
         allowed_admins = [u.strip().lower() for u in settings.admin_users_list.split(',')]
         
-        # 3. Perform LDAP Auth for ANY user to allow them as teacher
+        
         if authenticate_ldap(form_data.username, form_data.password):
             is_authenticated = True
             if form_data.username.lower() in allowed_admins:
                 role = "admin"
                 
     if not is_authenticated:
-        # Register failures for rate limiting
+        
         triggered_block = None
         for key in keys:
             status_obj = await login_rate_limiter.register_failure(key)
@@ -219,7 +219,7 @@ async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequ
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # Success: reset counters and audit log
+    
     for key in keys:
         await login_rate_limiter.reset(key)
     logger.info(f"AUTH success username={form_data.username} role={role} ip={client_ip} request_id={request_id}")

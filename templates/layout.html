@@ -724,7 +724,7 @@
                             if (data.status === 'success') {
                                 globalContext.value = data.data;
                             }
-                        } catch (e) { console.error(e); }
+                        } catch (e) { /* error handled */ }
                     }
                     if (globalContext.value.site_title) {
                         const suffix = " | " + globalContext.value.site_title;
@@ -739,7 +739,7 @@
                             await nextTick();
                             if (window.initAnimations) window.initAnimations();
                         } catch (err) {
-                            console.error("Page initialization failed:", err);
+                            // Initialization failed
                         }
                     }
 
