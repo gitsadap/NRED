@@ -4,7 +4,11 @@ import json
 import time  
 import numpy as np  
 from fastapi import APIRouter, HTTPException
+import pydantic
 from pydantic import BaseModel
+import os
+os.environ["LITELLM_LOCAL_MODEL_COST_MAP"] = "True"
+os.environ["LITELLM_LOG_LEVEL"] = "ERROR"
 import litellm
 from app.logging_config import logger 
 from typing import List, Dict, Optional

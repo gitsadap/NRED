@@ -688,19 +688,19 @@ async def show_page_raw(slug: str, request: Request, db: AsyncSession = Depends(
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="/assets/js/tailwind.js"></script>
     <script>
-        tailwind.config = { 
-            theme: { 
-                extend: { 
-                    fontFamily: { 
+        tailwind.config = {{ 
+            theme: {{ 
+                extend: {{ 
+                    fontFamily: {{ 
                         sans: ['Prompt', 'Kanit', 'sans-serif'],
                         serif: ['Sarabun', 'sans-serif']
-                    } 
-                } 
-            } 
-        } 
+                    }} 
+                }} 
+            }} 
+        }} 
     </script>
     <style>
-        body {  margin: 0; padding: 0; font-family: 'Prompt', 'Kanit', sans-serif; background-color: transparent; } 
+        body {{  margin: 0; padding: 0; font-family: 'Prompt', 'Kanit', sans-serif; background-color: transparent; }} 
     </style>
 </head>
 <body>

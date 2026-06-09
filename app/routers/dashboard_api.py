@@ -19,7 +19,9 @@ def get_student_db_connection():
             server=os.getenv('STUDENT_DB_SERVER'),
             user=os.getenv('STUDENT_DB_USER'),
             password=os.getenv('STUDENT_DB_PASS'),
-            database=os.getenv('STUDENT_DB_NAME')
+            database=os.getenv('STUDENT_DB_NAME'),
+            login_timeout=3,
+            timeout=3
         )
     except Exception as e:
         print(f"DB Connection Error: {e}")
@@ -49,7 +51,10 @@ def decode_thai(text):
 @router.get("/curriculum-stats")
 def get_curriculum_stats(base_year: int = Query(2569, description="ปีเริ่มต้นการค้นหา เช่น 2569")):
     conn = get_student_db_connection()
+    from app.db_cache import get_cached_data, set_cached_data
     if not conn:
+        cached = get_cached_data("curriculum_stats_cache")
+        if cached: return cached
         raise HTTPException(status_code=500, detail="ไม่สามารถเชื่อมต่อฐานข้อมูลได้")
         
     cursor = conn.cursor(as_dict=True)
@@ -222,12 +227,15 @@ def get_curriculum_stats(base_year: int = Query(2569, description="ปีเร�
             
         result.sort(key=lambda x: (x['level'], x['program']))
             
-        return {
+        final_result = {
             "base_year": base_year,
             "start_year": start_year,
             "end_year": end_year,
             "data": result
         }
+        from app.db_cache import set_cached_data
+        set_cached_data("curriculum_stats_cache", final_result)
+        return final_result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:
@@ -248,8 +256,11 @@ PROVINCE_MAPPING = {
 @router.get("/province-stats")
 def get_province_stats(base_year: int = Query(2569)):
     conn = get_student_db_connection()
+    from app.db_cache import get_cached_data, set_cached_data
     if not conn:
-        raise HTTPException(status_code=500, detail="Database connection failed")
+        cached = get_cached_data("curriculum_stats_cache")
+        if cached: return cached
+        raise HTTPException(status_code=500, detail="ไม่สามารถเชื่อมต่อฐานข้อมูลได้")
 
     try:
         cursor = conn.cursor(as_dict=True)
@@ -308,11 +319,14 @@ def get_province_stats(base_year: int = Query(2569)):
             
         results.sort(key=lambda x: x["count"], reverse=True)
         
-        return {
+        final_result = {
             "base_year": base_year,
             "total_students": total_valid_students,
             "data": results
         }
+        from app.db_cache import set_cached_data
+        set_cached_data("province_stats_cache", final_result)
+        return final_result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:
@@ -321,7 +335,10 @@ def get_province_stats(base_year: int = Query(2569)):
 @router.get("/province-students")
 def get_province_students(base_year: int = Query(..., description="ปีการศึกษาอ้างอิง"), province_id: int = Query(..., description="ID จังหวัด (0 = ไม่ระบุ)")):
     conn = get_student_db_connection()
+    from app.db_cache import get_cached_data, set_cached_data
     if not conn:
+        cached = get_cached_data("province_stats_cache")
+        if cached: return cached
         raise HTTPException(status_code=500, detail="ไม่สามารถเชื่อมต่อฐานข้อมูลได้")
         
     try:

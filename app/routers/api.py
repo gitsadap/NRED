@@ -219,14 +219,14 @@ async def api_external_stats(db: AsyncSession = Depends(get_db)):
     """Fetch student stats directly from SQL Server Database + local Postgres counts for Faculty"""
     import os
     import pymssql
+    import asyncio
+    from app.db_cache import get_cached_data, set_cached_data
     
     try:
-        
         faculty_count_stmt = select(func.count()).select_from(Faculty)
         faculty_count_res = await db.execute(faculty_count_stmt)
         total_faculty = faculty_count_res.scalar() or 0
 
-        
         total_research = 0
         research_res = await db.execute(select(Faculty.scholar_data).where(Faculty.scholar_data != None))
         for s_data in research_res.scalars().all():
@@ -238,28 +238,56 @@ async def api_external_stats(db: AsyncSession = Depends(get_db)):
                 except Exception:
                     pass
 
+        def fetch_mssql():
+            try:
+                conn = pymssql.connect(
+                    server=os.getenv('STUDENT_DB_SERVER'),
+                    user=os.getenv('STUDENT_DB_USER'),
+                    password=os.getenv('STUDENT_DB_PASS'),
+                    database=os.getenv('STUDENT_DB_NAME'),
+                    login_timeout=3,
+                    timeout=3
+                )
+                cursor = conn.cursor(as_dict=True)
+                sql = """
+                SELECT 
+                    LEVGROUPNAME as level, 
+                    PROGRAMNAME as program, 
+                    STDSTATUSID as status_id,
+                    COUNT(*) as count
+                FROM [Agri].[View_Student4AgriFaculty]
+                GROUP BY LEVGROUPNAME, PROGRAMNAME, STDSTATUSID
+                """
+                cursor.execute(sql)
+                rows = cursor.fetchall()
+                cursor.close()
+                conn.close()
+                return rows
+            except Exception as e:
+                print(f"MSSQL Error: {e}")
+                return None
         
-        conn = pymssql.connect(
-            server=os.getenv('STUDENT_DB_SERVER'),
-            user=os.getenv('STUDENT_DB_USER'),
-            password=os.getenv('STUDENT_DB_PASS'),
-            database=os.getenv('STUDENT_DB_NAME')
-        )
-        cursor = conn.cursor(as_dict=True)
+        rows = await asyncio.to_thread(fetch_mssql)
         
-        sql = """
-        SELECT 
-            LEVGROUPNAME as level, 
-            PROGRAMNAME as program, 
-            STDSTATUSID as status_id,
-            COUNT(*) as count
-        FROM [Agri].[View_Student4AgriFaculty]
-        GROUP BY LEVGROUPNAME, PROGRAMNAME, STDSTATUSID
-        """
-        cursor.execute(sql)
-        rows = cursor.fetchall()
-        cursor.close()
-        conn.close()
+        if rows is None:
+            # Database failed or timed out. Use cache!
+            cached = get_cached_data("external_stats", max_age=86400 * 30) # 30 days
+            if cached:
+                cached["total_faculty"] = total_faculty
+                cached["total_research"] = total_research
+                return {"status": "success", "data": {"analysis_overview": cached}}
+            else:
+                # No cache available, return 0s
+                return {
+                    "status": "success",
+                    "data": {
+                        "analysis_overview": {
+                            "grand_total": 0, "total_active": 0, "total_graduated": 0,
+                            "total_lost": 0, "total_faculty": total_faculty,
+                            "total_research": total_research, "by_level": {}
+                        }
+                    }
+                }
         
         data_summary = {}
         grand_total = 0
@@ -276,7 +304,6 @@ async def api_external_stats(db: AsyncSession = Depends(get_db)):
         for row in rows:
             level = decode_thai(row['level'])
             program = decode_thai(row['program'])
-            
             
             if not any(k in program for k in ['สิ่งแวดล้อม', 'ภูมิศาสตร์', 'ภูมิสารสนเทศ', 'อวกาศ', 'ทรัพยากรธรรมชาติ']):
                 continue
@@ -302,202 +329,30 @@ async def api_external_stats(db: AsyncSession = Depends(get_db)):
             elif status_id in lost_ids:
                 data_summary[level]["programs"][program]["lost"] += count
                 total_lost += count
-
-        
-        for level in data_summary:
-            for prog, stats in data_summary[level]["programs"].items():
-                g = stats["graduated"]
-                l = stats["lost"]
-                if (g + l) > 0:
-                    sr = round((g / (g + l)) * 100, 2)
-                    stats["success_rate"] = f"{int(sr)}%" if sr == int(sr) else f"{sr}%"
-                else:
-                    stats["success_rate"] = "0%"
-
-        overall_sr = "0%"
-        if (total_graduated + total_lost) > 0:
-            val = round((total_graduated / (total_graduated + total_lost)) * 100, 2)
-            overall_sr = f"{int(val)}%" if val == int(val) else f"{val}%"
-
-        result = {
-            "analysis_overview": {
-                "total_faculty": total_faculty,
-                "total_research": total_research,
-                "grand_total": grand_total,
-                "total_active": total_active,
-                "total_graduated": total_graduated,
-                "total_lost": total_lost,
-                "overall_success_rate": overall_sr
-            },
-            "data_summary": data_summary,
-            "results": {}
-        }
-        
-        return {"status": "success", "data": result}
-
-    except Exception as e:
-        logger.error(f"EXTERNAL-STATS error: {e}", exc_info=True)
-        try:
-            
-            total_research = 0
-            research_res = await db.execute(select(Faculty.scholar_data).where(Faculty.scholar_data != None))
-            for s_data in research_res.scalars().all():
-                if s_data:
-                    try:
-                        loaded = json.loads(s_data) if isinstance(s_data, str) else s_data
-                        if isinstance(loaded, list):
-                            total_research += len(loaded)
-                    except Exception:
-                        pass
-        except:
-            total_research = 0
-
-        return {
-            "status": "error",
-            "message": "Internal error",
-            "data": {
-                "analysis_overview": {
-                    "total_faculty": 0,
-                    "total_research": total_research
-                },
-                "data_summary": {},
-                "results": {}
-            }
-        }
-
-def harden_scholar_data(data):
-    """ทำความสะอาดข้อมูลเพื่อป้องกัน PII False Positive (เช่น Maestro CC BIN) และลดขนาด JSON"""
-    if isinstance(data, list):
-        return [harden_scholar_data(item) for item in data]
-    elif isinstance(data, dict):
-        cleaned = {}
-        for k, v in data.items():
-            
-            if k in ("cites_id", "serpapi_link"):
-                continue
-            
-            if k == "link" or k == "thumbnail":
-                if isinstance(v, str):
-                    def mask_digits(match):
-                        num = match.group(0)
-                        if len(num) >= 12:
-                            mid = len(num) // 2
-                            return num[:mid-2] + "xxxx" + num[mid+2:]
-                        return num
-                    v = re.sub(r'\d{12,19}', mask_digits, v)
-            elif isinstance(v, (str, int)):
-                val_str = str(v)
-                if val_str.isdigit() and len(val_str) >= 12:
-                    mid = len(val_str) // 2
-                    v = val_str[:mid-2] + "xxxx" + val_str[mid+2:]
-            else:
-                v = harden_scholar_data(v)
-            cleaned[k] = v
-        return cleaned
-    return data
-
-@router.get("/research")
-async def api_research_list(db: AsyncSession = Depends(get_db)):
-    """ดึงข้อมูลงานวิจัยทั้งหมด (SerpApi Organic Results) เรียงตามอาจารย์"""
-    result = await db.execute(select(Faculty).where(Faculty.scholar_data != None).order_by(Faculty.id))
-    faculty_rows = result.scalars().all()
-    
-    research_data = []
-    for row in faculty_rows:
-        img_val = row.image or ''
-        img = img_val if img_val.startswith(("http", "/static", "data:", "/uploads")) else (f"https://ww2.agi.nu.ac.th/personnel/upload/{img_val}" if img_val else "")
-        
-        scholar_results = []
-        if row.scholar_data:
-            try:
-                loaded = json.loads(row.scholar_data) if isinstance(row.scholar_data, str) else row.scholar_data
-                scholar_results = loaded if isinstance(loaded, list) else []
-            except Exception:
-                pass
                 
-        metrics = {}
-        if row.cited:
-            try:
-                metrics = json.loads(row.cited) if isinstance(row.cited, str) else row.cited
-            except Exception:
-                pass
-                
-        if not scholar_results and not metrics:
-            continue
-            
-        research_data.append(harden_scholar_data({
-            'faculty_id': row.id,
-            'name_th': f"{row.prefix or ''} {row.fname} {row.lname}".strip(),
-            'name_en': f"{row.fname_en or ''} {row.lname_en or ''}".strip(),
-            'image': img,
-            'scholar_id': row.scholar_id,
-            'publications': scholar_results,
-            'metrics': metrics
-        }))
+        for level, l_data in data_summary.items():
+            for prog, p_data in l_data["programs"].items():
+                total_prog = p_data["active"] + p_data["graduated"] + p_data["lost"]
+                if total_prog > 0:
+                    p_data["success_rate"] = f"{(p_data['graduated'] / total_prog * 100):.1f}%"
+
+        result_cache = {
+            "grand_total": grand_total,
+            "total_active": total_active,
+            "total_graduated": total_graduated,
+            "total_lost": total_lost,
+            "by_level": data_summary
+        }
+        set_cached_data("external_stats", result_cache)
         
-    return {"status": "success", "data": research_data}
-@router.get("/coop-stats")
-async def get_coop_stats(db: AsyncSession = Depends(get_db)):
-    """ดึงข้อมูลสถิติสหกิจศึกษาจากตาราง coop_students และ coop_companies โดยระบุ schema เป็น public"""
-    try:
-        total_std = await db.scalar(text("SELECT COUNT(*) FROM public.coop_students"))
-        total_comp = await db.scalar(text("SELECT COUNT(DISTINCT co_code) FROM public.coop_students WHERE co_code IS NOT NULL"))
-
-        majors_rows = await db.execute(text("SELECT major, COUNT(*) as cnt FROM public.coop_students GROUP BY major"))
-        majors_data = []
-        for row in majors_rows:
-            m_name = "ทรัพยากรธรรมชาติและสิ่งแวดล้อม" if row.major == 1 else "ภูมิศาสตร์" if row.major == 2 else "อื่นๆ"
-            majors_data.append({"name": m_name, "count": row.cnt})
-
-        
-        top_nre_rows = await db.execute(text("""
-            SELECT c.company_name, COUNT(s.id) as cnt
-            FROM public.coop_students s
-            JOIN public.coop_companies c ON s.co_code = c.co_code
-            WHERE s.major = 1
-            GROUP BY c.company_name ORDER BY cnt DESC LIMIT 10
-        """))
-        top_nre = [{"name": r.company_name, "count": r.cnt} for r in top_nre_rows]
-
-        
-        top_geo_rows = await db.execute(text("""
-            SELECT c.company_name, COUNT(s.id) as cnt
-            FROM public.coop_students s
-            JOIN public.coop_companies c ON s.co_code = c.co_code
-            WHERE s.major = 2
-            GROUP BY c.company_name ORDER BY cnt DESC LIMIT 10
-        """))
-        top_geo = [{"name": r.company_name, "count": r.cnt} for r in top_geo_rows]
-
-        
-        all_comp_rows = await db.execute(text("SELECT co_code, company_name, address, phone FROM public.coop_companies ORDER BY co_code"))
-        all_companies = [{"id": r.co_code, "name": r.company_name, "address": r.address or "-", "phone": r.phone or "-"} for r in all_comp_rows]
-
-        loc_rows = await db.execute(text("""
-            SELECT c.company_name, c.lat, c.long, s.name, s.major
-            FROM public.coop_students s
-            JOIN public.coop_companies c ON s.co_code = c.co_code
-            WHERE c.lat IS NOT NULL AND c.long IS NOT NULL
-        """))
-        locations = []
-        for r in loc_rows:
-            m_name = "ทรัพยากรธรรมชาติและสิ่งแวดล้อม" if r.major == 1 else "ภูมิศาสตร์"
-            locations.append({
-                "company": r.company_name, "name": r.name, "major": m_name, 
-                "lat": float(r.lat), "long": float(r.long), "major_id": r.major
-            })
+        result_cache["total_faculty"] = total_faculty
+        result_cache["total_research"] = total_research
 
         return {
             "status": "success",
             "data": {
-                "summary": {"total_students": total_std or 0, "total_companies": total_comp or 0},
-                "majors": majors_data,
-                "top_nre": top_nre,
-                "top_geo": top_geo,
-                "all_companies": all_companies,
-                "locations": locations
+                "analysis_overview": result_cache
             }
         }
     except Exception as e:
-        logger.error(f"COOP-STATS error: {e}", exc_info=True)
-        return {"status": "error", "message": "Internal error"}
+        raise HTTPException(status_code=500, detail=str(e))
