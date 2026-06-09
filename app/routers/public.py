@@ -741,17 +741,7 @@ async def show_page(slug: str, request: Request, db: AsyncSession = Depends(get_
     return templates.TemplateResponse(request=request, name=template_name, context=context)
 
 @router.get("/api/curriculum-stats-proxy")
-async def get_curriculum_stats_proxy():
-    api_url = "https://oassar.agi.nu.ac.th/esprel/vendor/include/info.php"
-    async with httpx.AsyncClient(timeout=10.0) as client:
-        try:
-            response = await client.get(api_url)
-            # ตรวจสอบว่าได้ข้อมูลถูกต้องไหม
-            response.raise_for_status()
-            return response.json()
-        except httpx.HTTPStatusError as e:
-            logger.warning(f"Curriculum stats proxy upstream error: {e}", exc_info=True)
-            raise HTTPException(status_code=502, detail="Upstream API unavailable")
-        except Exception as e:
-            logger.error(f"Curriculum stats proxy failed: {e}", exc_info=True)
-            raise HTTPException(status_code=502, detail="Upstream API unavailable")
+async def get_curriculum_stats_proxy(db: AsyncSession = Depends(get_db)):
+    # Redirect to the new internal endpoint
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/api/v1/external-stats")

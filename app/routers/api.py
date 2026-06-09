@@ -216,11 +216,10 @@ async def api_page(slug: str, db: AsyncSession = Depends(get_db)):
 
 @router.get("/external-stats")
 async def api_external_stats(db: AsyncSession = Depends(get_db)):
-    """Fetch student stats from internal PHP API + local Postgres counts for Faculty"""
-    import httpx
-    # URL ใหม่ที่คุณเตรียมไว้
-    EXTERNAL_API_URL = "https://oassar.agi.nu.ac.th/esprel/vendor/include/info.php"
-
+    """Fetch student stats directly from SQL Server Database + local Postgres counts for Faculty"""
+    import os
+    import pymssql
+    
     try:
         # 1. ดึงข้อมูลจำนวนอาจารย์จาก Postgres (Local) เหมือนเดิม
         faculty_count_stmt = select(func.count()).select_from(Faculty)
@@ -239,36 +238,98 @@ async def api_external_stats(db: AsyncSession = Depends(get_db)):
                 except Exception:
                     pass
 
-        # 2. ดึงข้อมูลนิสิตจาก API แทนการเชื่อมต่อ MSSQL
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.get(EXTERNAL_API_URL)
+        # 2. ดึงข้อมูลนิสิตจาก DB ภายในโดยตรงแทนการเรียก API ภายนอก
+        conn = pymssql.connect(
+            server=os.getenv('STUDENT_DB_SERVER'),
+            user=os.getenv('STUDENT_DB_USER'),
+            password=os.getenv('STUDENT_DB_PASS'),
+            database=os.getenv('STUDENT_DB_NAME')
+        )
+        cursor = conn.cursor(as_dict=True)
+        
+        sql = """
+        SELECT 
+            LEVGROUPNAME as level, 
+            PROGRAMNAME as program, 
+            STDSTATUSID as status_id,
+            COUNT(*) as count
+        FROM [Agri].[View_Student4AgriFaculty]
+        GROUP BY LEVGROUPNAME, PROGRAMNAME, STDSTATUSID
+        """
+        cursor.execute(sql)
+        rows = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        
+        data_summary = {}
+        grand_total = 0
+        total_active = 0
+        total_graduated = 0
+        total_lost = 0
+        
+        active_ids = {10, 11, 12}
+        graduated_ids = {40}
+        lost_ids = {21, 22, 50, 51, 52, 60}
+        
+        for row in rows:
+            level = row['level']
+            program = row['program']
             
-            if response.status_code != 200:
-                # กรณี API ปลายทางมีปัญหา ให้ส่งค่า default กลับไปแทนเพื่อให้ระบบไม่ล่ม
-                return {
-                    "status": "partial_success",
-                    "message": "External student API unavailable",
-                    "data": {
-                        "analysis_overview": {
-                            "total_faculty": total_faculty,
-                            "total_research": total_research
-                        },
-                        "data_summary": {},
-                        "results": {}
-                    }
-                }
+            # Filter programs to match the department's specific curriculums exactly like the old API
+            if not any(k in program for k in ['สิ่งแวดล้อม', 'ภูมิศาสตร์', 'ภูมิสารสนเทศ', 'อวกาศ', 'ทรัพยากรธรรมชาติ']):
+                continue
+            if 'วิทยาศาสตร์การเกษตร' in program:
+                continue
             
-            external_data = response.json()
+            status_id = row['status_id']
+            count = row['count']
+            
+            if level not in data_summary:
+                data_summary[level] = {"programs": {}}
+            
+            if program not in data_summary[level]["programs"]:
+                data_summary[level]["programs"][program] = {"active": 0, "graduated": 0, "lost": 0, "success_rate": "0%"}
+            
+            grand_total += count
+            if status_id in active_ids:
+                data_summary[level]["programs"][program]["active"] += count
+                total_active += count
+            elif status_id in graduated_ids:
+                data_summary[level]["programs"][program]["graduated"] += count
+                total_graduated += count
+            elif status_id in lost_ids:
+                data_summary[level]["programs"][program]["lost"] += count
+                total_lost += count
 
-        # 3. นำข้อมูลจาก API มาประกอบร่างกับข้อมูลอาจารย์ (โดยใช้โครงสร้างเดิม)
-        # เนื่องจากโครงสร้าง JSON ที่คุณให้มาเหมือนกับที่หน้าบ้านรออยู่แล้ว 
-        # เราแค่ต้องเอาค่า total_faculty ยัดกลับเข้าไปใน analysis_overview ครับ
-        
-        result = external_data.get("data", external_data) # ปรับตามโครงสร้างที่ส่งมาจริง
-        
-        if "analysis_overview" in result:
-            result["analysis_overview"]["total_faculty"] = total_faculty
-            result["analysis_overview"]["total_research"] = total_research
+        # Calculate success rates for programs
+        for level in data_summary:
+            for prog, stats in data_summary[level]["programs"].items():
+                g = stats["graduated"]
+                l = stats["lost"]
+                if (g + l) > 0:
+                    sr = round((g / (g + l)) * 100, 2)
+                    stats["success_rate"] = f"{int(sr)}%" if sr == int(sr) else f"{sr}%"
+                else:
+                    stats["success_rate"] = "0%"
+
+        overall_sr = "0%"
+        if (total_graduated + total_lost) > 0:
+            val = round((total_graduated / (total_graduated + total_lost)) * 100, 2)
+            overall_sr = f"{int(val)}%" if val == int(val) else f"{val}%"
+
+        result = {
+            "analysis_overview": {
+                "total_faculty": total_faculty,
+                "total_research": total_research,
+                "grand_total": grand_total,
+                "total_active": total_active,
+                "total_graduated": total_graduated,
+                "total_lost": total_lost,
+                "overall_success_rate": overall_sr
+            },
+            "data_summary": data_summary,
+            "results": {}
+        }
         
         return {"status": "success", "data": result}
 

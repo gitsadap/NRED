@@ -1002,6 +1002,9 @@ async def get_my_cv(request: Request, user: dict = Depends(get_current_user), db
         "success": True, 
         "faculty": {
             "id": faculty.id,
+            "prefix": faculty.prefix,
+            "fname": faculty.fname,
+            "lname": faculty.lname,
             "position": faculty.position,
             "expertise": faculty.expertise,
             "image": faculty.image

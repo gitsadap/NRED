@@ -139,9 +139,35 @@ function initAdminApp() {
     const payload = getUserPayload();
     let initialSection = 'dashboard';
     
+    // Update Header Profile
+    if (payload && payload.sub) {
+        document.getElementById('adminUsernameDisplay').innerText = payload.sub;
+        const initial = payload.sub.charAt(0).toUpperCase();
+        document.getElementById('adminProfileFallback').innerText = initial;
+        
+        // Fetch profile image and real name asynchronously
+        apiCall('/admin/api/faculty/my-cv')
+            .then(res => {
+                if (res && res.success && res.faculty) {
+                    if (res.faculty.image) {
+                        const imgEl = document.getElementById('adminProfileImage');
+                        imgEl.src = res.faculty.image;
+                        imgEl.classList.remove('hidden');
+                        document.getElementById('adminProfileFallback').classList.add('hidden');
+                    }
+                    if (res.faculty.fname && res.faculty.lname) {
+                        const prefix = res.faculty.prefix || '';
+                        const fullName = `${prefix}${res.faculty.fname} ${res.faculty.lname}`.trim();
+                        document.getElementById('adminUsernameDisplay').innerText = fullName;
+                    }
+                }
+            })
+            .catch(e => console.log("Profile data not found."));
+    }
+    
     // Fetch dashboard stats if admin
     if (payload && payload.role !== 'teacher') {
-        loadDashboardStats();
+        // loadDashboardStats(); // TODO: Function not defined
         loadTags();
     }
     
@@ -226,6 +252,7 @@ function showSection(sectionId) {
     if (sectionId === 'tags') loadTags();
     if (sectionId === 'appeals') loadAppeals();
     if (sectionId === 'settings') loadSettings();
+    if (sectionId === 'student_data') fetchStudentData();
 }
 
 // --- API Helpers ---
@@ -682,7 +709,7 @@ async function submitMyCV(silent = false) {
 
 function logout() {
     try { localStorage.removeItem('admin_token'); } catch (e) {}
-    window.location.href = '/admin/login';
+    window.location.href = '/';
 }
 
 async function apiCall(url, method = 'GET', body = null) {
@@ -1986,5 +2013,300 @@ async function deleteAward(id) {
     confirmAction('ลบรายการนี้ใช่หรือไม่?', async () => {
         await apiCall(`/admin/api/generic/delete`, 'POST', { model: 'Award', id: id });
         loadAwards();
+    });
+}
+
+// --- Student Data Logic ---
+function switchStudentTab(tabName) {
+    document.querySelectorAll('.student-tab-content').forEach(el => el.classList.add('hidden'));
+    document.querySelectorAll('.student-tab-btn').forEach(btn => {
+        btn.classList.remove('text-blue-700', 'border-blue-600', 'font-bold');
+        btn.classList.add('text-gray-500', 'border-transparent', 'font-medium');
+    });
+
+    const targetTab = document.getElementById(`student_tab_${tabName}`);
+    const activeBtn = document.getElementById(`tab-s-${tabName}`);
+    
+    if(targetTab) targetTab.classList.remove('hidden');
+    if(activeBtn) {
+        activeBtn.classList.remove('text-gray-500', 'border-transparent', 'font-medium');
+        activeBtn.classList.add('text-blue-700', 'border-blue-600', 'font-bold');
+    }
+}
+
+async function fetchStudentData() {
+    const baseYear = parseInt(document.getElementById('base_year_input').value) || 2569;
+    const loading = document.getElementById('studentDataLoading');
+    const content = document.getElementById('studentDataContent');
+    
+    // Update headers dynamically for all 5 tabs
+    const tabPrefixes = ['admitted', 'active', 'lost', 'grad', 'retention'];
+    tabPrefixes.forEach(prefix => {
+        for (let i = 1; i <= 5; i++) {
+            const th = document.getElementById(`th_${prefix}_${i}`);
+            if (th) {
+                // i=5 is baseYear - 4 (oldest), i=1 is baseYear (newest)
+                const y = baseYear - (5 - i);
+                if (prefix === 'grad') {
+                    // For graduation, indicate the cohort code beneath the year
+                    // e.g. Year 2565 corresponds to cohort 2562 (y - 3)
+                    const cohortCode = (y - 3).toString().substring(2);
+                    th.innerHTML = `ปี ${y}<br><span class="text-xs text-gray-500 font-normal">(รหัส ${cohortCode})</span>`;
+                } else {
+                    th.innerText = `ปี ${y}`;
+                }
+            }
+        }
+    });
+    
+    loading.classList.remove('hidden');
+    content.classList.add('hidden');
+    
+    try {
+        const res = await apiCall(`/api/dashboard/curriculum-stats?base_year=${baseYear}`);
+        if(res && res.data) {
+            renderStudentData(res.data, baseYear);
+            content.classList.remove('hidden');
+            
+            // Also load province stats
+            loadProvinceStats(baseYear);
+        } else {
+            Swal.fire('Error', 'No data returned or error occurred', 'error');
+        }
+    } catch (e) {
+        console.error(e);
+        Swal.fire('Error', 'Failed to fetch student data', 'error');
+    } finally {
+        loading.classList.add('hidden');
+    }
+}
+
+function renderStudentData(data, baseYear) {
+    const grouped = {};
+    data.forEach(item => {
+        const lv = item.level || 'ปริญญาตรี';
+        if (!grouped[lv]) grouped[lv] = [];
+        grouped[lv].push(item);
+    });
+
+    let htmlAdmitted = '';
+    let htmlActive = '';
+    let htmlLost = '';
+    let htmlGraduation = '';
+    let htmlRetention = '';
+    
+    // Years array from newest to oldest to match the left-to-right headers (5, 4, 3, 2, 1)
+    const years = [baseYear, baseYear - 1, baseYear - 2, baseYear - 3, baseYear - 4];
+    
+    for (const [level, items] of Object.entries(grouped)) {
+        const levelHeader = (cols) => `<tr class="bg-blue-50 border-b"><td colspan="${cols}" class="py-2 px-4 font-bold text-blue-800">ระดับ${escapeHtml(level)}</td></tr>`;
+        
+        htmlAdmitted += levelHeader(6);
+        htmlActive += levelHeader(6);
+        htmlLost += levelHeader(26);
+        htmlGraduation += levelHeader(6);
+        htmlRetention += levelHeader(6);
+
+        items.forEach(item => {
+            const admitted = item.admitted || {};
+            const active = item.active || {};
+            const lost = item.lost || {};
+            const attr_rate = item.attrition_rate || {};
+            const grad = item.graduated || {};
+            const grad_rate = item.grad_rate || {};
+            const ret_rate = item.retention_rate || {};
+            
+            // 1. Admitted (by admit_year)
+            htmlAdmitted += `
+                <tr class="border-b hover:bg-gray-50 transition">
+                    <td class="py-3 px-4 text-sm">${escapeHtml(item.program)}</td>
+                    ${years.map(y => `<td class="py-3 px-4 text-center text-sm">${admitted[y] || 0}</td>`).join('')}
+                </tr>
+            `;
+            
+            // 2. Active (by admit_year)
+            htmlActive += `
+                <tr class="border-b hover:bg-gray-50 transition">
+                    <td class="py-3 px-4 text-sm">${escapeHtml(item.program)}</td>
+                    ${years.map(y => `<td class="py-3 px-4 text-center font-semibold text-blue-600 text-sm">${active[y] || 0}</td>`).join('')}
+                </tr>
+            `;
+            
+            // 3. Lost (by admit_year)
+            htmlLost += `
+                <tr class="border-b hover:bg-gray-50 transition">
+                    <td class="py-3 px-4 text-sm border-r">${escapeHtml(item.program)}</td>
+                    ${years.map(y => {
+                        const l = lost[y] || {total: 0, y1: 0, y2: 0, y3: 0, y4: 0, other: 0};
+                        // Note: Because Javascript sometimes receives an integer if no data is found (due to backend initialization bugs if any), 
+                        // make sure we handle it robustly.
+                        const isObj = typeof l === 'object';
+                        const t = isObj ? l.total : (l || 0);
+                        const y1 = isObj ? l.y1 : 0;
+                        const y2 = isObj ? l.y2 : 0;
+                        const y3 = isObj ? l.y3 : 0;
+                        const y4plus = isObj ? (l.y4 + l.other) : 0;
+                        const rate = attr_rate[y] || 0;
+                        return `
+                        <td class="py-2 px-1 text-center text-red-600 font-bold text-sm bg-red-50">${t}</td>
+                        <td class="py-2 px-1 text-center text-xs text-gray-600">${y1 || '-'}</td>
+                        <td class="py-2 px-1 text-center text-xs text-gray-600">${y2 || '-'}</td>
+                        <td class="py-2 px-1 text-center text-xs text-gray-600">${y3 || '-'}</td>
+                        <td class="py-2 px-1 text-center text-xs text-gray-600 border-r">${y4plus || '-'}</td>
+                        `;
+                    }).join('')}
+                </tr>
+            `;
+            
+            // 4. Graduation (by finish_year)
+            htmlGraduation += `
+                <tr class="border-b hover:bg-gray-50 transition">
+                    <td class="py-3 px-4 text-sm">${escapeHtml(item.program)}</td>
+                    ${years.map(y => `<td class="py-3 px-4 text-center text-green-600 font-bold text-sm">${grad[y] || 0} คน (${grad_rate[y] || 0}%)</td>`).join('')}
+                </tr>
+            `;
+            
+            // 5. Retention (by admit_year)
+            htmlRetention += `
+                <tr class="border-b hover:bg-gray-50 transition">
+                    <td class="py-3 px-4 text-sm">${escapeHtml(item.program)}</td>
+                    ${years.map(y => `<td class="py-3 px-4 text-center text-blue-600 font-bold text-sm">${ret_rate[y] || 0}%</td>`).join('')}
+                </tr>
+            `;
+        });
+    }
+    
+    const emptyRow = '<tr><td colspan="6" class="text-center py-4 text-gray-500">ไม่มีข้อมูล</td></tr>';
+    
+    document.getElementById('tbody_admitted').innerHTML = htmlAdmitted || emptyRow;
+    document.getElementById('tbody_active').innerHTML = htmlActive || emptyRow;
+    document.getElementById('tbody_lost').innerHTML = htmlLost || emptyRow;
+    document.getElementById('tbody_graduation').innerHTML = htmlGraduation || emptyRow;
+    document.getElementById('tbody_retention').innerHTML = htmlRetention || emptyRow;
+}
+
+// --- Province Stats & Map Logic ---
+async function loadProvinceStats(baseYear) {
+    document.getElementById('province_year_label').innerText = baseYear;
+    const tbody = document.getElementById('province_table_body');
+    tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-gray-500">กำลังโหลดข้อมูล...</td></tr>';
+    
+    try {
+        const res = await apiCall(`/api/dashboard/province-stats?base_year=${baseYear}`);
+        if(res && res.data) {
+            if(res.data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-gray-500">ไม่พบข้อมูลในระบบ</td></tr>';
+            } else {
+                tbody.innerHTML = res.data.map((item, index) => `
+                    <tr class="hover:bg-gray-50 transition cursor-pointer" onclick="showProvinceStudents(${baseYear}, ${item.raw_pid}, '${escapeHtml(item.province_name)}')">
+                        <td class="py-2 px-4 border-b text-gray-500">${index + 1}</td>
+                        <td class="py-2 px-4 border-b font-medium text-gray-800 hover:text-primary">${escapeHtml(item.province_name)}</td>
+                        <td class="py-2 px-4 border-b text-right font-bold text-blue-600 underline hover:text-blue-800">${item.count}</td>
+                    </tr>
+                `).join('');
+            }
+            
+            // Load and draw Google GeoChart
+            if(typeof google !== 'undefined' && google.charts) {
+                google.charts.load('current', {
+                    'packages':['geochart'],
+                });
+                google.charts.setOnLoadCallback(() => drawProvinceMap(res.data));
+            }
+        }
+    } catch(e) {
+        console.error(e);
+        tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-red-500">เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>';
+    }
+}
+
+async function showProvinceStudents(baseYear, provinceId, provinceName) {
+    Swal.fire({
+        title: 'กำลังโหลดข้อมูล...',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+    });
+    
+    try {
+        const res = await apiCall(`/api/dashboard/province-students?base_year=${baseYear}&province_id=${provinceId}`);
+        if(res && res.students) {
+            if(res.students.length === 0) {
+                Swal.fire('ไม่พบข้อมูล', `ไม่พบนิสิตจาก ${provinceName} ในปี ${baseYear}`, 'info');
+                return;
+            }
+            
+            let html = `
+                <div class="overflow-y-auto max-h-[60vh] text-left">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-50 sticky top-0">
+                            <tr>
+                                <th class="py-2 px-3 border-b">รหัสนิสิต</th>
+                                <th class="py-2 px-3 border-b">ชื่อ-สกุล</th>
+                                <th class="py-2 px-3 border-b">ระดับ</th>
+                                <th class="py-2 px-3 border-b">สาขา</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+            `;
+            
+            res.students.forEach(std => {
+                html += `
+                    <tr class="hover:bg-gray-50">
+                        <td class="py-2 px-3 text-gray-600">${escapeHtml(std.stdcode)}</td>
+                        <td class="py-2 px-3 font-medium text-gray-800">${escapeHtml(std.fullname)}</td>
+                        <td class="py-2 px-3 text-gray-500">${escapeHtml(std.level)}</td>
+                        <td class="py-2 px-3 text-gray-600">${escapeHtml(std.program)}</td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            Swal.fire({
+                title: `รายชื่อนิสิต: ${provinceName} (ปี ${baseYear})`,
+                html: html,
+                width: '800px',
+                showCloseButton: true,
+                showConfirmButton: false
+            });
+        }
+    } catch(e) {
+        console.error(e);
+        Swal.fire('Error', 'ไม่สามารถโหลดข้อมูลนิสิตได้', 'error');
+    }
+}
+
+function drawProvinceMap(provinceData) {
+    var data = new google.visualization.DataTable();
+    data.addColumn('string', 'Province');
+    data.addColumn('number', 'Students');
+
+    // GeoChart maps standard ISO 3166-2:TH codes
+    const mapData = provinceData
+        .filter(item => item.id.startsWith('TH-'))
+        .map(item => [item.id, item.count]);
+        
+    data.addRows(mapData);
+
+    var options = {
+        region: 'TH',
+        resolution: 'provinces',
+        colorAxis: {colors: ['#e0f2fe', '#0ea5e9', '#0369a1']}, // Light blue to dark blue
+        backgroundColor: 'transparent',
+        datalessRegionColor: '#f8fafc',
+        defaultColor: '#f1f5f9',
+        keepAspectRatio: true
+    };
+
+    var chart = new google.visualization.GeoChart(document.getElementById('province_map_container'));
+    chart.draw(data, options);
+    
+    // Make map responsive on resize
+    window.addEventListener('resize', () => {
+        chart.draw(data, options);
     });
 }

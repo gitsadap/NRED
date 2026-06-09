@@ -1,0 +1,16 @@
+import pymssql
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+conn = pymssql.connect(
+    server=os.getenv('STUDENT_DB_SERVER'),
+    user=os.getenv('STUDENT_DB_USER'),
+    password=os.getenv('STUDENT_DB_PASS'),
+    database=os.getenv('STUDENT_DB_NAME')
+)
+cursor = conn.cursor(as_dict=True)
+cursor.execute("SELECT TOP 20 STDADMITYEAR, STDSTATUSID, STDSTATUSNAME, STDFINISHDATE FROM [Agri].[View_Student4AgriFaculty] WHERE STDSTATUSID IN (21, 22, 50, 51, 52, 60)")
+rows = cursor.fetchall()
+for r in rows:
+    print(r)

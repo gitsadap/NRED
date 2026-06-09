@@ -72,7 +72,8 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             script_src_domains = ""
             
             if is_admin_page:
-                script_src_domains += " https://cdnjs.cloudflare.com"
+                script_src_domains += " https://cdnjs.cloudflare.com https://www.gstatic.com"
+                style_src_domains += " https://www.gstatic.com"
                 
             csp = (
                 "default-src 'self'; "
@@ -245,7 +246,7 @@ for mount_point, directory in static_dirs:
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 # Import routers
-from app.routers import public, appeals, admin, api, chatbot, auth
+from app.routers import public, appeals, admin, api, chatbot, auth, dashboard_api
 # Redirect routes
 from fastapi.responses import RedirectResponse
 
@@ -260,6 +261,7 @@ app.include_router(admin.router)
 app.include_router(appeals.router)
 app.include_router(api.router)
 app.include_router(chatbot.router)
+app.include_router(dashboard_api.router, prefix="/api/dashboard")
 app.include_router(public.router)  # Public router has catch-all, so it MUST be last
 
 @app.on_event("startup")

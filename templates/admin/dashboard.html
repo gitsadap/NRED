@@ -59,6 +59,10 @@
                 class="block py-3 px-6 hover:bg-secondary cursor-pointer transition-colors border-l-4 border-transparent hover:border-accent">
                 <span class="mr-2">📊</span> แดชบอร์ด
             </a>
+            <a onclick="showSection('student_data')" id="nav-student_data"
+                class="block py-3 px-6 hover:bg-secondary cursor-pointer transition-colors border-l-4 border-transparent hover:border-accent">
+                <span class="mr-2">🎓</span> ข้อมูลนิสิต
+            </a>
             <a onclick="showSection('cv_update')" id="nav-cv_update"
                 class="block py-3 px-6 hover:bg-secondary cursor-pointer transition-colors border-l-4 border-transparent hover:border-accent">
                 <span class="mr-2">🧑‍🏫</span> แก้ไขข้อมูลส่วนตัว (CV)
@@ -105,8 +109,9 @@
         <header class="bg-white shadow-sm flex justify-between items-center py-4 px-8 z-10 border-b border-gray-200">
             <h1 class="text-2xl font-bold text-gray-800" id="headerTitle">แดชบอร์ด</h1>
             <div class="flex items-center gap-4">
-                <span class="text-sm text-gray-600">Admin User</span>
-                <div class="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold border border-blue-200"> A</div>
+                <span id="adminUsernameDisplay" class="text-sm text-gray-600">Admin</span>
+                <div id="adminProfileFallback" class="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold border border-blue-200">A</div>
+                <img id="adminProfileImage" src="" alt="Profile" class="w-9 h-9 rounded-full border border-gray-200 hidden object-cover">
                 <button onclick="logout()" class="ml-4 px-3 py-1 bg-red-500 text-white text-sm font-semibold rounded hover:bg-red-600 transition">Logout</button>
             </div>
         </header>
@@ -137,6 +142,193 @@
                             <h3 class="text-blue-800 font-bold text-lg mb-2">ตั้งค่าระบบ</h3>
                             <p class="text-blue-600 text-sm">จัดการเมนูและหน้าแรก</p>
                         </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Student Data Reporting -->
+            <div id="student_data" class="section-view">
+                <div class="bg-white rounded-xl shadow-sm p-8 border border-gray-100 max-w-6xl mx-auto">
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800">รายงานข้อมูลหลักสูตร (ข้อมูลนิสิต)</h2>
+                            <p class="text-gray-500 text-sm">ข้อมูลสถิตินิสิตย้อนหลัง 5 ปี (ตามกลุ่มสาขาวิชา)</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <label class="text-sm font-bold text-gray-700">ปีเริ่มต้นการค้นหา:</label>
+                            <input type="number" id="base_year_input" class="w-24 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" value="2569">
+                            <button onclick="fetchStudentData()" class="px-4 py-2 bg-primary text-white rounded-lg shadow hover:bg-secondary font-medium transition">
+                                ดึงข้อมูล
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="studentDataLoading" class="hidden text-center py-10">
+                        <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mx-auto mb-4"></div>
+                        <p class="text-gray-500">กำลังประมวลผลข้อมูล...</p>
+                    </div>
+
+                    <div id="studentDataContent" class="hidden">
+                        <div class="flex border-b border-gray-200 mb-6 overflow-x-auto custom-scrollbar">
+                            <button onclick="switchStudentTab('admitted')" id="tab-s-admitted" class="student-tab-btn px-6 py-3 font-bold text-blue-700 border-b-2 border-blue-600 transition whitespace-nowrap">1. รับเข้าทั้งหมด</button>
+                            <button onclick="switchStudentTab('active')" id="tab-s-active" class="student-tab-btn px-6 py-3 font-medium text-gray-500 border-b-2 border-transparent hover:text-blue-600 transition whitespace-nowrap">2. กำลังศึกษา</button>
+                            <button onclick="switchStudentTab('lost')" id="tab-s-lost" class="student-tab-btn px-6 py-3 font-medium text-gray-500 border-b-2 border-transparent hover:text-blue-600 transition whitespace-nowrap">3. ลาออก/ย้ายสาขา</button>
+                            <button onclick="switchStudentTab('graduation')" id="tab-s-graduation" class="student-tab-btn px-6 py-3 font-medium text-gray-500 border-b-2 border-transparent hover:text-blue-600 transition whitespace-nowrap">4. สำเร็จการศึกษา</button>
+                            <button onclick="switchStudentTab('retention')" id="tab-s-retention" class="student-tab-btn px-6 py-3 font-medium text-gray-500 border-b-2 border-transparent hover:text-blue-600 transition whitespace-nowrap">5. อัตราคงอยู่</button>
+                        </div>
+
+                        <!-- Content blocks populated by JS -->
+                        <div id="student_tab_admitted" class="student-tab-content">
+                            <div class="overflow-x-auto rounded-lg border">
+                                <table class="w-full text-left border-collapse">
+                                    <thead class="bg-gray-50 text-gray-600 text-sm uppercase">
+                                        <tr>
+                                            <th class="py-3 px-4 font-semibold">สาขาวิชา</th>
+                                            <th id="th_admitted_5" class="py-3 px-4 font-semibold text-center">ปี</th>
+                                            <th id="th_admitted_4" class="py-3 px-4 font-semibold text-center">ปี</th>
+                                            <th id="th_admitted_3" class="py-3 px-4 font-semibold text-center">ปี</th>
+                                            <th id="th_admitted_2" class="py-3 px-4 font-semibold text-center">ปี</th>
+                                            <th id="th_admitted_1" class="py-3 px-4 font-semibold text-center">ปี</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbody_admitted" class="divide-y divide-gray-100 bg-white"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div id="student_tab_active" class="student-tab-content hidden">
+                            <div class="overflow-x-auto rounded-lg border">
+                                <table class="w-full text-left border-collapse">
+                                    <thead class="bg-gray-50 text-gray-600 text-sm uppercase">
+                                        <tr>
+                                            <th class="py-3 px-4 font-semibold">สาขาวิชา</th>
+                                            <th id="th_active_5" class="py-3 px-4 font-semibold text-center">ชั้นปีที่ 5+</th>
+                                            <th id="th_active_4" class="py-3 px-4 font-semibold text-center">ชั้นปีที่ 4</th>
+                                            <th id="th_active_3" class="py-3 px-4 font-semibold text-center">ชั้นปีที่ 3</th>
+                                            <th id="th_active_2" class="py-3 px-4 font-semibold text-center">ชั้นปีที่ 2</th>
+                                            <th id="th_active_1" class="py-3 px-4 font-semibold text-center">ชั้นปีที่ 1</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbody_active" class="divide-y divide-gray-100 bg-white"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div id="student_tab_lost" class="student-tab-content hidden">
+                            <div class="overflow-x-auto rounded-lg border">
+                                <table class="w-full text-left border-collapse">
+                                    <thead class="bg-gray-50 text-gray-600 text-sm uppercase">
+                                        <tr>
+                                            <th rowspan="2" class="py-3 px-4 font-semibold align-middle border-b border-r">สาขาวิชา</th>
+                                            <th id="th_lost_5" colspan="5" class="py-2 px-2 font-semibold text-center border-b border-r">ปี</th>
+                                            <th id="th_lost_4" colspan="5" class="py-2 px-2 font-semibold text-center border-b border-r">ปี</th>
+                                            <th id="th_lost_3" colspan="5" class="py-2 px-2 font-semibold text-center border-b border-r">ปี</th>
+                                            <th id="th_lost_2" colspan="5" class="py-2 px-2 font-semibold text-center border-b border-r">ปี</th>
+                                            <th id="th_lost_1" colspan="5" class="py-2 px-2 font-semibold text-center border-b border-r">ปี</th>
+                                        </tr>
+                                        <tr class="text-xs bg-gray-100">
+                                            <th class="py-1 px-1 text-center font-medium text-red-600">รวม</th>
+                                            <th class="py-1 px-1 text-center font-medium">ปี1</th>
+                                            <th class="py-1 px-1 text-center font-medium">ปี2</th>
+                                            <th class="py-1 px-1 text-center font-medium">ปี3</th>
+                                            <th class="py-1 px-1 text-center font-medium border-r">ปี4+</th>
+                                            
+                                            <th class="py-1 px-1 text-center font-medium text-red-600">รวม</th>
+                                            <th class="py-1 px-1 text-center font-medium">ปี1</th>
+                                            <th class="py-1 px-1 text-center font-medium">ปี2</th>
+                                            <th class="py-1 px-1 text-center font-medium">ปี3</th>
+                                            <th class="py-1 px-1 text-center font-medium border-r">ปี4+</th>
+
+                                            <th class="py-1 px-1 text-center font-medium text-red-600">รวม</th>
+                                            <th class="py-1 px-1 text-center font-medium">ปี1</th>
+                                            <th class="py-1 px-1 text-center font-medium">ปี2</th>
+                                            <th class="py-1 px-1 text-center font-medium">ปี3</th>
+                                            <th class="py-1 px-1 text-center font-medium border-r">ปี4+</th>
+
+                                            <th class="py-1 px-1 text-center font-medium text-red-600">รวม</th>
+                                            <th class="py-1 px-1 text-center font-medium">ปี1</th>
+                                            <th class="py-1 px-1 text-center font-medium">ปี2</th>
+                                            <th class="py-1 px-1 text-center font-medium">ปี3</th>
+                                            <th class="py-1 px-1 text-center font-medium border-r">ปี4+</th>
+
+                                            <th class="py-1 px-1 text-center font-medium text-red-600">รวม</th>
+                                            <th class="py-1 px-1 text-center font-medium">ปี1</th>
+                                            <th class="py-1 px-1 text-center font-medium">ปี2</th>
+                                            <th class="py-1 px-1 text-center font-medium">ปี3</th>
+                                            <th class="py-1 px-1 text-center font-medium border-r">ปี4+</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbody_lost" class="divide-y divide-gray-100 bg-white"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div id="student_tab_graduation" class="student-tab-content hidden">
+                            <div class="overflow-x-auto rounded-lg border">
+                                <table class="w-full text-left border-collapse">
+                                    <thead class="bg-gray-50 text-gray-600 text-sm uppercase">
+                                        <tr>
+                                            <th class="py-3 px-4 font-semibold">สาขาวิชา</th>
+                                            <th id="th_grad_5" class="py-3 px-4 font-semibold text-center">ปี</th>
+                                            <th id="th_grad_4" class="py-3 px-4 font-semibold text-center">ปี</th>
+                                            <th id="th_grad_3" class="py-3 px-4 font-semibold text-center">ปี</th>
+                                            <th id="th_grad_2" class="py-3 px-4 font-semibold text-center">ปี</th>
+                                            <th id="th_grad_1" class="py-3 px-4 font-semibold text-center">ปี</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbody_graduation" class="divide-y divide-gray-100 bg-white"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div id="student_tab_retention" class="student-tab-content hidden">
+                            <div class="overflow-x-auto rounded-lg border">
+                                <table class="w-full text-left border-collapse">
+                                    <thead class="bg-gray-50 text-gray-600 text-sm uppercase">
+                                        <tr>
+                                            <th class="py-3 px-4 font-semibold">สาขาวิชา</th>
+                                            <th id="th_retention_5" class="py-3 px-4 font-semibold text-center">ปี</th>
+                                            <th id="th_retention_4" class="py-3 px-4 font-semibold text-center">ปี</th>
+                                            <th id="th_retention_3" class="py-3 px-4 font-semibold text-center">ปี</th>
+                                            <th id="th_retention_2" class="py-3 px-4 font-semibold text-center">ปี</th>
+                                            <th id="th_retention_1" class="py-3 px-4 font-semibold text-center">ปี</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbody_retention" class="divide-y divide-gray-100 bg-white"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Map and Province Stats Section -->
+                        <div id="province_stats_section" class="mt-8 border-t pt-8">
+                            <h3 class="text-xl font-bold mb-4 text-gray-800">ภูมิลำเนานิสิตรับเข้าใหม่ (ปี <span id="province_year_label">...</span>)</h3>
+                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                <!-- Map Container -->
+                                <div class="lg:col-span-2 bg-gray-50 rounded-lg p-4 border border-gray-100 flex justify-center items-center">
+                                    <div id="province_map_container" style="width: 100%; height: 500px;"></div>
+                                </div>
+                                <!-- Data Table -->
+                                <div class="bg-white rounded-lg border overflow-hidden flex flex-col h-[500px]">
+                                    <div class="bg-gray-100 px-4 py-2 border-b font-semibold text-gray-700 sticky top-0">
+                                        จำนวนนิสิตแยกตามจังหวัด
+                                    </div>
+                                    <div class="overflow-y-auto flex-1 p-0">
+                                        <table class="w-full text-left text-sm">
+                                            <thead class="bg-gray-50 text-gray-600 sticky top-0 shadow-sm">
+                                                <tr>
+                                                    <th class="py-2 px-4 font-semibold border-b">อันดับ</th>
+                                                    <th class="py-2 px-4 font-semibold border-b">จังหวัด</th>
+                                                    <th class="py-2 px-4 font-semibold border-b text-right">จำนวน (คน)</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="province_table_body" class="divide-y divide-gray-100">
+                                                <tr><td colspan="3" class="text-center py-4 text-gray-500">กำลังโหลดข้อมูล...</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -770,8 +962,11 @@
         </div>
     </div>
 
+    <!-- Google Charts -->
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
     <!-- Custom Admin Dashboard Logic -->
-    <script src="/assets/js/admin.js?v=2.4.0"></script>
+    <script src="/assets/js/admin.js?v=2.5.1"></script>
 
 </body>
 
