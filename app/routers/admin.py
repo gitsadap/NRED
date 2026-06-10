@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Query, HTTPException, Request, status, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, desc
+from sqlalchemy import select, desc, delete
 from app.database import get_db
 from app.models import Page, News, Activity, Appeal, Menu, Tag
 from fastapi.templating import Jinja2Templates
@@ -842,7 +842,7 @@ async def save_award(item: AwardCreate, db: AsyncSession = Depends(get_db)):
 
 
 from app.models import Faculty
-from sqlalchemy import delete
+
 
 @router.get("/api/faculty")
 async def get_admin_faculty(db: AsyncSession = Depends(get_db)):

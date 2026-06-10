@@ -6,7 +6,6 @@ import numpy as np
 from fastapi import APIRouter, HTTPException
 import pydantic
 from pydantic import BaseModel
-import os
 os.environ["LITELLM_LOCAL_MODEL_COST_MAP"] = "True"
 os.environ["LITELLM_LOG_LEVEL"] = "ERROR"
 import litellm
@@ -160,7 +159,8 @@ async def get_chatbot_response(req: ChatRequest):
         
         indices = [i for i, m in enumerate(documents_meta) if m.get("program_code") == target_code]
         if not indices:
-            return {"response": f"ขออภัยค่ะ ยังไม่มีข้อมูลของหลักสูตร {target_code}"}
+            prog_name = target_code or "ที่เลือก"
+            return {"response": f"ขออภัยค่ะ ยังไม่มีข้อมูลของหลักสูตร {prog_name}"}
 
         filtered_embeddings = doc_embeddings[indices]
         filtered_meta = [documents_meta[i] for i in indices]

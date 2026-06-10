@@ -97,11 +97,14 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 
 def _is_db_connectivity_error(exc: Exception) -> bool:
-    if isinstance(exc, BaseExceptionGroup):
-        for sub_exc in exc.exceptions:
-            if isinstance(sub_exc, Exception) and _is_db_connectivity_error(sub_exc):
-                return True
-        return False
+    try:
+        if isinstance(exc, BaseExceptionGroup):
+            for sub_exc in exc.exceptions:
+                if isinstance(sub_exc, Exception) and _is_db_connectivity_error(sub_exc):
+                    return True
+            return False
+    except NameError:
+        pass
     if isinstance(exc, (OperationalError, socket.gaierror, ConnectionError, TimeoutError, OSError)):
         return True
     

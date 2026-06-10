@@ -33,7 +33,7 @@ async def api_home(db: AsyncSession = Depends(get_db)):
     news_items = [{"id": n.id, "title": n.title, "image": n.image_url, "created_at": n.created_at, "type": "News"} for n in news_res.scalars().all()]
     activity_items = [{"id": a.id, "title": a.title, "image": a.image_url, "created_at": a.created_at, "type": "Activity"} for a in act_res.scalars().all()]
     
-    combined = sorted(news_items + activity_items, key=lambda x: x["created_at"] or getattr(x, 'id', 0), reverse=True)[:6]
+    combined = sorted(news_items + activity_items, key=lambda x: x["created_at"] or x.get('id', 0), reverse=True)[:6]
     
     
     banner_res = await db.execute(select(Banner).where(Banner.is_active == 1).order_by(Banner.order_index))

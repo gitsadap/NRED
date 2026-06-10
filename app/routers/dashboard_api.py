@@ -258,7 +258,7 @@ def get_province_stats(base_year: int = Query(2569)):
     conn = get_student_db_connection()
     from app.db_cache import get_cached_data, set_cached_data
     if not conn:
-        cached = get_cached_data("curriculum_stats_cache")
+        cached = get_cached_data("province_stats_cache")
         if cached: return cached
         raise HTTPException(status_code=500, detail="ไม่สามารถเชื่อมต่อฐานข้อมูลได้")
 
@@ -336,8 +336,9 @@ def get_province_stats(base_year: int = Query(2569)):
 def get_province_students(base_year: int = Query(..., description="ปีการศึกษาอ้างอิง"), province_id: int = Query(..., description="ID จังหวัด (0 = ไม่ระบุ)")):
     conn = get_student_db_connection()
     from app.db_cache import get_cached_data, set_cached_data
+    cache_key = f"province_students_{base_year}_{province_id}"
     if not conn:
-        cached = get_cached_data("province_stats_cache")
+        cached = get_cached_data(cache_key)
         if cached: return cached
         raise HTTPException(status_code=500, detail="ไม่สามารถเชื่อมต่อฐานข้อมูลได้")
         
@@ -398,12 +399,14 @@ def get_province_students(base_year: int = Query(..., description="ปีกา�
         
         students.sort(key=lambda x: (x["program"], x["stdcode"]))
         
-        return {
+        final_result = {
             "base_year": base_year,
             "province_id": province_id,
             "total": len(students),
             "students": students
         }
+        set_cached_data(cache_key, final_result)
+        return final_result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:
