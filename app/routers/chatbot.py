@@ -220,38 +220,51 @@ async def get_chatbot_response(req: ChatRequest):
         
         
         for h in req.history[-5:]:
-            role = "assistant" if h.get("sender") == "bot" else "user"
-            msg = h.get("text", "")
+            sender = h.get("sender") or h.get("role")
+            r = "assistant" if sender in ["bot", "ai", "assistant"] else "user"
+            msg = h.get("text") or h.get("content", "")
             if msg:
-                messages.append({"role": role, "content": msg})
+                messages.append({"role": r, "content": msg})
         
         
         messages.append({"role": "user", "content": user_msg})
         
         start_gemini_time = time.time()
         
+        import asyncio
+        max_retries = 4
+        retry_delay = 1.5
+        models_to_try = [
+            "gemini/gemini-3.1-flash-lite-preview",
+            "gemini/gemini-2.5-flash",
+            "gemini/gemini-3.1-flash-lite-preview",
+            "gemini/gemini-2.5-flash"
+        ]
         
-        try:
-            response = await litellm.acompletion(
-                model="gemini/gemini-3.1-flash-lite-preview",
-                messages=messages,
-                api_key=gemini_key,
-                temperature=0.3, 
-                max_tokens=800
-            )
-        except Exception as e:
-            logger.error(f"Fallback to gemini-2.5-flash due to error: {e}")
+        response = None
+        last_error = None
+        
+        for attempt in range(max_retries):
+            current_model = models_to_try[attempt]
             try:
                 response = await litellm.acompletion(
-                    model="gemini/gemini-2.5-flash",
+                    model=current_model,
                     messages=messages,
                     api_key=gemini_key,
                     temperature=0.3, 
                     max_tokens=800
                 )
-            except Exception as e2:
-                logger.error(f"All models failed: {e2}")
-                return {"response": "ขออภัยค่ะ ตอนนี้ระบบ AI มีผู้ใช้งานเยอะมากจนโควต้าเต็มชั่วคราว รบกวนทิ้งช่วงสัก 1-2 นาทีแล้วลองพิมพ์มาใหม่นะคะ 🙏"}
+                break  # Success
+            except Exception as e:
+                last_error = e
+                logger.warning(f"Attempt {attempt+1} failed with model {current_model}: {e}")
+                if attempt < max_retries - 1:
+                    await asyncio.sleep(retry_delay)
+                    retry_delay *= 1.5  # Exponential backoff
+        
+        if not response:
+            logger.error(f"All LiteLLM retries failed. Last error: {last_error}")
+            return {"response": "ขออภัยค่ะ ตอนนี้ระบบ AI มีผู้ใช้งานเยอะมากจนโควต้าเต็มชั่วคราว รบกวนทิ้งช่วงสัก 1-2 นาทีแล้วลองพิมพ์มาใหม่นะคะ 🙏"}
         
         gemini_duration = time.time() - start_gemini_time
         logger.info(f"⏱️ [2] Time waiting for LiteLLM (Gemini): {gemini_duration:.2f} seconds")
