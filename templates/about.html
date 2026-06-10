@@ -65,25 +65,26 @@
 <!-- ============================================================
      STATISTICS BAR
      ============================================================ -->
-{% if stats %}
+<!-- ============================================================
+     STATISTICS BAR
+     ============================================================ -->
 <section class="bg-gradient-to-r from-emerald-800 to-teal-800 py-8 relative z-20 shadow-lg">
     <div class="container mx-auto px-4">
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center text-white">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center text-white" id="stats-container">
+            {% if stats %}
             {% for stat in stats %}
             <div class="about-stat border-r last:border-r-0 border-white/10" data-aos="zoom-in"
                 data-aos-delay="{{ loop.index0 * 80 }}">
                 <div class="text-3xl md:text-4xl font-black mb-1 font-mono text-yellow-300">
-                    <span class="stat-count" data-target="{{ stat.value }}">{{ stat.value }}</span>{{ stat.suffix or ''
-                    }}
+                    <span class="stat-count" data-target="{{ stat.value }}">{{ stat.value }}</span>{{ stat.suffix or '' }}
                 </div>
-                <div class="text-emerald-100 text-xs md:text-sm uppercase tracking-wider font-light">{{ stat.label }}
-                </div>
+                <div class="text-emerald-100 text-xs md:text-sm uppercase tracking-wider font-light">{{ stat.label }}</div>
             </div>
             {% endfor %}
+            {% endif %}
         </div>
     </div>
 </section>
-{% endif %}
 
 <!-- ============================================================
      MAIN BODY WITH STICKY SIDEBAR
@@ -1098,6 +1099,51 @@
         }, { threshold: 0.3 });
 
         document.querySelectorAll('.stat-count').forEach(el => observer.observe(el));
+
+        // Fetch real dynamic stats like the home page
+        fetch("/api/v1/external-stats")
+            .then(res => res.json())
+            .then(json => {
+                if (json.status === "success" && json.data && json.data.analysis_overview) {
+                    const stats = json.data.analysis_overview.slice(0, 5);
+                    const container = document.getElementById("stats-container");
+                    if (container) {
+                        container.className = "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 md:gap-8 gap-4 text-center text-white";
+                        container.innerHTML = stats.map((stat, index) => {
+                            const hasPlus = ['Students', 'Graduates', 'Faculty'].includes(stat.label);
+                            const hasPercent = ['Employability'].includes(stat.label);
+                            const suffix = hasPlus ? '+' : (hasPercent ? '%' : '');
+                            return `
+                            <div class="about-stat border-r last:border-r-0 border-white/10" data-aos="zoom-in" data-aos-delay="${index * 80}">
+                                <div class="text-3xl md:text-4xl font-black mb-1 font-mono text-yellow-300">
+                                    <span class="stat-count-new" data-target="${stat.value}">0</span>${suffix}
+                                </div>
+                                <div class="text-emerald-100 text-xs md:text-sm uppercase tracking-wider font-light">${stat.label}</div>
+                            </div>
+                            `;
+                        }).join("");
+                        
+                        // Re-trigger animation
+                        const newTargets = container.querySelectorAll('.stat-count-new');
+                        newTargets.forEach(el => {
+                            const target = parseFloat(el.getAttribute('data-target'));
+                            const hasPercent = el.nextSibling && el.nextSibling.textContent.includes('%');
+                            let start = 0;
+                            const duration = 2000;
+                            const step = timestamp => {
+                                if (!start) start = timestamp;
+                                const progress = Math.min((timestamp - start) / duration, 1);
+                                const current = progress * target;
+                                el.textContent = hasPercent ? current.toFixed(2) : Math.floor(current).toLocaleString('th-TH');
+                                if (progress < 1) requestAnimationFrame(step);
+                                else el.textContent = hasPercent ? target.toFixed(2) : target.toLocaleString('th-TH');
+                            };
+                            requestAnimationFrame(step);
+                        });
+                    }
+                }
+            })
+            .catch(err => console.error("Error fetching dynamic stats:", err));
 
         // 2. Sticky Sidebar Navigation highlight on scroll
         const sections = document.querySelectorAll('.scroll-mt-28');
