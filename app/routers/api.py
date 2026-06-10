@@ -356,3 +356,136 @@ async def api_external_stats(db: AsyncSession = Depends(get_db)):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+def harden_scholar_data(data):
+    """ทำความสะอาดข้อมูลเพื่อป้องกัน PII False Positive (เช่น Maestro CC BIN) และลดขนาด JSON"""
+    if isinstance(data, list):
+        return [harden_scholar_data(item) for item in data]
+    elif isinstance(data, dict):
+        cleaned = {}
+        for k, v in data.items():
+            if k in ("cites_id", "serpapi_link"):
+                continue
+            if k == "link" or k == "thumbnail":
+                if isinstance(v, str):
+                    def mask_digits(match):
+                        num = match.group(0)
+                        if len(num) >= 12:
+                            mid = len(num) // 2
+                            return num[:mid-2] + "xxxx" + num[mid+2:]
+                        return num
+                    v = re.sub(r'\d{12,19}', mask_digits, v)
+            elif isinstance(v, (str, int)):
+                val_str = str(v)
+                if val_str.isdigit() and len(val_str) >= 12:
+                    mid = len(val_str) // 2
+                    v = val_str[:mid-2] + "xxxx" + val_str[mid+2:]
+            else:
+                v = harden_scholar_data(v)
+            cleaned[k] = v
+        return cleaned
+    return data
+
+@router.get("/research")
+async def api_research_list(db: AsyncSession = Depends(get_db)):
+    """ดึงข้อมูลงานวิจัยทั้งหมด (SerpApi Organic Results) เรียงตามอาจารย์"""
+    result = await db.execute(select(Faculty).where(Faculty.scholar_data != None).order_by(Faculty.id))
+    faculty_rows = result.scalars().all()
+    
+    research_data = []
+    for row in faculty_rows:
+        img_val = row.image or ''
+        img = img_val if img_val.startswith(("http", "/static", "data:", "/uploads")) else (f"https://ww2.agi.nu.ac.th/personnel/upload/{img_val}" if img_val else "")
+        
+        scholar_results = []
+        if row.scholar_data:
+            try:
+                loaded = json.loads(row.scholar_data) if isinstance(row.scholar_data, str) else row.scholar_data
+                scholar_results = loaded if isinstance(loaded, list) else []
+            except Exception:
+                pass
+                
+        metrics = {}
+        if row.cited:
+            try:
+                metrics = json.loads(row.cited) if isinstance(row.cited, str) else row.cited
+            except Exception:
+                pass
+                
+        if not scholar_results and not metrics:
+            continue
+            
+        research_data.append(harden_scholar_data({
+            'faculty_id': row.id,
+            'name_th': f"{row.prefix or ''} {row.fname} {row.lname}".strip(),
+            'name_en': f"{row.fname_en or ''} {row.lname_en or ''}".strip(),
+            'image': img,
+            'scholar_id': row.scholar_id,
+            'publications': scholar_results,
+            'metrics': metrics
+        }))
+        
+    return {"status": "success", "data": research_data}
+
+@router.get("/coop-stats")
+async def get_coop_stats(db: AsyncSession = Depends(get_db)):
+    """ดึงข้อมูลสถิติสหกิจศึกษาจากตาราง coop_students และ coop_companies โดยระบุ schema เป็น public"""
+    try:
+        total_std = await db.scalar(text("SELECT COUNT(*) FROM public.coop_students"))
+        total_comp = await db.scalar(text("SELECT COUNT(DISTINCT co_code) FROM public.coop_students WHERE co_code IS NOT NULL"))
+
+        majors_rows = await db.execute(text("SELECT major, COUNT(*) as cnt FROM public.coop_students GROUP BY major"))
+        majors_data = []
+        for row in majors_rows:
+            m_name = "ทรัพยากรธรรมชาติและสิ่งแวดล้อม" if row.major == 1 else "ภูมิศาสตร์" if row.major == 2 else "อื่นๆ"
+            majors_data.append({"name": m_name, "count": row.cnt})
+
+        top_nre_rows = await db.execute(text("""
+            SELECT c.company_name, COUNT(s.id) as cnt
+            FROM public.coop_students s
+            JOIN public.coop_companies c ON s.co_code = c.co_code
+            WHERE s.major = 1
+            GROUP BY c.company_name ORDER BY cnt DESC LIMIT 10
+        """))
+        top_nre = [{"name": r.company_name, "count": r.cnt} for r in top_nre_rows]
+
+        top_geo_rows = await db.execute(text("""
+            SELECT c.company_name, COUNT(s.id) as cnt
+            FROM public.coop_students s
+            JOIN public.coop_companies c ON s.co_code = c.co_code
+            WHERE s.major = 2
+            GROUP BY c.company_name ORDER BY cnt DESC LIMIT 10
+        """))
+        top_geo = [{"name": r.company_name, "count": r.cnt} for r in top_geo_rows]
+
+        all_comp_rows = await db.execute(text("SELECT co_code, company_name, address, phone FROM public.coop_companies ORDER BY co_code"))
+        all_companies = [{"id": r.co_code, "name": r.company_name, "address": r.address or "-", "phone": r.phone or "-"} for r in all_comp_rows]
+
+        loc_rows = await db.execute(text("""
+            SELECT c.company_name, c.lat, c.long, s.name, s.major
+            FROM public.coop_students s
+            JOIN public.coop_companies c ON s.co_code = c.co_code
+            WHERE c.lat IS NOT NULL AND c.long IS NOT NULL
+        """))
+        locations = []
+        for r in loc_rows:
+            m_name = "ทรัพยากรธรรมชาติและสิ่งแวดล้อม" if r.major == 1 else "ภูมิศาสตร์"
+            locations.append({
+                "company": r.company_name, "name": r.name, "major": m_name, 
+                "lat": float(r.lat), "long": float(r.long), "major_id": r.major
+            })
+
+        return {
+            "status": "success",
+            "data": {
+                "summary": {"total_students": total_std or 0, "total_companies": total_comp or 0},
+                "majors": majors_data,
+                "top_nre": top_nre,
+                "top_geo": top_geo,
+                "all_companies": all_companies,
+                "locations": locations
+            }
+        }
+    except Exception as e:
+        logger.error(f"COOP-STATS error: {e}", exc_info=True)
+        return {"status": "error", "message": "Internal error"}
