@@ -389,43 +389,49 @@ def harden_scholar_data(data):
 @router.get("/research")
 async def api_research_list(db: AsyncSession = Depends(get_db)):
     """ดึงข้อมูลงานวิจัยทั้งหมด (SerpApi Organic Results) เรียงตามอาจารย์"""
-    result = await db.execute(select(Faculty).where(Faculty.scholar_data != None).order_by(Faculty.id))
-    faculty_rows = result.scalars().all()
-    
-    research_data = []
-    for row in faculty_rows:
-        img_val = row.image or ''
-        img = img_val if img_val.startswith(("http", "/static", "data:", "/uploads")) else (f"https://ww2.agi.nu.ac.th/personnel/upload/{img_val}" if img_val else "")
+    try:
+        result = await db.execute(select(Faculty).where(Faculty.scholar_data != None).order_by(Faculty.id))
+        faculty_rows = result.scalars().all()
         
-        scholar_results = []
-        if row.scholar_data:
-            try:
-                loaded = json.loads(row.scholar_data) if isinstance(row.scholar_data, str) else row.scholar_data
-                scholar_results = loaded if isinstance(loaded, list) else []
-            except Exception:
-                pass
-                
-        metrics = {}
-        if row.cited:
-            try:
-                metrics = json.loads(row.cited) if isinstance(row.cited, str) else row.cited
-            except Exception:
-                pass
-                
-        if not scholar_results and not metrics:
-            continue
+        research_data = []
+        for row in faculty_rows:
+            img_val = row.image or ''
+            img = img_val if img_val.startswith(("http", "/static", "data:", "/uploads")) else (f"https://ww2.agi.nu.ac.th/personnel/upload/{img_val}" if img_val else "")
             
-        research_data.append(harden_scholar_data({
-            'faculty_id': row.id,
-            'name_th': f"{row.prefix or ''} {row.fname} {row.lname}".strip(),
-            'name_en': f"{row.fname_en or ''} {row.lname_en or ''}".strip(),
-            'image': img,
-            'scholar_id': row.scholar_id,
-            'publications': scholar_results,
-            'metrics': metrics
-        }))
-        
-    return {"status": "success", "data": research_data}
+            scholar_results = []
+            if row.scholar_data:
+                try:
+                    loaded = json.loads(row.scholar_data) if isinstance(row.scholar_data, str) else row.scholar_data
+                    scholar_results = loaded if isinstance(loaded, list) else []
+                except Exception:
+                    pass
+                    
+            metrics = {}
+            if row.cited:
+                try:
+                    metrics = json.loads(row.cited) if isinstance(row.cited, str) else row.cited
+                except Exception:
+                    pass
+                    
+            if not scholar_results and not metrics:
+                continue
+                
+            research_data.append(harden_scholar_data({
+                'faculty_id': row.id,
+                'name_th': f"{row.prefix or ''} {row.fname} {row.lname}".strip(),
+                'name_en': f"{row.fname_en or ''} {row.lname_en or ''}".strip(),
+                'image': img,
+                'scholar_id': row.scholar_id,
+                'publications': scholar_results,
+                'metrics': metrics
+            }))
+            
+        return {"status": "success", "data": research_data}
+    except Exception as e:
+        logger.error(f"RESEARCH API ERROR: {str(e)}", exc_info=True)
+        # return a 200 with status error so the frontend doesn't throw response.ok = false,
+        # but instead goes to the json.status === 'success' check.
+        return {"status": "error", "message": f"Server Error: {str(e)}"}
 
 @router.get("/coop-stats")
 async def get_coop_stats(db: AsyncSession = Depends(get_db)):
