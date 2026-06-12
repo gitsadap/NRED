@@ -147,33 +147,39 @@ async def get_chatbot_response(req: ChatRequest):
         
         
         
-        start_encode_time = time.time()
+        from fastapi.concurrency import run_in_threadpool
         
-        
-        query_embedding = embedding_model.encode([search_query], convert_to_numpy=True)[0]
-        encode_duration = time.time() - start_encode_time
-        logger.info(f"⏱️ [1] Time to encode vector (Local MiniLM): {encode_duration:.2f} seconds")
+        def process_vector_search(query, code):
+            start_encode = time.time()
+            query_emb = embedding_model.encode([query], convert_to_numpy=True)[0]
+            enc_duration = time.time() - start_encode
+            
+            idx_list = [i for i, m in enumerate(documents_meta) if m.get("program_code") == code]
+            if not idx_list:
+                return enc_duration, None, None, None
+                
+            f_emb = doc_embeddings[idx_list]
+            f_meta = [documents_meta[i] for i in idx_list]
+            
+            n_query = np.linalg.norm(query_emb)
+            n_filtered = np.linalg.norm(f_emb, axis=1)
+            denom = n_filtered * n_query
+            denom[denom == 0] = 1e-9
+            s = np.dot(f_emb, query_emb) / denom
+            
+            top_idx = np.argsort(s)[::-1][:15]
+            return enc_duration, f_meta, s, top_idx
 
+        # รันการคำนวณ Embedding และ Cosine Similarity ใน Threadpool เพื่อไม่ให้ block API อื่น
+        encode_duration, filtered_meta, scores, top_indices = await run_in_threadpool(
+            process_vector_search, search_query, target_code
+        )
         
+        logger.info(f"⏱️ [1] Time to encode vector (Local MiniLM): {encode_duration:.2f} seconds")
         
-        
-        indices = [i for i, m in enumerate(documents_meta) if m.get("program_code") == target_code]
-        if not indices:
+        if filtered_meta is None:
             prog_name = target_code or "ที่เลือก"
             return {"response": f"ขออภัยค่ะ ยังไม่มีข้อมูลของหลักสูตร {prog_name}"}
-
-        filtered_embeddings = doc_embeddings[indices]
-        filtered_meta = [documents_meta[i] for i in indices]
-
-        
-        norm_query = np.linalg.norm(query_embedding)
-        norm_filtered = np.linalg.norm(filtered_embeddings, axis=1)
-        denom = norm_filtered * norm_query
-        denom[denom == 0] = 1e-9
-        scores = np.dot(filtered_embeddings, query_embedding) / denom
-        
-        
-        top_indices = np.argsort(scores)[::-1][:15]
         
         seen_pages = set()
         final_contexts = []
@@ -264,7 +270,13 @@ async def get_chatbot_response(req: ChatRequest):
         
         if not response:
             logger.error(f"All LiteLLM retries failed. Last error: {last_error}")
-            return {"response": "ขออภัยค่ะ ตอนนี้ระบบ AI มีผู้ใช้งานเยอะมากจนโควต้าเต็มชั่วคราว รบกวนทิ้งช่วงสัก 1-2 นาทีแล้วลองพิมพ์มาใหม่นะคะ 🙏"}
+            
+            # ตรวจสอบว่าเป็น Rate Limit จริงๆ หรือปัญหาอื่น
+            error_msg = str(last_error).lower()
+            if "rate limit" in error_msg or "429" in error_msg or "quota" in error_msg:
+                return {"response": "ขออภัยค่ะ ตอนนี้ระบบ AI มีผู้ใช้งานเยอะมากจนโควต้าเต็มชั่วคราว รบกวนทิ้งช่วงสัก 1-2 นาทีแล้วลองพิมพ์มาใหม่นะคะ 🙏"}
+            else:
+                return {"response": f"ขออภัยค่ะ ระบบ AI เชื่อมต่อขัดข้องชั่วคราว ({type(last_error).__name__}) รบกวนลองใหม่อีกครั้งนะคะ 🙏"}
         
         gemini_duration = time.time() - start_gemini_time
         logger.info(f"⏱️ [2] Time waiting for LiteLLM (Gemini): {gemini_duration:.2f} seconds")
