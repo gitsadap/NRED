@@ -5,7 +5,8 @@ import os
 from litellm import acompletion
 
 async def main():
-    gemini_key = "AIzaSyDQtdcfwInt6_NPsjNNpvTMCJrfvjrptys"
+    from app.config import settings
+    gemini_key = settings.gemini_api_key or os.getenv("GEMINI_API_KEY")
     # Create consecutive user messages
     messages = [
         {"role": "user", "content": "Hi"},

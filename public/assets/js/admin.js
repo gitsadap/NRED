@@ -1224,7 +1224,7 @@ async function uploadSwalCVPdf(input) {
     if (!input.files.length) return;
     const file = input.files[0];
     if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
-        return alert('กรุณาอัปโหลดไฟล์ PDF เท่านั้น');
+        return Swal.fire('ข้อผิดพลาด', 'กรุณาอัปโหลดไฟล์ PDF เท่านั้น', 'error');
     }
     
     const origText = input.nextElementSibling.textContent;
@@ -1240,7 +1240,7 @@ async function uploadSwalCVPdf(input) {
         const res = await fetch('/admin/api/upload', { method: 'POST', body: formData, headers });
         if(res.status === 401) return handleAuthFailure();
         if(res.status === 403) {
-            alert('Permission denied');
+            Swal.fire('ข้อผิดพลาด', 'Permission denied', 'error');
             return;
         }
         
@@ -1248,10 +1248,10 @@ async function uploadSwalCVPdf(input) {
         if (data.location) {
             document.getElementById('sw_cv_file').value = data.location;
         } else {
-            alert('อัปโหลดล้มเหลว: ' + (data.error || ''));
+            Swal.fire('ข้อผิดพลาด', 'อัปโหลดล้มเหลว: ' + (data.error || ''), 'error');
         }
     } catch (e) {
-        alert('Error: ' + e.message);
+        Swal.fire('ข้อผิดพลาด', 'Error: ' + e.message, 'error');
     } finally {
         input.nextElementSibling.textContent = origText;
         input.nextElementSibling.disabled = false;
@@ -1524,11 +1524,11 @@ async function saveContactItem(key, value, icon, order_index) {
 }
 
 async function deleteContactItem(key) {
-    if (confirm(`Are you sure you want to delete '${key}'?`)) {
+    confirmAction(`Are you sure you want to delete '${key}'?`, async () => {
         await apiCall('/admin/api/contact/delete', 'POST', { key: key });
         toast('Deleted');
         loadContactInfo();
-    }
+    });
 }
 
 function addContactRow() {
@@ -1802,11 +1802,12 @@ async function saveTag() {
 }
 
 async function deleteTag(id) {
-    if (!confirm('Are you sure you want to delete this tag?')) return;
-    const res = await apiCall('/admin/api/tags/delete', 'POST', { id });
-    if (res && res.success) {
-        await loadTags();
-    }
+    confirmAction('Are you sure you want to delete this tag?', async () => {
+        const res = await apiCall('/admin/api/tags/delete', 'POST', { id });
+        if (res && res.success) {
+            await loadTags();
+        }
+    });
 }
 
 function renderTagsCheckboxes() {
