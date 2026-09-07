@@ -273,6 +273,7 @@ async def startup_event():
 
     # Auto-create translations table if not exists
     from app.database import engine
+    from sqlalchemy import text
     async with engine.begin() as conn:
         await conn.execute(text("""
             CREATE TABLE IF NOT EXISTS api.translations (
