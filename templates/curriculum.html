@@ -439,10 +439,10 @@
 
                 // Handle both wrapped and unwrapped structures
                 const outer = result.status === 'success' ? result.data : result;
-                const summary = outer?.data_summary;
+                const summary = outer?.analysis_overview?.by_level;
 
                 if (!summary || typeof summary !== 'object') {
-                    throw new Error('Invalid API structure — no data_summary found');
+                    throw new Error('Invalid API structure — no by_level found');
                 }
 
                 let stats = {
