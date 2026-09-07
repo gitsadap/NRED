@@ -142,6 +142,20 @@
                             </li>
                         </template>
                     </ul>
+                    <!-- Language Switcher -->
+                    <div class="relative" id="lang-switcher">
+                        <button onclick="toggleLangMenu()" class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 hover:text-primary hover:bg-slate-100 rounded-lg transition-colors">
+                            <span id="current-lang-flag">🇹🇭</span>
+                            <span id="current-lang-code" class="hidden sm:inline text-xs font-semibold">TH</span>
+                            <svg class="w-3 h-3 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div id="lang-menu" class="hidden absolute right-0 top-full mt-1 w-36 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden p-1 z-50">
+                            <button onclick="setLang('th')" class="w-full text-left px-3 py-2 text-sm text-gray-600 hover:text-primary hover:bg-slate-100 rounded-lg flex items-center gap-2">🇹🇭 ภาษาไทย</button>
+                            <button onclick="setLang('en')" class="w-full text-left px-3 py-2 text-sm text-gray-600 hover:text-primary hover:bg-slate-100 rounded-lg flex items-center gap-2">🇺🇸 English</button>
+                            <button onclick="setLang('zh')" class="w-full text-left px-3 py-2 text-sm text-gray-600 hover:text-primary hover:bg-slate-100 rounded-lg flex items-center gap-2">🇨🇳 中文</button>
+                            <button onclick="setLang('ja')" class="w-full text-left px-3 py-2 text-sm text-gray-600 hover:text-primary hover:bg-slate-100 rounded-lg flex items-center gap-2">🇯🇵 日本語</button>
+                        </div>
+                    </div>
                     <a href="/admin"
                         class="ml-4 px-5 py-2.5 bg-primary text-white text-sm font-semibold rounded-full shadow-lg hover:bg-secondary transition-all">Staff
                         Login</a>
@@ -944,6 +958,140 @@
                 sendMessage(inputEl.value.trim());
             });
         });
+    </script>
+
+    <script>
+    // ============================================================
+    // MULTI-LANGUAGE SYSTEM — TH / EN / ZH / JA
+    // ============================================================
+    (function() {
+        const LANG_CONFIG = {
+            th: { flag: '🇹🇭', code: 'TH' },
+            en: { flag: '🇺🇸', code: 'EN' },
+            zh: { flag: '🇨🇳', code: 'ZH' },
+            ja: { flag: '🇯🇵', code: 'JA' }
+        };
+
+        let _currentLang = localStorage.getItem('site_lang') || 'th';
+        const _originals = new Map(); // textNode → original string
+
+        window.toggleLangMenu = function() {
+            document.getElementById('lang-menu')?.classList.toggle('hidden');
+        };
+
+        document.addEventListener('click', (e) => {
+            if (!document.getElementById('lang-switcher')?.contains(e.target))
+                document.getElementById('lang-menu')?.classList.add('hidden');
+        });
+
+        function updateLangUI(lang) {
+            const c = LANG_CONFIG[lang] || LANG_CONFIG.th;
+            const flagEl = document.getElementById('current-lang-flag');
+            const codeEl = document.getElementById('current-lang-code');
+            if (flagEl) flagEl.textContent = c.flag;
+            if (codeEl) codeEl.textContent = c.code;
+            document.documentElement.lang = lang === 'zh' ? 'zh-CN' : lang;
+        }
+
+        function collectTextNodes(root) {
+            const skipTags = new Set(['SCRIPT','STYLE','NOSCRIPT','TEMPLATE','TEXTAREA','CODE','PRE']);
+            const nodes = [];
+            const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+                acceptNode(node) {
+                    const p = node.parentElement;
+                    if (!p) return NodeFilter.FILTER_REJECT;
+                    if (skipTags.has(p.tagName)) return NodeFilter.FILTER_REJECT;
+                    if (p.closest('[data-no-tr]')) return NodeFilter.FILTER_REJECT;
+                    const t = node.textContent.trim();
+                    if (!t || t.length < 2) return NodeFilter.FILTER_SKIP;
+                    // Skip pure numbers / symbols / URLs
+                    if (/^[\d\s\.\,\-\+\%\(\)\[\]\{\}\/\:\#\@\!\=\_]+$/.test(t)) return NodeFilter.FILTER_SKIP;
+                    if (/^https?:\/\//.test(t)) return NodeFilter.FILTER_SKIP;
+                    return NodeFilter.FILTER_ACCEPT;
+                }
+            });
+            let n;
+            while ((n = walker.nextNode())) nodes.push(n);
+            return nodes;
+        }
+
+        function getCacheKey(lang) {
+            return 'tr_' + lang + '_' + location.pathname;
+        }
+
+        function loadCache(lang) {
+            try {
+                const raw = localStorage.getItem(getCacheKey(lang));
+                if (!raw) return {};
+                const { data, ts } = JSON.parse(raw);
+                if (Date.now() - ts > 86400000) return {};
+                return data || {};
+            } catch { return {}; }
+        }
+
+        function saveCache(lang, data) {
+            try {
+                localStorage.setItem(getCacheKey(lang), JSON.stringify({ data, ts: Date.now() }));
+            } catch {}
+        }
+
+        async function applyTranslation(lang) {
+            if (lang === 'th') {
+                _originals.forEach((orig, node) => { node.textContent = orig; });
+                updateLangUI('th');
+                return;
+            }
+
+            const nodes = collectTextNodes(document.body);
+            nodes.forEach(node => {
+                if (!_originals.has(node)) _originals.set(node, node.textContent);
+            });
+
+            const cache = loadCache(lang);
+            const unique = [...new Set(nodes.map(n => _originals.get(n)))];
+            const toFetch = unique.filter(t => !cache[t]);
+
+            if (toFetch.length > 0) {
+                const BATCH = 80;
+                for (let i = 0; i < toFetch.length; i += BATCH) {
+                    const batch = toFetch.slice(i, i + BATCH);
+                    try {
+                        const res = await fetch('/api/v1/translate', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ texts: batch, target_lang: lang })
+                        });
+                        if (res.ok) {
+                            const { translations } = await res.json();
+                            batch.forEach((t, j) => { if (translations[j]) cache[t] = translations[j]; });
+                        }
+                    } catch {}
+                }
+                saveCache(lang, cache);
+            }
+
+            nodes.forEach(node => {
+                const orig = _originals.get(node);
+                if (orig && cache[orig]) node.textContent = cache[orig];
+            });
+            updateLangUI(lang);
+        }
+
+        window.setLang = async function(lang) {
+            _currentLang = lang;
+            localStorage.setItem('site_lang', lang);
+            document.getElementById('lang-menu')?.classList.add('hidden');
+            await applyTranslation(lang);
+        };
+
+        // Init
+        updateLangUI(_currentLang);
+        if (_currentLang !== 'th') {
+            window.addEventListener('load', () => {
+                setTimeout(() => applyTranslation(_currentLang), 600);
+            });
+        }
+    })();
     </script>
 </body>
 

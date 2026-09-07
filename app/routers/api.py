@@ -1,5 +1,6 @@
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc, text, func
 import json
@@ -495,3 +496,30 @@ async def get_coop_stats(db: AsyncSession = Depends(get_db)):
     except Exception as e:
         logger.error(f"COOP-STATS error: {e}", exc_info=True)
         return {"status": "error", "message": "Internal error"}
+
+
+# ─── Multi-language Translation Endpoint ───────────────────────────────────────
+
+class TranslateRequest(BaseModel):
+    texts: list[str]
+    target_lang: str  # 'en' | 'zh' | 'ja'
+
+@router.post("/translate")
+async def api_translate(req: TranslateRequest, db: AsyncSession = Depends(get_db)):
+    """Translate a batch of texts using Gemini + DB cache."""
+    from app.services.translation_service import translate_texts
+
+    if not req.texts:
+        return {"translations": []}
+    if len(req.texts) > 150:
+        raise HTTPException(status_code=400, detail="Max 150 texts per request")
+
+    # Sanitise: strip whitespace, cap length
+    cleaned = [t.strip()[:500] for t in req.texts]
+
+    try:
+        translations = await translate_texts(cleaned, req.target_lang, db)
+        return {"translations": translations}
+    except Exception as e:
+        logger.error(f"[translate] {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Translation failed")

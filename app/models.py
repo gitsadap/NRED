@@ -182,3 +182,13 @@ class Faculty(ModelBase):
     updated_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
+
+class Translation(ModelBase):
+    __tablename__ = "translations"
+    __table_args__ = {"schema": "api"}
+    id = Column(Integer, primary_key=True, index=True)
+    text_hash = Column(String(32), nullable=False, index=True)
+    lang = Column(String(5), nullable=False)
+    original_text = Column(Text, nullable=False)
+    translated_text = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())

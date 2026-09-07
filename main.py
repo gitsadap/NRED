@@ -271,6 +271,22 @@ app.include_router(public.router)
 async def startup_event():
     logger.info("Application starting up...")
 
+    # Auto-create translations table if not exists
+    from app.database import engine
+    async with engine.begin() as conn:
+        await conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS api.translations (
+                id SERIAL PRIMARY KEY,
+                text_hash VARCHAR(32) NOT NULL,
+                lang VARCHAR(5) NOT NULL,
+                original_text TEXT NOT NULL,
+                translated_text TEXT NOT NULL,
+                created_at TIMESTAMPTZ DEFAULT NOW(),
+                UNIQUE(text_hash, lang)
+            )
+        """))
+        await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_translations_hash_lang ON api.translations(text_hash, lang)"))
+
     issues = validate_security_settings(settings)
     for issue in issues:
         if settings.debug:
