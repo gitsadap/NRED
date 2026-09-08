@@ -73,7 +73,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             
             if is_admin_page:
                 script_src_domains += " https://cdnjs.cloudflare.com https://www.gstatic.com"
-                style_src_domains += " https://www.gstatic.com"
+                style_src_domains += " https://www.gstatic.com https://cdnjs.cloudflare.com blob:"
                 
             csp = (
                 "default-src 'self'; "
