@@ -65,33 +65,26 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             or request.url.path.startswith("/openapi.json")
         ):
             is_admin_page = request.url.path.startswith("/admin")
-            
-            
-            
-            style_src_domains = "https://fonts.googleapis.com"
-            script_src_domains = ""
-            
-            if is_admin_page:
-                script_src_domains += " https://cdnjs.cloudflare.com https://www.gstatic.com"
-                style_src_domains += " https://www.gstatic.com https://cdnjs.cloudflare.com blob:"
-                
-            csp = (
-                "default-src 'self'; "
-                "base-uri 'self'; "
-                "form-action 'self'; "
-                "object-src 'none'; "
-                "frame-ancestors 'self'; "
-                "img-src 'self' data: https:; "
-                "font-src 'self' data: https://fonts.gstatic.com; "
-                f"style-src 'self' 'unsafe-inline' {style_src_domains}; "
-                "script-src 'self' 'unsafe-inline' "
-                + "'unsafe-eval' "
-                + f"{script_src_domains}; "
-                + "worker-src 'self' blob:; "
-                + "connect-src 'self' https:; "
-                + "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com; "
-            )
-            response.headers.setdefault("Content-Security-Policy", csp)
+
+            if not is_admin_page:
+                style_src_domains = "https://fonts.googleapis.com"
+                script_src_domains = ""
+                csp = (
+                    "default-src 'self'; "
+                    "base-uri 'self'; "
+                    "form-action 'self'; "
+                    "object-src 'none'; "
+                    "frame-ancestors 'self'; "
+                    "img-src 'self' data: https:; "
+                    "font-src 'self' data: https://fonts.gstatic.com; "
+                    f"style-src 'self' 'unsafe-inline' {style_src_domains}; "
+                    "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
+                    "worker-src 'self' blob:; "
+                    "connect-src 'self' https:; "
+                    "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com; "
+                )
+                response.headers.setdefault("Content-Security-Policy", csp)
+            # Admin pages: no CSP header — TinyMCE editor requires broad permissions
 
         return response
 
