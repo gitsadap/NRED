@@ -865,7 +865,14 @@ function openUnifiedEditor() {
     document.getElementById('contentEditorView').classList.remove('hidden');
     document.getElementById('unifiedForm').reset();
     document.getElementById('postId').value = '';
-    safeSetTinyContent('postContent', '');
+    // Re-init TinyMCE after element is visible (was hidden before)
+    if (typeof tinymce !== 'undefined') {
+        if (tinymce.get('postContent')) {
+            tinymce.get('postContent').setContent('');
+        } else {
+            tinymce.init({ ...tinyConfig, selector: '#postContent' });
+        }
+    }
     setSelectedTags('');
     toggleFormFields();
 }
@@ -884,6 +891,11 @@ async function editUnifiedContent(id, type) {
 
     document.getElementById('contentListView').classList.add('hidden');
     document.getElementById('contentEditorView').classList.remove('hidden');
+
+    // Re-init TinyMCE if not yet initialized (was hidden)
+    if (typeof tinymce !== 'undefined' && !tinymce.get('postContent')) {
+        tinymce.init({ ...tinyConfig, selector: '#postContent' });
+    }
 
     document.getElementById('postId').value = item.id;
     document.querySelector(`input[name="postType"][value="${item.type}"]`).checked = true;
