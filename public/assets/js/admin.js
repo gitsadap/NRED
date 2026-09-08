@@ -88,6 +88,8 @@ function getValidTokenOrRedirect() {
 
 
 const tinyConfig = {
+    base_url: 'https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2',
+    suffix: '.min',
     plugins: 'link image code table lists media',
     toolbar: 'undo redo | blocks | bold italic | alignleft aligncenter alignright | bullist numlist | link image media | table code',
     menubar: false,
