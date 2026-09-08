@@ -85,9 +85,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
                 "font-src 'self' data: https://fonts.gstatic.com; "
                 f"style-src 'self' 'unsafe-inline' {style_src_domains}; "
                 "script-src 'self' 'unsafe-inline' "
-                + ("" if is_admin_page else "'unsafe-eval' ")
+                + "'unsafe-eval' "
                 + f"{script_src_domains}; "
-                + ("worker-src 'self'; " if is_admin_page else "worker-src 'self' blob:; ")
+                + "worker-src 'self' blob:; "
                 + "connect-src 'self' https:; "
                 + "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com; "
             )
