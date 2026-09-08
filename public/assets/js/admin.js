@@ -87,38 +87,28 @@ function getValidTokenOrRedirect() {
 }
 
 
-const tinyConfig = {
-    base_url: 'https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2',
-    suffix: '.min',
-    plugins: 'link image code table lists media',
-    toolbar: 'undo redo | blocks | bold italic | alignleft aligncenter alignright | bullist numlist | link image media | table code',
-    menubar: false,
-    height: 400,
-    image_title: true,
-    automatic_uploads: true,
-    file_picker_types: 'image',
-    images_upload_handler: (blobInfo, progress) => new Promise((resolve, reject) => {
-        const formData = new FormData();
-        formData.append('file', blobInfo.blob(), blobInfo.filename());
-        const token = getValidTokenOrRedirect();
-        if (!token) return reject('Auth required');
-        fetch('/admin/api/upload', { 
-            method: 'POST', 
-            body: formData,
-            headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-        })
-            .then(r => {
-                if(r.status === 401) return handleAuthFailure();
-                return r.json()
-            })
-            .then(json => {
-                if (!json) return reject('Upload failed: Auth error');
-                if (json.location) resolve(json.location);
-                else reject('Upload failed: ' + json.error);
-            })
-            .catch(err => reject('Upload error: ' + err));
-    })
-};
+// Quill instances keyed by editor div id
+const _quillInstances = {};
+function getOrInitQuill(editorDivId) {
+    if (_quillInstances[editorDivId]) return _quillInstances[editorDivId];
+    const el = document.getElementById(editorDivId);
+    if (!el) return null;
+    const quill = new Quill('#' + editorDivId, {
+        theme: 'snow',
+        modules: {
+            toolbar: [
+                [{ header: [1, 2, 3, false] }],
+                ['bold', 'italic', 'underline', 'strike'],
+                [{ list: 'ordered' }, { list: 'bullet' }],
+                [{ align: [] }],
+                ['link', 'image'],
+                ['clean']
+            ]
+        }
+    });
+    _quillInstances[editorDivId] = quill;
+    return quill;
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('admin_token');
@@ -183,17 +173,7 @@ function initAdminApp() {
         }
     }
 
-    if (typeof tinymce !== 'undefined') {
-        if (document.querySelector('#content')) {
-            tinymce.init({ ...tinyConfig, selector: '#content' });
-        }
-        if (document.querySelector('#postContent')) {
-            tinymce.init({ ...tinyConfig, selector: '#postContent' });
-        }
-        if (document.querySelector('#cv_editor')) {
-            tinymce.init({ ...tinyConfig, selector: '#cv_editor' });
-        }
-    }
+    // Quill is init lazily when each editor becomes visible
 
     showSection(initialSection);
 }
@@ -867,14 +847,8 @@ function openUnifiedEditor() {
     document.getElementById('contentEditorView').classList.remove('hidden');
     document.getElementById('unifiedForm').reset();
     document.getElementById('postId').value = '';
-    // Re-init TinyMCE after element is visible (was hidden before)
-    if (typeof tinymce !== 'undefined') {
-        if (tinymce.get('postContent')) {
-            tinymce.get('postContent').setContent('');
-        } else {
-            tinymce.init({ ...tinyConfig, selector: '#postContent' });
-        }
-    }
+    // Init Quill for postContent (lazy, after element visible)
+    setTimeout(() => { getOrInitQuill('postContentEditor'); }, 50);
     setSelectedTags('');
     toggleFormFields();
 }
@@ -894,10 +868,8 @@ async function editUnifiedContent(id, type) {
     document.getElementById('contentListView').classList.add('hidden');
     document.getElementById('contentEditorView').classList.remove('hidden');
 
-    // Re-init TinyMCE if not yet initialized (was hidden)
-    if (typeof tinymce !== 'undefined' && !tinymce.get('postContent')) {
-        tinymce.init({ ...tinyConfig, selector: '#postContent' });
-    }
+    // Init Quill for postContent (lazy, after element visible)
+    setTimeout(() => { getOrInitQuill('postContentEditor'); }, 50);
 
     document.getElementById('postId').value = item.id;
     document.querySelector(`input[name="postType"][value="${item.type}"]`).checked = true;
@@ -1762,16 +1734,21 @@ async function saveCurrentMenu() {
 }
 window.switchHomeTab = switchHomeTab;
 function safeSetTinyContent(id, content) {
-    if (typeof tinymce !== 'undefined' && tinymce.get(id)) {
-        tinymce.get(id).setContent(content || '');
+    // id is 'postContent' (textarea) — map to Quill editor div
+    const editorDivId = id === 'postContent' ? 'postContentEditor' : id + 'Editor';
+    const quill = _quillInstances[editorDivId];
+    if (quill) {
+        quill.clipboard.dangerouslyPasteHTML(content || '');
     } else {
         const el = document.getElementById(id);
         if (el) el.value = content || '';
     }
 }
 function safeGetTinyContent(id) {
-    if (typeof tinymce !== 'undefined' && tinymce.get(id)) {
-        return tinymce.get(id).getContent();
+    const editorDivId = id === 'postContent' ? 'postContentEditor' : id + 'Editor';
+    const quill = _quillInstances[editorDivId];
+    if (quill) {
+        return quill.root.innerHTML;
     } else {
         const el = document.getElementById(id);
         return el ? el.value : '';
