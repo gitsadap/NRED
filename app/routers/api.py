@@ -526,7 +526,7 @@ async def api_translate(req: TranslateRequest, db: AsyncSession = Depends(get_db
 
 
 # ─── Public Thesis API ────────────────────────────────────────────────────────
-@router.get("/v1/thesis")
+@router.get("/thesis")
 async def get_public_thesis(db: AsyncSession = Depends(get_db)):
     from app.models import UndergradThesis
     res = await db.execute(
