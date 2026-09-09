@@ -1541,7 +1541,7 @@
 
                             {% if item.content %}
                             <p class="text-gray-600 text-sm md:text-base leading-relaxed line-clamp-3 mb-6">
-                                {{ item.content[:120] }}...
+                                {{ item.content | striptags | truncate(120) }}
                             </p>
                             {% endif %}
 
