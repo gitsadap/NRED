@@ -58,11 +58,14 @@ async def translate_texts(texts: List[str], target_lang: str, db: AsyncSession) 
     translated_texts = uncached_texts  # fallback
     try:
         import litellm
+        from app.config import settings
+        gemini_key = settings.gemini_api_key or ""
         response = litellm.completion(
             model="gemini/gemini-2.0-flash-lite",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=4096,
-            temperature=0.1
+            temperature=0.1,
+            api_key=gemini_key or None
         )
         content = response.choices[0].message.content.strip()
 
