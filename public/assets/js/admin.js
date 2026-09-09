@@ -87,27 +87,20 @@ function getValidTokenOrRedirect() {
 }
 
 
-// Quill instances keyed by editor div id
-const _quillInstances = {};
-function getOrInitQuill(editorDivId) {
-    if (_quillInstances[editorDivId]) return _quillInstances[editorDivId];
-    const el = document.getElementById(editorDivId);
-    if (!el) return null;
-    const quill = new Quill('#' + editorDivId, {
-        theme: 'snow',
-        modules: {
-            toolbar: [
-                [{ header: [1, 2, 3, false] }],
-                ['bold', 'italic', 'underline', 'strike'],
-                [{ list: 'ordered' }, { list: 'bullet' }],
-                [{ align: [] }],
-                ['link', 'image'],
-                ['clean']
-            ]
-        }
-    });
-    _quillInstances[editorDivId] = quill;
-    return quill;
+// Inline contenteditable rich text editor helpers
+function editorCmd(cmd, value) {
+    const el = document.getElementById('postContentEditor');
+    if (el) el.focus();
+    document.execCommand(cmd, false, value || null);
+}
+function editorInsertLink() {
+    const url = prompt('URL:');
+    if (url) editorCmd('createLink', url);
+}
+function syncPostContent() {
+    const el = document.getElementById('postContentEditor');
+    const ta = document.getElementById('postContent');
+    if (el && ta) ta.value = el.innerHTML;
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -847,8 +840,8 @@ function openUnifiedEditor() {
     document.getElementById('contentEditorView').classList.remove('hidden');
     document.getElementById('unifiedForm').reset();
     document.getElementById('postId').value = '';
-    // Init Quill for postContent (lazy, after element visible)
-    setTimeout(() => { getOrInitQuill('postContentEditor'); }, 50);
+    const edEl = document.getElementById('postContentEditor');
+    if (edEl) edEl.innerHTML = '';
     setSelectedTags('');
     toggleFormFields();
 }
@@ -868,8 +861,7 @@ async function editUnifiedContent(id, type) {
     document.getElementById('contentListView').classList.add('hidden');
     document.getElementById('contentEditorView').classList.remove('hidden');
 
-    // Init Quill for postContent (lazy, after element visible)
-    setTimeout(() => { getOrInitQuill('postContentEditor'); }, 50);
+
 
     document.getElementById('postId').value = item.id;
     document.querySelector(`input[name="postType"][value="${item.type}"]`).checked = true;
@@ -1734,25 +1726,23 @@ async function saveCurrentMenu() {
 }
 window.switchHomeTab = switchHomeTab;
 function safeSetTinyContent(id, content) {
-    // id is 'postContent' (textarea) — map to Quill editor div
-    const editorDivId = id === 'postContent' ? 'postContentEditor' : id + 'Editor';
-    const quill = _quillInstances[editorDivId];
-    if (quill) {
-        quill.clipboard.dangerouslyPasteHTML(content || '');
+    if (id === 'postContent') {
+        const edEl = document.getElementById('postContentEditor');
+        if (edEl) edEl.innerHTML = content || '';
+        const ta = document.getElementById('postContent');
+        if (ta) ta.value = content || '';
     } else {
         const el = document.getElementById(id);
         if (el) el.value = content || '';
     }
 }
 function safeGetTinyContent(id) {
-    const editorDivId = id === 'postContent' ? 'postContentEditor' : id + 'Editor';
-    const quill = _quillInstances[editorDivId];
-    if (quill) {
-        return quill.root.innerHTML;
-    } else {
-        const el = document.getElementById(id);
-        return el ? el.value : '';
+    if (id === 'postContent') {
+        const edEl = document.getElementById('postContentEditor');
+        return edEl ? edEl.innerHTML : '';
     }
+    const el = document.getElementById(id);
+    return el ? el.value : '';
 }
 
 let allTags = [];
