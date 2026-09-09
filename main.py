@@ -281,6 +281,25 @@ async def startup_event():
         """))
         await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_translations_hash_lang ON api.translations(text_hash, lang)"))
 
+        # undergrad_thesis table
+        await conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS api.undergrad_thesis (
+                id SERIAL PRIMARY KEY,
+                title TEXT NOT NULL,
+                title_en TEXT,
+                abstract TEXT,
+                abstract_en TEXT,
+                advisor VARCHAR(255),
+                program VARCHAR(10) NOT NULL DEFAULT 'NRE',
+                keywords TEXT,
+                year INTEGER,
+                file_url TEXT,
+                created_at TIMESTAMPTZ DEFAULT NOW(),
+                updated_at TIMESTAMPTZ DEFAULT NOW()
+            )
+        """))
+        await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_thesis_program ON api.undergrad_thesis(program)"))
+
     issues = validate_security_settings(settings)
     for issue in issues:
         if settings.debug:

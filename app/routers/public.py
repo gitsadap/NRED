@@ -745,3 +745,9 @@ async def get_curriculum_stats_proxy(db: AsyncSession = Depends(get_db)):
     
     from fastapi.responses import RedirectResponse
     return RedirectResponse(url="/api/v1/external-stats")
+
+
+@router.get("/thesis", response_class=HTMLResponse)
+async def show_thesis(request: Request, db: AsyncSession = Depends(get_db)):
+    context = await get_global_context(db)
+    return templates.TemplateResponse("thesis.html", {"request": request, **context})

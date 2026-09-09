@@ -95,6 +95,10 @@
                 class="block py-3 px-6 hover:bg-secondary cursor-pointer transition-colors border-l-4 border-transparent hover:border-accent">
                 <span class="mr-2">📢</span> ร้องเรียน (Appeals)
             </a>
+            <a onclick="showSection('thesis')" id="nav-thesis"
+                class="block py-3 px-6 hover:bg-secondary cursor-pointer transition-colors border-l-4 border-transparent hover:border-accent">
+                <span class="mr-2">📚</span> วิทยานิพนธ์ ป.ตรี
+            </a>
         </nav>
 
         <a href="/"
@@ -966,6 +970,116 @@
                 </div>
             </div>
 
+
+            <div id="thesis" class="section-view">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-gray-800">📚 วิทยานิพนธ์ปริญญาตรี</h2>
+                    <button onclick="showThesisForm(null)"
+                        class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-secondary text-sm font-medium">+ เพิ่มวิทยานิพนธ์</button>
+                </div>
+
+                <!-- Filter & Search -->
+                <div class="flex flex-wrap gap-3 mb-4">
+                    <button onclick="filterThesis('ALL')" id="thesis-filter-ALL"
+                        class="thesis-filter px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium">ทั้งหมด</button>
+                    <button onclick="filterThesis('NRE')" id="thesis-filter-NRE"
+                        class="thesis-filter px-4 py-2 rounded-lg bg-gray-200 text-gray-600 text-sm font-medium">ทรัพยากรธรรมชาติฯ (NRE)</button>
+                    <button onclick="filterThesis('GEO')" id="thesis-filter-GEO"
+                        class="thesis-filter px-4 py-2 rounded-lg bg-gray-200 text-gray-600 text-sm font-medium">ภูมิศาสตร์ (GEO)</button>
+                    <input type="text" id="thesis-search" oninput="renderThesisTable()"
+                        placeholder="🔍 ค้นหาชื่อเรื่อง / อาจารย์ / คำสำคัญ..."
+                        class="flex-1 min-w-[200px] px-4 py-2 border rounded-lg text-sm outline-none focus:border-blue-400">
+                </div>
+
+                <!-- Table -->
+                <div id="thesis-list" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-gray-50 text-gray-600 text-xs uppercase">
+                            <tr>
+                                <th class="px-4 py-3">ชื่อเรื่อง</th>
+                                <th class="px-4 py-3">สาขา</th>
+                                <th class="px-4 py-3">อาจารย์ที่ปรึกษา</th>
+                                <th class="px-4 py-3">ปีการศึกษา</th>
+                                <th class="px-4 py-3">ไฟล์</th>
+                                <th class="px-4 py-3 text-right">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="thesis-tbody"></tbody>
+                    </table>
+                </div>
+
+                <!-- Form -->
+                <div id="thesis-form" class="hidden mt-6 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h3 id="thesis-form-title" class="text-lg font-bold mb-4 border-b pb-2">เพิ่มวิทยานิพนธ์</h3>
+                    <form onsubmit="saveThesis(event)" class="space-y-4">
+                        <input type="hidden" id="thesis-id">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อเรื่อง (ไทย) <span class="text-red-500">*</span></label>
+                                <input type="text" id="thesis-title" required
+                                    class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อเรื่อง (อังกฤษ)</label>
+                                <input type="text" id="thesis-title-en"
+                                    class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">สาขาวิชา</label>
+                                <select id="thesis-program"
+                                    class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+                                    <option value="NRE">ทรัพยากรธรรมชาติและสิ่งแวดล้อม (NRE)</option>
+                                    <option value="GEO">ภูมิศาสตร์ (GEO)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">ปีการศึกษา (พ.ศ.)</label>
+                                <input type="number" id="thesis-year" min="2540" max="2600"
+                                    class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">อาจารย์ที่ปรึกษา</label>
+                                <input type="text" id="thesis-advisor"
+                                    class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
+                                    placeholder="เช่น ผศ.ดร.ชื่อ นามสกุล">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">คำสำคัญ (Keywords)</label>
+                                <input type="text" id="thesis-keywords"
+                                    class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
+                                    placeholder="เช่น GIS, สิ่งแวดล้อม, น้ำ (คั่นด้วยจุลภาค)">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">บทคัดย่อ (ไทย)</label>
+                                <textarea id="thesis-abstract" rows="4"
+                                    class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400"></textarea>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">บทคัดย่อ (อังกฤษ)</label>
+                                <textarea id="thesis-abstract-en" rows="4"
+                                    class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400"></textarea>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">ไฟล์ PDF (URL)</label>
+                                <div class="flex gap-2">
+                                    <input type="text" id="thesis-file-url"
+                                        class="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
+                                        placeholder="/uploads/thesis-filename.pdf">
+                                    <button type="button" onclick="openMediaSelectorForThesis()"
+                                        class="px-3 py-2 bg-gray-100 border rounded-lg text-sm hover:bg-gray-200">📁 เลือกไฟล์</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="pt-4 border-t flex justify-end gap-2">
+                            <button type="button" onclick="cancelThesisForm()"
+                                class="px-4 py-2 text-gray-500 hover:text-gray-700">ยกเลิก</button>
+                            <button type="submit"
+                                class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-secondary">บันทึก</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
         </div>
     </main>
 
@@ -985,6 +1099,140 @@
 
     <!-- Custom Admin Dashboard Logic -->
     <script src="/assets/js/admin.js?v=2.5.1"></script>
+
+
+    <script>
+    // ─── Thesis Management ────────────────────────────────────────────
+    let _thesisData = [];
+    let _thesisFilter = 'ALL';
+
+    async function loadThesis() {
+        const res = await fetch('/admin/api/thesis');
+        _thesisData = await res.json();
+        renderThesisTable();
+    }
+
+    function filterThesis(prog) {
+        _thesisFilter = prog;
+        document.querySelectorAll('.thesis-filter').forEach(b => {
+            b.classList.replace('bg-primary','bg-gray-200');
+            b.classList.replace('text-white','text-gray-600');
+        });
+        const btn = document.getElementById('thesis-filter-' + prog);
+        if (btn) { btn.classList.replace('bg-gray-200','bg-primary'); btn.classList.replace('text-gray-600','text-white'); }
+        renderThesisTable();
+    }
+
+    function renderThesisTable() {
+        const q = (document.getElementById('thesis-search')?.value || '').toLowerCase();
+        let data = _thesisFilter === 'ALL' ? _thesisData : _thesisData.filter(t => t.program === _thesisFilter);
+        if (q) data = data.filter(t =>
+            (t.title||'').toLowerCase().includes(q) ||
+            (t.advisor||'').toLowerCase().includes(q) ||
+            (t.keywords||'').toLowerCase().includes(q)
+        );
+        const tbody = document.getElementById('thesis-tbody');
+        if (!tbody) return;
+        tbody.innerHTML = data.length === 0
+            ? '<tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">ไม่มีข้อมูล</td></tr>'
+            : data.map(t => `
+                <tr class="border-t hover:bg-gray-50">
+                    <td class="px-4 py-3 max-w-xs">
+                        <div class="font-medium text-gray-800 truncate" title="${t.title}">${t.title}</div>
+                        ${t.title_en ? `<div class="text-xs text-gray-400 truncate">${t.title_en}</div>` : ''}
+                    </td>
+                    <td class="px-4 py-3">
+                        <span class="px-2 py-1 rounded-full text-xs font-bold ${t.program==='NRE'?'bg-emerald-100 text-emerald-700':'bg-blue-100 text-blue-700'}">${t.program}</span>
+                    </td>
+                    <td class="px-4 py-3 text-sm text-gray-600">${t.advisor||'-'}</td>
+                    <td class="px-4 py-3 text-sm text-gray-600">${t.year||'-'}</td>
+                    <td class="px-4 py-3">${t.file_url ? `<a href="${t.file_url}" target="_blank" class="text-blue-500 hover:underline text-xs">📄 ดูไฟล์</a>` : '-'}</td>
+                    <td class="px-4 py-3 text-right space-x-2">
+                        <button onclick="showThesisForm(${t.id})" class="text-blue-500 hover:underline text-sm">แก้ไข</button>
+                        <button onclick="deleteThesis(${t.id})" class="text-red-500 hover:underline text-sm">ลบ</button>
+                    </td>
+                </tr>`).join('');
+    }
+
+    function showThesisForm(id) {
+        const form = document.getElementById('thesis-form');
+        form.classList.remove('hidden');
+        if (!id) {
+            document.getElementById('thesis-form-title').textContent = 'เพิ่มวิทยานิพนธ์';
+            ['thesis-id','thesis-title','thesis-title-en','thesis-advisor','thesis-keywords','thesis-abstract','thesis-abstract-en','thesis-file-url','thesis-year'].forEach(f => {
+                const el = document.getElementById(f); if (el) el.value = '';
+            });
+            document.getElementById('thesis-program').value = 'NRE';
+        } else {
+            const t = _thesisData.find(x => x.id === id);
+            if (!t) return;
+            document.getElementById('thesis-form-title').textContent = 'แก้ไขวิทยานิพนธ์';
+            document.getElementById('thesis-id').value = t.id;
+            document.getElementById('thesis-title').value = t.title||'';
+            document.getElementById('thesis-title-en').value = t.title_en||'';
+            document.getElementById('thesis-advisor').value = t.advisor||'';
+            document.getElementById('thesis-keywords').value = t.keywords||'';
+            document.getElementById('thesis-abstract').value = t.abstract||'';
+            document.getElementById('thesis-abstract-en').value = t.abstract_en||'';
+            document.getElementById('thesis-file-url').value = t.file_url||'';
+            document.getElementById('thesis-year').value = t.year||'';
+            document.getElementById('thesis-program').value = t.program||'NRE';
+        }
+        form.scrollIntoView({behavior:'smooth'});
+    }
+
+    function cancelThesisForm() {
+        document.getElementById('thesis-form').classList.add('hidden');
+    }
+
+    function openMediaSelectorForThesis() {
+        loadMediaForSelector();
+        window._mediaSelectCallback = (url) => {
+            document.getElementById('thesis-file-url').value = url;
+        };
+        document.getElementById('mediaSelectorModal').classList.remove('hidden');
+    }
+
+    async function saveThesis(e) {
+        e.preventDefault();
+        const payload = {
+            id: parseInt(document.getElementById('thesis-id').value)||null,
+            title: document.getElementById('thesis-title').value,
+            title_en: document.getElementById('thesis-title-en').value||null,
+            abstract: document.getElementById('thesis-abstract').value||null,
+            abstract_en: document.getElementById('thesis-abstract-en').value||null,
+            advisor: document.getElementById('thesis-advisor').value||null,
+            program: document.getElementById('thesis-program').value,
+            keywords: document.getElementById('thesis-keywords').value||null,
+            year: parseInt(document.getElementById('thesis-year').value)||null,
+            file_url: document.getElementById('thesis-file-url').value||null,
+        };
+        const res = await fetch('/admin/api/thesis', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+        const data = await res.json();
+        if (data.success) {
+            Swal.fire({icon:'success',title:'บันทึกแล้ว',timer:1200,showConfirmButton:false});
+            cancelThesisForm();
+            loadThesis();
+        } else {
+            Swal.fire({icon:'error',title:'เกิดข้อผิดพลาด'});
+        }
+    }
+
+    async function deleteThesis(id) {
+        const conf = await Swal.fire({icon:'warning',title:'ลบวิทยานิพนธ์?',showCancelButton:true,confirmButtonText:'ลบ',cancelButtonText:'ยกเลิก',confirmButtonColor:'#ef4444'});
+        if (!conf.isConfirmed) return;
+        const res = await fetch('/admin/api/thesis/delete', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id})});
+        const data = await res.json();
+        if (data.success) { loadThesis(); }
+    }
+
+    // Hook into showSection to load thesis data on nav click
+    const _origShowSection = typeof showSection === 'function' ? showSection : null;
+    document.addEventListener('DOMContentLoaded', () => {
+        const origBtn = document.getElementById('nav-thesis');
+        if (origBtn) origBtn.addEventListener('click', () => { loadThesis(); });
+    });
+    </script>
 
 </body>
 

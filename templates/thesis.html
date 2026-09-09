@@ -1,0 +1,195 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<!-- Page Header -->
+<section class="relative pt-24 pb-12 lg:pt-32 lg:pb-20 bg-emerald-900 border-b border-emerald-800/30 overflow-hidden">
+    <div class="absolute inset-0 opacity-10"
+        style="background-image: url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'1\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');">
+    </div>
+    <div class="container mx-auto px-4 relative z-10 text-center">
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-4 tracking-tight" data-aos="fade-up">
+            ฐานข้อมูลวิทยานิพนธ์
+        </h1>
+        <p class="text-lg md:text-xl text-emerald-100 max-w-3xl mx-auto font-light" data-aos="fade-up" data-aos-delay="100">
+            ค้นหาและเข้าถึงงานวิทยานิพนธ์ปริญญาตรีของภาควิชาทรัพยากรธรรมชาติและสิ่งแวดล้อม
+        </p>
+    </div>
+</section>
+
+<div v-pre>
+<div id="thesis-app" class="bg-gray-50 min-h-screen pb-16" v-cloak>
+
+    <!-- Search Bar -->
+    <div class="bg-white border-b border-gray-200 shadow-sm sticky top-[72px] z-40">
+        <div class="container mx-auto px-4 py-4 md:py-5">
+            <div class="relative max-w-3xl mx-auto">
+                <div class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                    <i class="fas fa-search text-emerald-500 text-lg"></i>
+                </div>
+                <input type="text" v-model="searchQuery"
+                    class="w-full pl-14 pr-12 py-3 bg-gray-50 border-2 border-transparent hover:border-gray-200 focus:bg-white focus:border-emerald-500 rounded-2xl text-base shadow-inner outline-none transition-all placeholder-gray-400"
+                    placeholder="ค้นหาชื่อเรื่อง อาจารย์ที่ปรึกษา หรือคำสำคัญ...">
+                <button v-if="searchQuery" @click="searchQuery = ''"
+                    class="absolute inset-y-0 right-0 pr-5 flex items-center text-gray-400 hover:text-red-500 transition-colors">
+                    <i class="fas fa-times-circle text-lg"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 pt-8">
+
+        <!-- Program Filter -->
+        <div class="flex flex-wrap gap-3 mb-8 justify-center" data-aos="fade-up">
+            <button @click="activeProgram = 'ALL'"
+                :class="activeProgram === 'ALL' ? 'bg-emerald-600 text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'"
+                class="px-5 py-2.5 rounded-full font-medium text-sm transition-all">
+                🌿 ทั้งหมด
+            </button>
+            <button @click="activeProgram = 'NRE'"
+                :class="activeProgram === 'NRE' ? 'bg-emerald-600 text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'"
+                class="px-5 py-2.5 rounded-full font-medium text-sm transition-all">
+                🌱 ทรัพยากรธรรมชาติและสิ่งแวดล้อม (NRE)
+            </button>
+            <button @click="activeProgram = 'GEO'"
+                :class="activeProgram === 'GEO' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'"
+                class="px-5 py-2.5 rounded-full font-medium text-sm transition-all">
+                🗺️ ภูมิศาสตร์ (GEO)
+            </button>
+        </div>
+
+        <!-- Stats row -->
+        <div class="flex gap-4 mb-6 text-sm text-gray-500 justify-center">
+            <span>ผลลัพธ์ <strong class="text-emerald-700">[[ filteredThesis.length ]]</strong> รายการ</span>
+            <span v-if="searchQuery">จากการค้นหา "<em>[[ searchQuery ]]</em>"</span>
+        </div>
+
+        <!-- Loading -->
+        <div v-if="loading" class="flex flex-col items-center justify-center py-32">
+            <svg class="animate-spin h-10 w-10 text-emerald-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+            <p class="text-gray-500">กำลังโหลดข้อมูล...</p>
+        </div>
+
+        <!-- Empty -->
+        <div v-else-if="!loading && filteredThesis.length === 0" class="text-center py-24">
+            <div class="text-6xl mb-4">📭</div>
+            <p class="text-gray-500 text-lg">ไม่พบวิทยานิพนธ์ที่ตรงกับการค้นหา</p>
+        </div>
+
+        <!-- Thesis Cards -->
+        <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div v-for="t in paginatedThesis" :key="t.id"
+                class="bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 flex flex-col overflow-hidden group">
+
+                <!-- Program Badge Top Strip -->
+                <div :class="t.program === 'NRE' ? 'bg-emerald-600' : 'bg-blue-600'" class="h-1.5"></div>
+
+                <div class="p-5 flex flex-col flex-1">
+                    <!-- Badge + Year -->
+                    <div class="flex items-center gap-2 mb-3">
+                        <span :class="t.program === 'NRE' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'"
+                            class="px-2.5 py-0.5 rounded-full text-xs font-bold">[[ t.program ]]</span>
+                        <span v-if="t.year" class="text-xs text-gray-400">ปีการศึกษา [[ t.year ]]</span>
+                    </div>
+
+                    <!-- Title -->
+                    <h3 class="font-bold text-gray-800 text-sm leading-snug mb-1 line-clamp-3 group-hover:text-emerald-700 transition-colors">[[ t.title ]]</h3>
+                    <p v-if="t.title_en" class="text-xs text-gray-400 italic mb-3 line-clamp-2">[[ t.title_en ]]</p>
+
+                    <!-- Abstract -->
+                    <p v-if="t.abstract" class="text-xs text-gray-500 leading-relaxed line-clamp-3 mb-3 flex-1">[[ t.abstract ]]</p>
+                    <div v-else class="flex-1"></div>
+
+                    <!-- Keywords -->
+                    <div v-if="t.keywords" class="flex flex-wrap gap-1 mb-3">
+                        <span v-for="kw in t.keywords.split(',')" :key="kw"
+                            class="px-2 py-0.5 bg-gray-100 text-gray-500 rounded text-xs">[[ kw.trim() ]]</span>
+                    </div>
+
+                    <!-- Advisor -->
+                    <div v-if="t.advisor" class="flex items-center gap-1.5 text-xs text-gray-500 mb-3">
+                        <i class="fas fa-user-tie text-gray-400"></i>
+                        <span>[[ t.advisor ]]</span>
+                    </div>
+
+                    <!-- File link -->
+                    <div class="mt-auto pt-3 border-t border-gray-100">
+                        <a v-if="t.file_url" :href="t.file_url" target="_blank"
+                            class="flex items-center gap-2 text-emerald-600 hover:text-emerald-800 text-sm font-medium transition-colors">
+                            <i class="fas fa-file-pdf text-red-500"></i> ดาวน์โหลด / ดูเอกสาร
+                        </a>
+                        <span v-else class="text-xs text-gray-300 italic">ไม่มีไฟล์แนบ</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div v-if="totalPages > 1" class="flex justify-center gap-2 mt-10">
+            <button @click="currentPage = Math.max(1, currentPage - 1)" :disabled="currentPage === 1"
+                class="px-4 py-2 rounded-lg border text-sm disabled:opacity-40 hover:bg-gray-100">ก่อนหน้า</button>
+            <button v-for="p in totalPages" :key="p" @click="currentPage = p"
+                :class="currentPage === p ? 'bg-emerald-600 text-white border-emerald-600' : 'hover:bg-gray-100'"
+                class="px-4 py-2 rounded-lg border text-sm">[[ p ]]</button>
+            <button @click="currentPage = Math.min(totalPages, currentPage + 1)" :disabled="currentPage === totalPages"
+                class="px-4 py-2 rounded-lg border text-sm disabled:opacity-40 hover:bg-gray-100">ถัดไป</button>
+        </div>
+    </div>
+</div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+    const { createApp } = Vue;
+    createApp({
+        delimiters: ['[[', ']]'],
+        data() {
+            return {
+                thesis: [],
+                loading: true,
+                searchQuery: '',
+                activeProgram: 'ALL',
+                currentPage: 1,
+                perPage: 12,
+            };
+        },
+        computed: {
+            filteredThesis() {
+                const q = this.searchQuery.toLowerCase().trim();
+                return this.thesis.filter(t => {
+                    const prog = this.activeProgram === 'ALL' || t.program === this.activeProgram;
+                    if (!prog) return false;
+                    if (!q) return true;
+                    return (t.title||'').toLowerCase().includes(q)
+                        || (t.title_en||'').toLowerCase().includes(q)
+                        || (t.advisor||'').toLowerCase().includes(q)
+                        || (t.keywords||'').toLowerCase().includes(q)
+                        || (t.abstract||'').toLowerCase().includes(q);
+                });
+            },
+            totalPages() {
+                return Math.ceil(this.filteredThesis.length / this.perPage) || 1;
+            },
+            paginatedThesis() {
+                const start = (this.currentPage - 1) * this.perPage;
+                return this.filteredThesis.slice(start, start + this.perPage);
+            },
+        },
+        watch: {
+            searchQuery() { this.currentPage = 1; },
+            activeProgram() { this.currentPage = 1; },
+        },
+        async mounted() {
+            try {
+                const res = await fetch('/api/v1/thesis');
+                this.thesis = await res.json();
+            } catch(e) { this.thesis = []; }
+            this.loading = false;
+        }
+    }).mount('#thesis-app');
+});
+</script>
+{% endblock %}

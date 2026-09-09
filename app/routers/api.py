@@ -523,3 +523,22 @@ async def api_translate(req: TranslateRequest, db: AsyncSession = Depends(get_db
     except Exception as e:
         logger.error(f"[translate] {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Translation failed")
+
+
+# ─── Public Thesis API ────────────────────────────────────────────────────────
+@router.get("/v1/thesis")
+async def get_public_thesis(db: AsyncSession = Depends(get_db)):
+    from app.models import UndergradThesis
+    res = await db.execute(
+        select(UndergradThesis).order_by(UndergradThesis.year.desc(), UndergradThesis.id.desc())
+    )
+    items = res.scalars().all()
+    return [
+        {
+            "id": t.id, "title": t.title, "title_en": t.title_en,
+            "abstract": t.abstract, "abstract_en": t.abstract_en,
+            "advisor": t.advisor, "program": t.program,
+            "keywords": t.keywords, "year": t.year, "file_url": t.file_url,
+        }
+        for t in items
+    ]

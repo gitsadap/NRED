@@ -1079,3 +1079,65 @@ async def save_my_cv(payload: dict, request: Request, user: dict = Depends(get_c
 
     await db.commit()
     return {"success": True, "message": "บันทึกข้อมูล CV เรียบร้อย"}
+
+
+# ─── Undergraduate Thesis CRUD ───────────────────────────────────────────────
+from app.models import UndergradThesis
+
+class ThesisCreate(BaseModel):
+    id: Optional[int] = None
+    title: str
+    title_en: Optional[str] = None
+    abstract: Optional[str] = None
+    abstract_en: Optional[str] = None
+    advisor: Optional[str] = None
+    program: str = "NRE"
+    keywords: Optional[str] = None
+    year: Optional[int] = None
+    file_url: Optional[str] = None
+
+@router.get("/api/thesis")
+async def get_thesis_list(db: AsyncSession = Depends(get_db)):
+    res = await db.execute(select(UndergradThesis).order_by(UndergradThesis.year.desc(), UndergradThesis.id.desc()))
+    items = res.scalars().all()
+    return [
+        {
+            "id": t.id, "title": t.title, "title_en": t.title_en,
+            "abstract": t.abstract, "abstract_en": t.abstract_en,
+            "advisor": t.advisor, "program": t.program,
+            "keywords": t.keywords, "year": t.year, "file_url": t.file_url,
+            "created_at": t.created_at.isoformat() if t.created_at else None,
+        }
+        for t in items
+    ]
+
+@router.post("/api/thesis")
+async def save_thesis(data: ThesisCreate, db: AsyncSession = Depends(get_db), user: dict = Depends(get_current_user)):
+    if data.id:
+        res = await db.execute(select(UndergradThesis).where(UndergradThesis.id == data.id))
+        obj = res.scalars().first()
+        if obj:
+            obj.title = data.title; obj.title_en = data.title_en
+            obj.abstract = data.abstract; obj.abstract_en = data.abstract_en
+            obj.advisor = data.advisor; obj.program = data.program
+            obj.keywords = data.keywords; obj.year = data.year; obj.file_url = data.file_url
+    else:
+        obj = UndergradThesis(
+            title=data.title, title_en=data.title_en,
+            abstract=data.abstract, abstract_en=data.abstract_en,
+            advisor=data.advisor, program=data.program,
+            keywords=data.keywords, year=data.year, file_url=data.file_url
+        )
+        db.add(obj)
+    await db.commit()
+    return {"success": True}
+
+@router.post("/api/thesis/delete")
+async def delete_thesis(req: DeleteRequest, db: AsyncSession = Depends(get_db), user: dict = Depends(get_current_user)):
+    res = await db.execute(select(UndergradThesis).where(UndergradThesis.id == req.id))
+    obj = res.scalars().first()
+    if obj:
+        await db.delete(obj)
+        await db.commit()
+        return {"success": True}
+    return {"success": False, "message": "Not found"}
