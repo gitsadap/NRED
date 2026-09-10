@@ -24,7 +24,6 @@ engine = create_async_engine(
         "prepared_statement_cache_size": 0,
         "statement_cache_size": 0,
         "command_timeout": 60,
-        "connect_timeout": 10,
         "server_settings": {
             "application_name": "nred_agi_prod"
         }
