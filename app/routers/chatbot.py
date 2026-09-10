@@ -407,9 +407,9 @@ async def get_chatbot_response(req: ChatRequest):
         # ─── LLM Call (retry + exponential backoff) ───────────────────────
         # 🔧 แก้ไข model names ที่ typo (gemini-3.1-flash-lite-preview ไม่มีจริง)
         models_to_try = [
-            "gemini/gemini-2.0-flash-lite",  # เร็ว ประหยัด
+            "gemini/gemini-2.0-flash",  # เร็ว ประหยัด
             "gemini/gemini-2.5-flash",        # ฉลาดกว่า ใช้เป็น fallback
-            "gemini/gemini-2.0-flash-lite",
+            "gemini/gemini-2.0-flash",
             "gemini/gemini-2.5-flash",
         ]
 

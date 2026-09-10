@@ -713,8 +713,12 @@ async def show_page_raw(slug: str, request: Request, db: AsyncSession = Depends(
 
 @router.get("/thesis", response_class=HTMLResponse)
 async def show_thesis(request: Request, db: AsyncSession = Depends(get_db)):
-    context = await get_global_context(db)
-    return templates.TemplateResponse("thesis.html", {"request": request, **context})
+    try:
+        context = await get_global_context(db)
+        return templates.TemplateResponse("thesis.html", {"request": request, **context})
+    except Exception as _thesis_exc:
+        logger.exception("THESIS ROUTE EXCEPTION: %s", _thesis_exc)
+        raise
 
 
 @router.get("/{slug}", response_class=HTMLResponse)

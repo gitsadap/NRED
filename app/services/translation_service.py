@@ -61,7 +61,7 @@ async def translate_texts(texts: List[str], target_lang: str, db: AsyncSession) 
         from app.config import settings
         gemini_key = settings.gemini_api_key or ""
         response = litellm.completion(
-            model="gemini/gemini-3.5-flash-lite",
+            model="gemini/gemini-2.5-flash",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=4096,
             temperature=0.1,
