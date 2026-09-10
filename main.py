@@ -262,43 +262,48 @@ app.include_router(public.router)
 
 @app.on_event("startup")
 async def startup_event():
+    import asyncio
     logger.info("Application starting up...")
 
     # Auto-create translations table if not exists
     from app.database import engine
     from sqlalchemy import text
-    async with engine.begin() as conn:
-        await conn.execute(text("""
-            CREATE TABLE IF NOT EXISTS api.translations (
-                id SERIAL PRIMARY KEY,
-                text_hash VARCHAR(32) NOT NULL,
-                lang VARCHAR(5) NOT NULL,
-                original_text TEXT NOT NULL,
-                translated_text TEXT NOT NULL,
-                created_at TIMESTAMPTZ DEFAULT NOW(),
-                UNIQUE(text_hash, lang)
-            )
-        """))
-        await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_translations_hash_lang ON api.translations(text_hash, lang)"))
+    try:
+        async with asyncio.timeout(20):
+            async with engine.begin() as conn:
+                await conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS api.translations (
+                        id SERIAL PRIMARY KEY,
+                        text_hash VARCHAR(32) NOT NULL,
+                        lang VARCHAR(5) NOT NULL,
+                        original_text TEXT NOT NULL,
+                        translated_text TEXT NOT NULL,
+                        created_at TIMESTAMPTZ DEFAULT NOW(),
+                        UNIQUE(text_hash, lang)
+                    )
+                """))
+                await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_translations_hash_lang ON api.translations(text_hash, lang)"))
 
-        # undergrad_thesis table
-        await conn.execute(text("""
-            CREATE TABLE IF NOT EXISTS api.undergrad_thesis (
-                id SERIAL PRIMARY KEY,
-                title TEXT NOT NULL,
-                title_en TEXT,
-                abstract TEXT,
-                abstract_en TEXT,
-                advisor VARCHAR(255),
-                program VARCHAR(10) NOT NULL DEFAULT 'NRE',
-                keywords TEXT,
-                year INTEGER,
-                file_url TEXT,
-                created_at TIMESTAMPTZ DEFAULT NOW(),
-                updated_at TIMESTAMPTZ DEFAULT NOW()
-            )
-        """))
-        await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_thesis_program ON api.undergrad_thesis(program)"))
+                # undergrad_thesis table
+                await conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS api.undergrad_thesis (
+                        id SERIAL PRIMARY KEY,
+                        title TEXT NOT NULL,
+                        title_en TEXT,
+                        abstract TEXT,
+                        abstract_en TEXT,
+                        advisor VARCHAR(255),
+                        program VARCHAR(10) NOT NULL DEFAULT 'NRE',
+                        keywords TEXT,
+                        year INTEGER,
+                        file_url TEXT,
+                        created_at TIMESTAMPTZ DEFAULT NOW(),
+                        updated_at TIMESTAMPTZ DEFAULT NOW()
+                    )
+                """))
+                await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_thesis_program ON api.undergrad_thesis(program)"))
+    except Exception as _startup_db_exc:
+        logger.error("Startup DB table creation failed (will continue): %s", _startup_db_exc)
 
     issues = validate_security_settings(settings)
     for issue in issues:
