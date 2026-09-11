@@ -715,7 +715,7 @@ async def show_page_raw(slug: str, request: Request, db: AsyncSession = Depends(
 async def show_thesis(request: Request, db: AsyncSession = Depends(get_db)):
     try:
         context = await get_global_context(db)
-        return templates.TemplateResponse("thesis.html", {"request": request, **context})
+        return templates.TemplateResponse(request=request, name="thesis.html", context=context)
     except Exception as _thesis_exc:
         logger.exception("THESIS ROUTE EXCEPTION: %s", _thesis_exc)
         raise
