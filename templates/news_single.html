@@ -25,8 +25,19 @@
 <article class="bg-white py-16">
     <div class="container mx-auto px-4 max-w-4xl">
         {% if news.image_url %}
-        <div class="rounded-2xl overflow-hidden shadow-2xl mb-10 -mt-32 relative z-20">
+        <div class="rounded-2xl overflow-hidden shadow-2xl mb-10 -mt-32 relative z-20 group">
             <img src="{{ news.image_url }}" alt="{{ news.title }}" class="w-full h-auto">
+            <!-- Share Arrow Button on Thumbnail -->
+            <button type="button"
+                onclick="event.preventDefault(); event.stopPropagation(); window.openShareModal({ title: '{{ news.title | replace("'", "\\'") | replace('"', '&quot;') }}', url: window.location.href });"
+                class="absolute top-4 right-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-black/60 hover:bg-emerald-600 text-white backdrop-blur-md shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 border border-white/25 z-30 font-medium text-xs group/share"
+                title="แชร์ข่าวนี้"
+                aria-label="แชร์ข่าวนี้">
+                <svg class="w-4 h-4 transition-transform group-hover/share:translate-x-0.5 group-hover/share:-translate-y-0.5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M14 8.5V4.5L21.5 12L14 19.5V15.5C8 15.5 4 17.5 1 22C2.5 16 6 10 14 8.5Z"/>
+                </svg>
+                <span>แชร์ข่าวนี้</span>
+            </button>
         </div>
         {% endif %}
 
@@ -34,8 +45,16 @@
             {{ news.content | safe }}
         </div>
 
-        <div class="mt-12 pt-8 border-t border-gray-200">
+        <div class="mt-12 pt-8 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
             <a href="/news" class="text-green-700 font-bold hover:underline">← กลับไปหน้าข่าวสารทั้งหมด</a>
+            <button type="button"
+                onclick="window.openShareModal({ title: '{{ news.title | replace("'", "\\'") | replace('"', '&quot;') }}', url: window.location.href });"
+                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white font-medium text-sm shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M14 8.5V4.5L21.5 12L14 19.5V15.5C8 15.5 4 17.5 1 22C2.5 16 6 10 14 8.5Z"/>
+                </svg>
+                <span>แชร์ข่าวสาร</span>
+            </button>
         </div>
     </div>
 </article>

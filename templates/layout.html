@@ -1093,6 +1093,262 @@
         }
     })();
     </script>
+
+    <!-- =========================================
+         GLOBAL SHARE MODAL
+         ========================================= -->
+    <div id="globalShareModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 opacity-0 pointer-events-none transition-opacity duration-300" aria-modal="true" role="dialog">
+        <!-- Backdrop -->
+        <div id="globalShareBackdrop" class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300" onclick="window.closeShareModal()"></div>
+
+        <!-- Modal Content -->
+        <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden transform scale-95 transition-all duration-300 border border-gray-100 z-10">
+            <!-- Header -->
+            <div class="p-6 pb-4 border-b border-gray-100 flex items-start justify-between bg-gradient-to-r from-emerald-50/50 via-teal-50/30 to-transparent">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-md shadow-emerald-600/20 flex-shrink-0">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M14 8.5V4.5L21.5 12L14 19.5V15.5C8 15.5 4 17.5 1 22C2.5 16 6 10 14 8.5Z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-900 leading-tight">แชร์เนื้อหานี้</h3>
+                        <p class="text-xs text-gray-500 mt-0.5">แบ่งปันหรือส่งต่อไปยังแพลตฟอร์มอื่น</p>
+                    </div>
+                </div>
+                <button type="button" onclick="window.closeShareModal()" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-800 flex items-center justify-center transition-colors" aria-label="ปิด">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-5">
+                <!-- Title Preview -->
+                <div class="p-3 bg-gray-50 rounded-2xl border border-gray-100 text-xs text-gray-700 font-medium line-clamp-2" id="shareModalItemTitle">
+                    หัวข้อข่าวสาร
+                </div>
+
+                <!-- Social Platforms -->
+                <div>
+                    <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-3">แชร์ไปยังโซเชียลมีเดีย</span>
+                    <div class="grid grid-cols-4 gap-3 text-center">
+                        <!-- LINE -->
+                        <button type="button" onclick="window.shareToSocial('line')" class="group flex flex-col items-center gap-1.5 focus:outline-none">
+                            <div class="w-12 h-12 rounded-2xl bg-[#06C755] hover:bg-[#05b34c] text-white flex items-center justify-center shadow-md shadow-green-500/20 transition-transform group-hover:scale-110 active:scale-95">
+                                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2C6.48 2 2 5.82 2 10.53c0 2.94 1.77 5.53 4.46 7.02.2.11.32.27.32.49 0 .15-.05.41-.1.67-.18.84-.57 2.05-.6 2.18-.04.18.06.32.24.23.14-.07 1.83-1.07 3.52-2.22.42.06.85.1 1.29.1 5.52 0 10-3.82 10-8.53S17.52 2 12 2zm-4.7 11.23h-1.5a.7.7 0 0 1-.7-.7v-4.2a.7.7 0 0 1 .7-.7h1.5a.7.7 0 1 1 0 1.4h-.8v.7h.8a.7.7 0 1 1 0 1.4h-.8v.7h.8a.7.7 0 0 1 0 1.4zm2.84 0a.7.7 0 0 1-.7-.7v-4.2a.7.7 0 1 1 1.4 0v4.2a.7.7 0 0 1-.7.7zm4.27 0a.7.7 0 0 1-.56-.27l-2.07-2.77v2.34a.7.7 0 1 1-1.4 0v-4.2a.7.7 0 0 1 .56-.28.7.7 0 0 1 .56.28l2.07 2.77V8.33a.7.7 0 1 1 1.4 0v4.2a.7.7 0 0 1-.56.7zm3.56-2.8a.7.7 0 1 1 0 1.4h-.8v.7h.8a.7.7 0 1 1 0 1.4h-1.5a.7.7 0 0 1-.7-.7v-4.2a.7.7 0 0 1 .7-.7h1.5a.7.7 0 1 1 0 1.4h-.8v.7h.8z"/>
+                                </svg>
+                            </div>
+                            <span class="text-xs font-medium text-gray-700">LINE</span>
+                        </button>
+
+                        <!-- Facebook -->
+                        <button type="button" onclick="window.shareToSocial('facebook')" class="group flex flex-col items-center gap-1.5 focus:outline-none">
+                            <div class="w-12 h-12 rounded-2xl bg-[#1877F2] hover:bg-[#166fe5] text-white flex items-center justify-center shadow-md shadow-blue-500/20 transition-transform group-hover:scale-110 active:scale-95">
+                                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                                </svg>
+                            </div>
+                            <span class="text-xs font-medium text-gray-700">Facebook</span>
+                        </button>
+
+                        <!-- X (Twitter) -->
+                        <button type="button" onclick="window.shareToSocial('twitter')" class="group flex flex-col items-center gap-1.5 focus:outline-none">
+                            <div class="w-12 h-12 rounded-2xl bg-black hover:bg-gray-800 text-white flex items-center justify-center shadow-md shadow-black/20 transition-transform group-hover:scale-110 active:scale-95">
+                                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                                </svg>
+                            </div>
+                            <span class="text-xs font-medium text-gray-700">X</span>
+                        </button>
+
+                        <!-- System Share (Native) -->
+                        <button type="button" onclick="window.shareToSocial('native')" class="group flex flex-col items-center gap-1.5 focus:outline-none" id="nativeShareBtn">
+                            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 hover:from-emerald-700 hover:to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20 transition-transform group-hover:scale-110 active:scale-95">
+                                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="18" cy="5" r="3"></circle>
+                                    <circle cx="6" cy="12" r="3"></circle>
+                                    <circle cx="18" cy="19" r="3"></circle>
+                                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                                </svg>
+                            </div>
+                            <span class="text-xs font-medium text-gray-700">อื่นๆ</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Copy Link -->
+                <div class="pt-2">
+                    <label for="shareModalUrlInput" class="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-2">หรือคัดลอกลิงก์</label>
+                    <div class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-2xl p-1.5 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-200 transition-all">
+                        <input type="text" id="shareModalUrlInput" readonly
+                            class="w-full bg-transparent px-3 py-1.5 text-xs text-gray-600 font-mono focus:outline-none select-all truncate">
+                        <button type="button" id="shareModalCopyBtn" onclick="window.copyShareUrl()"
+                            class="flex-shrink-0 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" id="copyIcon">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/>
+                            </svg>
+                            <span id="copyBtnText">คัดลอก</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Toast Notification -->
+    <div id="globalShareToast" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-gray-900/95 text-white px-5 py-3 rounded-full shadow-2xl flex items-center gap-3 text-xs font-medium z-50 transition-all duration-300 transform opacity-0 pointer-events-none translate-y-4 backdrop-blur-md border border-white/10">
+        <div class="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center flex-shrink-0">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+            </svg>
+        </div>
+        <span id="globalShareToastText">คัดลอกลิงก์สำเร็จแล้ว</span>
+    </div>
+
+    <script>
+    (function() {
+        let currentShareData = { title: '', url: '' };
+
+        window.openShareModal = function(data) {
+            if (!data) return;
+            const fullUrl = data.url.startsWith('http') ? data.url : window.location.origin + (data.url.startsWith('/') ? '' : '/') + data.url;
+            currentShareData = {
+                title: data.title || document.title,
+                url: fullUrl
+            };
+
+            const modal = document.getElementById('globalShareModal');
+            const titleEl = document.getElementById('shareModalItemTitle');
+            const inputEl = document.getElementById('shareModalUrlInput');
+            const copyBtnText = document.getElementById('copyBtnText');
+            const copyBtn = document.getElementById('shareModalCopyBtn');
+
+            if (titleEl) titleEl.textContent = currentShareData.title;
+            if (inputEl) inputEl.value = currentShareData.url;
+            if (copyBtnText) copyBtnText.textContent = 'คัดลอก';
+            if (copyBtn) {
+                copyBtn.classList.remove('bg-emerald-800');
+                copyBtn.classList.add('bg-emerald-600');
+            }
+
+            if (modal) {
+                modal.classList.remove('opacity-0', 'pointer-events-none');
+                const card = modal.querySelector('.relative.bg-white');
+                if (card) {
+                    card.classList.remove('scale-95');
+                    card.classList.add('scale-100');
+                }
+            }
+        };
+
+        window.closeShareModal = function() {
+            const modal = document.getElementById('globalShareModal');
+            if (modal) {
+                modal.classList.add('opacity-0', 'pointer-events-none');
+                const card = modal.querySelector('.relative.bg-white');
+                if (card) {
+                    card.classList.remove('scale-100');
+                    card.classList.add('scale-95');
+                }
+            }
+        };
+
+        window.copyShareUrl = function() {
+            const inputEl = document.getElementById('shareModalUrlInput');
+            const textToCopy = inputEl && inputEl.value ? inputEl.value : currentShareData.url;
+
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(textToCopy).then(handleCopySuccess).catch(() => fallbackCopy(inputEl, textToCopy));
+            } else {
+                fallbackCopy(inputEl, textToCopy);
+            }
+        };
+
+        function fallbackCopy(inputEl, text) {
+            if (inputEl) {
+                inputEl.focus();
+                inputEl.select();
+                try {
+                    document.execCommand('copy');
+                    handleCopySuccess();
+                    return;
+                } catch (e) {}
+            }
+            // Fallback prompt
+            window.prompt("คัดลอกลิงก์:", text);
+        }
+
+        function handleCopySuccess() {
+            const copyBtnText = document.getElementById('copyBtnText');
+            const copyBtn = document.getElementById('shareModalCopyBtn');
+            if (copyBtnText) copyBtnText.textContent = 'คัดลอกแล้ว!';
+            if (copyBtn) {
+                copyBtn.classList.remove('bg-emerald-600');
+                copyBtn.classList.add('bg-emerald-800');
+            }
+            window.showShareToast('คัดลอกลิงก์ไปยังคลิปบอร์ดแล้ว');
+            setTimeout(() => {
+                if (copyBtnText) copyBtnText.textContent = 'คัดลอก';
+                if (copyBtn) {
+                    copyBtn.classList.add('bg-emerald-600');
+                    copyBtn.classList.remove('bg-emerald-800');
+                }
+            }, 2500);
+        }
+
+        window.shareToSocial = function(platform) {
+            const url = encodeURIComponent(currentShareData.url);
+            const title = encodeURIComponent(currentShareData.title);
+            let shareLink = '';
+
+            if (platform === 'line') {
+                shareLink = `https://social-plugins.line.me/lineit/share?url=${url}`;
+            } else if (platform === 'facebook') {
+                shareLink = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
+            } else if (platform === 'twitter') {
+                shareLink = `https://twitter.com/intent/tweet?url=${url}&text=${title}`;
+            } else if (platform === 'native') {
+                if (navigator.share) {
+                    navigator.share({
+                        title: currentShareData.title,
+                        url: currentShareData.url
+                    }).catch(() => {});
+                    return;
+                } else {
+                    window.copyShareUrl();
+                    return;
+                }
+            }
+
+            if (shareLink) {
+                window.open(shareLink, '_blank', 'width=600,height=500,scrollbars=yes,resizable=yes');
+            }
+        };
+
+        window.showShareToast = function(msg) {
+            const toast = document.getElementById('globalShareToast');
+            const toastText = document.getElementById('globalShareToastText');
+            if (toastText && msg) toastText.textContent = msg;
+            if (toast) {
+                toast.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-4');
+                toast.classList.add('opacity-100', 'translate-y-0');
+                setTimeout(() => {
+                    toast.classList.remove('opacity-100', 'translate-y-0');
+                    toast.classList.add('opacity-0', 'pointer-events-none', 'translate-y-4');
+                }, 3000);
+            }
+        };
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                window.closeShareModal();
+            }
+        });
+    })();
+    </script>
 </body>
 
 </html>

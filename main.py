@@ -302,6 +302,20 @@ async def startup_event():
                     )
                 """))
                 await conn.execute(text("CREATE INDEX IF NOT EXISTS idx_thesis_program ON api.undergrad_thesis(program)"))
+
+                # appeals table (public schema)
+                await conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS public.appeals (
+                        id SERIAL PRIMARY KEY,
+                        sender_name VARCHAR(255),
+                        email VARCHAR(255),
+                        topic VARCHAR(500) NOT NULL,
+                        message TEXT NOT NULL,
+                        is_anonymous INTEGER DEFAULT 0,
+                        status VARCHAR(50) DEFAULT 'pending',
+                        created_at TIMESTAMPTZ DEFAULT NOW()
+                    )
+                """))
     except Exception as _startup_db_exc:
         logger.error("Startup DB table creation failed (will continue): %s", _startup_db_exc)
 

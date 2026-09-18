@@ -1107,8 +1107,8 @@
     let _thesisFilter = 'ALL';
 
     async function loadThesis() {
-        const res = await fetch('/admin/api/thesis');
-        _thesisData = await res.json();
+        const data = await apiCall('/admin/api/thesis');
+        _thesisData = Array.isArray(data) ? data : [];
         renderThesisTable();
     }
 
@@ -1207,30 +1207,74 @@
             year: parseInt(document.getElementById('thesis-year').value)||null,
             file_url: document.getElementById('thesis-file-url').value||null,
         };
-        const res = await fetch('/admin/api/thesis', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
-        const data = await res.json();
-        if (data.success) {
+        const data = await apiCall('/admin/api/thesis', 'POST', payload);
+        if (data && data.success) {
             Swal.fire({icon:'success',title:'บันทึกแล้ว',timer:1200,showConfirmButton:false});
             cancelThesisForm();
             loadThesis();
         } else {
-            Swal.fire({icon:'error',title:'เกิดข้อผิดพลาด'});
+            Swal.fire({icon:'error',title:'เกิดข้อผิดพลาด',text: data ? (data.detail||'') : 'ไม่สามารถบันทึกได้'});
         }
     }
 
     async function deleteThesis(id) {
         const conf = await Swal.fire({icon:'warning',title:'ลบวิทยานิพนธ์?',showCancelButton:true,confirmButtonText:'ลบ',cancelButtonText:'ยกเลิก',confirmButtonColor:'#ef4444'});
         if (!conf.isConfirmed) return;
-        const res = await fetch('/admin/api/thesis/delete', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id})});
-        const data = await res.json();
-        if (data.success) { loadThesis(); }
+        const data = await apiCall('/admin/api/thesis/delete', 'POST', {id});
+        if (data && data.success) { loadThesis(); }
     }
 
-    // Hook into showSection to load thesis data on nav click
-    const _origShowSection = typeof showSection === 'function' ? showSection : null;
+    // ─── Appeals Management ───────────────────────────────────────────
+    async function loadAppeals() {
+        const data = await apiCall('/admin/api/appeals');
+        const tbody = document.getElementById('appealsTableBody');
+        if (!tbody) return;
+        if (!data || !Array.isArray(data) || data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-400">ไม่มีข้อมูลร้องเรียน</td></tr>';
+            return;
+        }
+        tbody.innerHTML = data.map(a => `
+            <tr class="border-t hover:bg-gray-50">
+                <td class="py-3 px-4 text-sm text-gray-500">${a.created_at ? new Date(a.created_at).toLocaleDateString('th-TH') : '-'}</td>
+                <td class="py-3 px-4 text-sm font-medium text-gray-800">${a.topic || '-'}</td>
+                <td class="py-3 px-4 text-sm text-gray-600">${a.is_anonymous ? '<span class="italic text-gray-400">ไม่ระบุตัวตน</span>' : (a.sender_name || '-')}</td>
+                <td class="py-3 px-4">
+                    <span class="px-2 py-1 rounded-full text-xs font-bold ${a.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}">${a.status || 'pending'}</span>
+                </td>
+                <td class="py-3 px-4 text-right space-x-2">
+                    <button onclick="viewAppeal(${a.id})" class="text-blue-500 hover:underline text-sm">ดู</button>
+                    <button onclick="deleteAppeal(${a.id})" class="text-red-500 hover:underline text-sm">ลบ</button>
+                </td>
+            </tr>`).join('');
+    }
+
+    async function viewAppeal(id) {
+        const data = await apiCall('/admin/api/appeals');
+        const a = data ? data.find(x => x.id === id) : null;
+        if (!a) return;
+        Swal.fire({
+            title: a.topic || 'เรื่องร้องเรียน',
+            html: `<div class="text-left">
+                <p class="text-sm text-gray-500 mb-3">${a.created_at ? new Date(a.created_at).toLocaleString('th-TH') : ''}</p>
+                <p class="mb-4 whitespace-pre-wrap">${a.message || ''}</p>
+                ${!a.is_anonymous ? `<p class="text-sm text-gray-600 border-t pt-3">ผู้ส่ง: <strong>${a.sender_name || '-'}</strong> (${a.email || '-'})</p>` : '<p class="text-sm text-gray-400 border-t pt-3">ไม่ระบุตัวตน</p>'}
+            </div>`,
+            confirmButtonText: 'ปิด',
+            width: '600px'
+        });
+    }
+
+    async function deleteAppeal(id) {
+        const conf = await Swal.fire({icon:'warning',title:'ลบเรื่องร้องเรียน?',showCancelButton:true,confirmButtonText:'ลบ',cancelButtonText:'ยกเลิก',confirmButtonColor:'#ef4444'});
+        if (!conf.isConfirmed) return;
+        const data = await apiCall('/admin/api/appeals/delete', 'POST', {id});
+        if (data && data.success) { loadAppeals(); }
+    }
+
+    // Hook thesis nav click → load thesis data
     document.addEventListener('DOMContentLoaded', () => {
-        const origBtn = document.getElementById('nav-thesis');
-        if (origBtn) origBtn.addEventListener('click', () => { loadThesis(); });
+        const thesisBtn = document.getElementById('nav-thesis');
+        if (thesisBtn) thesisBtn.addEventListener('click', () => { loadThesis(); });
     });
     </script>
 

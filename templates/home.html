@@ -1524,6 +1524,17 @@
                                 </span>
                             </div>
 
+                            <!-- Share Arrow Button on Thumbnail -->
+                            <button type="button"
+                                onclick="event.preventDefault(); event.stopPropagation(); window.openShareModal({ title: '{{ item.title | replace("'", "\\'") | replace('"', '&quot;') }}', url: '/{{ 'news' if is_news else 'activities' }}/{{ item.id }}' });"
+                                class="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/40 hover:bg-emerald-600 text-white backdrop-blur-md flex items-center justify-center shadow-lg transition-all duration-300 hover:scale-110 active:scale-95 border border-white/30 z-20 group/share"
+                                title="แชร์"
+                                aria-label="แชร์เนื้อหานี้">
+                                <svg class="w-4 h-4 transition-transform group-hover/share:translate-x-0.5 group-hover/share:-translate-y-0.5" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M14 8.5V4.5L21.5 12L14 19.5V15.5C8 15.5 4 17.5 1 22C2.5 16 6 10 14 8.5Z"/>
+                                </svg>
+                            </button>
+
                             <!-- Date -->
                             <div class="absolute bottom-4 left-4">
                                 <span class="glass-dark px-4 py-2 rounded-full text-xs font-bold text-white">
