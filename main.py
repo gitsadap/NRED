@@ -243,6 +243,7 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 
 from app.routers import public, appeals, admin, api, chatbot, auth, dashboard_api
+from app.routers.esprel_gateway import router as esprel_gateway_router
 
 from fastapi.responses import RedirectResponse
 
@@ -259,6 +260,7 @@ app.include_router(api.router)
 app.include_router(chatbot.router)
 app.include_router(dashboard_api.router, prefix="/api/dashboard")
 app.include_router(public.router)  
+app.include_router(esprel_gateway_router)
 
 @app.on_event("startup")
 async def startup_event():
