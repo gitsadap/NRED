@@ -1,0 +1,138 @@
+{
+  "year": 2568,
+  "_note": "Fill in title, title_en, advisor, abstract, abstract_en, keywords for each entry. abstract_pdf and fullpaper_pdf are paths relative to docs/thesis/ and must NOT be changed.",
+  "entries": [
+    {
+      "num": "01",
+      "program": "GEO",
+      "title": "",
+      "title_en": "",
+      "abstract": "",
+      "abstract_en": "",
+      "advisor": "",
+      "keywords": "",
+      "abstract_pdf": "2568/68geo/01.พรทิพย์ แป้นเพ็ชร/01.พรทิพย์ แป้นเพ็ชร.pdf",
+      "fullpaper_pdf": null
+    },
+    {
+      "num": "02",
+      "program": "GEO",
+      "title": "",
+      "title_en": "",
+      "abstract": "",
+      "abstract_en": "",
+      "advisor": "",
+      "keywords": "",
+      "abstract_pdf": "2568/68geo/02.ปานไพลิน ชมเชย/02.ปานไพลิน ชมเชย.pdf",
+      "fullpaper_pdf": null
+    },
+    {
+      "num": "03",
+      "program": "GEO",
+      "title": "",
+      "title_en": "",
+      "abstract": "",
+      "abstract_en": "",
+      "advisor": "",
+      "keywords": "",
+      "abstract_pdf": "2568/68geo/03.กัณฐมณี วรอินทร์/03.กัณฐมณี วรอินทร์.pdf",
+      "fullpaper_pdf": null
+    },
+    {
+      "num": "04",
+      "program": "GEO",
+      "title": "",
+      "title_en": "",
+      "abstract": "",
+      "abstract_en": "",
+      "advisor": "",
+      "keywords": "",
+      "abstract_pdf": "2568/68geo/04.ปรัชญากุล มณีฉาย/04.ปรัชญากุล มณีฉาย.pdf",
+      "fullpaper_pdf": null
+    },
+    {
+      "num": "05",
+      "program": "GEO",
+      "title": "",
+      "title_en": "",
+      "abstract": "",
+      "abstract_en": "",
+      "advisor": "",
+      "keywords": "",
+      "abstract_pdf": "2568/68geo/05.สรวิศ ปัญญา/05.สรวิศ ปัญญา.pdf",
+      "fullpaper_pdf": null
+    },
+    {
+      "num": "06",
+      "program": "GEO",
+      "title": "",
+      "title_en": "",
+      "abstract": "",
+      "abstract_en": "",
+      "advisor": "",
+      "keywords": "",
+      "abstract_pdf": "2568/68geo/06.จักรภัทร บุญยง/06.จักรภัทร บุญยง.pdf",
+      "fullpaper_pdf": null
+    },
+    {
+      "num": "07",
+      "program": "GEO",
+      "title": "",
+      "title_en": "",
+      "abstract": "",
+      "abstract_en": "",
+      "advisor": "",
+      "keywords": "",
+      "abstract_pdf": "2568/68geo/07.ยุวดี ใจอินถา/07.ยุวดี ใจอินถา.pdf",
+      "fullpaper_pdf": null
+    },
+    {
+      "num": "08",
+      "program": "GEO",
+      "title": "",
+      "title_en": "",
+      "abstract": "",
+      "abstract_en": "",
+      "advisor": "",
+      "keywords": "",
+      "abstract_pdf": "2568/68geo/08.วงศธร กันเกิด/08.วงศธร กันเกิด.pdf",
+      "fullpaper_pdf": null
+    },
+    {
+      "num": "09",
+      "program": "GEO",
+      "title": "",
+      "title_en": "",
+      "abstract": "",
+      "abstract_en": "",
+      "advisor": "",
+      "keywords": "",
+      "abstract_pdf": "2568/68geo/09.วริศรา จันทร์อินทร์/09.วริศรา จันทร์อินทร์.pdf",
+      "fullpaper_pdf": null
+    },
+    {
+      "num": "010",
+      "program": "GEO",
+      "title": "",
+      "title_en": "",
+      "abstract": "",
+      "abstract_en": "",
+      "advisor": "",
+      "keywords": "",
+      "abstract_pdf": "2568/68geo/010.ชิษนุชา ธรรมขันแข็ง/010.ชิษนุชา ธรรมขันแข็ง.pdf",
+      "fullpaper_pdf": null
+    },
+    {
+      "num": "011",
+      "program": "GEO",
+      "title": "",
+      "title_en": "",
+      "abstract": "",
+      "abstract_en": "",
+      "advisor": "",
+      "keywords": "",
+      "abstract_pdf": "2568/68geo/011.สมรัก สิทธิ์ผิน/011.สมรัก สิทธิ์ผิน.pdf",
+      "fullpaper_pdf": null
+    }
+  ]
+}
