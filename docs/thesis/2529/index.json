@@ -1,0 +1,31 @@
+{
+  "year": 2529,
+  "entries": [
+    {
+      "num": "01",
+      "program": "GEO",
+      "title": "ผลของระยะทางจากตัวเมืองที่มีผลต่อชนิดของสินค้าและบริการในเขตจังหวัดพิษณุโลก",
+      "title_en": "",
+      "author": "ธัญญวัฒน์ ชาญพินิจ พิมพ์ใจ สวงนสุข โอฬาร ชิเดนทรีย์",
+      "abstract": "",
+      "abstract_en": "",
+      "advisor": "",
+      "keywords": "",
+      "abstract_pdf": "2529/geo_2529_01_FullPaper.pdf",
+      "fullpaper_pdf": "2529/geo_2529_01_FullPaper.pdf"
+    },
+    {
+      "num": "02",
+      "program": "GEO",
+      "title": "การวิเคราะห์พฤติกรรมของผู้มาใช้บริการภัตาคารในเขตเทศบาลเมืองพิษณุโลก",
+      "title_en": "",
+      "author": "จุฑารัตน์ เธียรถาวร พูน ผลประกอบ ยุพวัลย์ ระลึกมูล วิลาวรรณ์ เสือเปรม สกุลรัตน์ แดงทองดี เสวนีย์ ทวีวัย",
+      "abstract": "",
+      "abstract_en": "",
+      "advisor": "",
+      "keywords": "",
+      "abstract_pdf": "2529/geo_2529_02_FullPaper.pdf",
+      "fullpaper_pdf": "2529/geo_2529_02_FullPaper.pdf"
+    }
+  ]
+}

@@ -1,138 +1,148 @@
 {
   "year": 2568,
-  "_note": "Fill in title, title_en, advisor, abstract, abstract_en, keywords for each entry. abstract_pdf and fullpaper_pdf are paths relative to docs/thesis/ and must NOT be changed.",
   "entries": [
     {
       "num": "01",
       "program": "GEO",
-      "title": "",
+      "title": "Accident SmartBot: ระบบแผนที่อัจฉริยะเพื่อรายงานอุบัติเหตุด้วยแชทบอทปัญญาประดิษฐ์",
       "title_en": "",
+      "author": "พรทิพย์ แป้นเพ็ชร",
       "abstract": "",
       "abstract_en": "",
       "advisor": "",
       "keywords": "",
-      "abstract_pdf": "2568/68geo/01.พรทิพย์ แป้นเพ็ชร/01.พรทิพย์ แป้นเพ็ชร.pdf",
-      "fullpaper_pdf": null
+      "abstract_pdf": "2568/geo_2568_01_Abstract.pdf",
+      "fullpaper_pdf": "2568/geo_2568_01_FullPaper.pdf"
     },
     {
       "num": "02",
       "program": "GEO",
-      "title": "",
+      "title": "การพัฒนาแบบจำลองคาดการณ์ผลผลิตอ้อยด้วยเทคนิคการเรียนรู้ของเครื่องจากดัชนีพืชพรรณหลายช่วงเวลาจากภาพอากาศยานไร้คนขับ",
       "title_en": "",
+      "author": "ปานไพลิน ชมเชย",
       "abstract": "",
       "abstract_en": "",
       "advisor": "",
       "keywords": "",
-      "abstract_pdf": "2568/68geo/02.ปานไพลิน ชมเชย/02.ปานไพลิน ชมเชย.pdf",
-      "fullpaper_pdf": null
+      "abstract_pdf": "2568/geo_2568_02_Abstract.pdf",
+      "fullpaper_pdf": "2568/geo_2568_02_FullPaper.pdf"
     },
     {
       "num": "03",
       "program": "GEO",
-      "title": "",
+      "title": "SMART NU: การพัฒนาระบบภูมิสารสนเทศเพื่อการเดินทางและการรับรู้สภาพอากาศภายในมหาวิทยาลัยนเรศวร",
       "title_en": "",
+      "author": "กัณฐมณี วรอินทร์",
       "abstract": "",
       "abstract_en": "",
       "advisor": "",
       "keywords": "",
-      "abstract_pdf": "2568/68geo/03.กัณฐมณี วรอินทร์/03.กัณฐมณี วรอินทร์.pdf",
-      "fullpaper_pdf": null
+      "abstract_pdf": "2568/geo_2568_03_Abstract.pdf",
+      "fullpaper_pdf": "2568/geo_2568_03_FullPaper.pdf"
     },
     {
       "num": "04",
       "program": "GEO",
-      "title": "",
+      "title": "การพัฒนาระบบติดตามรถเก็บขยะเพื่อการวิเคราะห์เส้นทางและเพิ่มประสิทธิภาพการติดตามรถเก็บขยะ โดยใช้ IoT และ GIS",
       "title_en": "",
+      "author": "ปรัชญากุล มณีฉาย",
       "abstract": "",
       "abstract_en": "",
       "advisor": "",
       "keywords": "",
-      "abstract_pdf": "2568/68geo/04.ปรัชญากุล มณีฉาย/04.ปรัชญากุล มณีฉาย.pdf",
-      "fullpaper_pdf": null
+      "abstract_pdf": "2568/geo_2568_04_Abstract.pdf",
+      "fullpaper_pdf": "2568/geo_2568_04_FullPaper.pdf"
     },
     {
       "num": "05",
       "program": "GEO",
-      "title": "",
+      "title": "การพัฒนาระบบควบคุมสภาพแวดล้อมภายในโรงเรือนเพาะเห็ดอัจฉริยะด้วยเทคโนโลยี IoT",
       "title_en": "",
+      "author": "สรวิศ ปัญญา",
       "abstract": "",
       "abstract_en": "",
       "advisor": "",
       "keywords": "",
-      "abstract_pdf": "2568/68geo/05.สรวิศ ปัญญา/05.สรวิศ ปัญญา.pdf",
-      "fullpaper_pdf": null
+      "abstract_pdf": "2568/geo_2568_05_Abstract.pdf",
+      "fullpaper_pdf": "2568/geo_2568_05_FullPaper.pdf"
     },
     {
       "num": "06",
       "program": "GEO",
-      "title": "",
+      "title": "การพัฒนาระบบสนับสนุนการตัดสินใจเพื่อการรับมือภัยพิบัติในพื้นที่จังหวัดเชียงรายบนแพลตฟอร์ม WebGIS",
       "title_en": "",
+      "author": "จักรภัทร บุญยง",
       "abstract": "",
       "abstract_en": "",
       "advisor": "",
       "keywords": "",
-      "abstract_pdf": "2568/68geo/06.จักรภัทร บุญยง/06.จักรภัทร บุญยง.pdf",
-      "fullpaper_pdf": null
+      "abstract_pdf": "2568/geo_2568_06_Abstract.pdf",
+      "fullpaper_pdf": "2568/geo_2568_06_FullPaper.pdf"
     },
     {
       "num": "07",
       "program": "GEO",
-      "title": "",
+      "title": "การเปรียบเทียบแบบจำลองการถดถอยเชิงเส้นพหุคูณและแบบจำลองการถดถอยอัตโนมัติเชิงพื้นที่ ในการประเมินราคาที่ดินอำเภอเมืองเชียงใหม่",
       "title_en": "",
+      "author": "ยุวดี ใจอินถา",
       "abstract": "",
       "abstract_en": "",
       "advisor": "",
       "keywords": "",
-      "abstract_pdf": "2568/68geo/07.ยุวดี ใจอินถา/07.ยุวดี ใจอินถา.pdf",
-      "fullpaper_pdf": null
+      "abstract_pdf": "2568/geo_2568_07_Abstract.pdf",
+      "fullpaper_pdf": "2568/geo_2568_07_FullPaper.pdf"
     },
     {
       "num": "08",
       "program": "GEO",
-      "title": "",
+      "title": "การวิเคราะห์การเปลี่ยนแปลงพื้นที่น้ำท่วมซ้ำซากบริเวรลุ่มน้ำยมตอนล่าง จังหวัดพิจิตร",
       "title_en": "",
+      "author": "วงศธร กันเกิด",
       "abstract": "",
       "abstract_en": "",
       "advisor": "",
       "keywords": "",
-      "abstract_pdf": "2568/68geo/08.วงศธร กันเกิด/08.วงศธร กันเกิด.pdf",
-      "fullpaper_pdf": null
+      "abstract_pdf": "2568/geo_2568_08_Abstract.pdf",
+      "fullpaper_pdf": "2568/geo_2568_08_FullPaper.pdf"
     },
     {
       "num": "09",
       "program": "GEO",
-      "title": "",
+      "title": "การวิเคราะห์ความสัมพันธ์ของปริมาณตะกอนกับพื้นที่เกษตรกรรม บริเวณลุ่มแม่น้ำแควน้อยตอนบน",
       "title_en": "",
+      "author": "วริศรา จันทร์อินทร์",
       "abstract": "",
       "abstract_en": "",
       "advisor": "",
       "keywords": "",
-      "abstract_pdf": "2568/68geo/09.วริศรา จันทร์อินทร์/09.วริศรา จันทร์อินทร์.pdf",
-      "fullpaper_pdf": null
+      "abstract_pdf": "2568/geo_2568_09_Abstract.pdf",
+      "fullpaper_pdf": "2568/geo_2568_09_FullPaper.pdf"
     },
     {
       "num": "010",
       "program": "GEO",
-      "title": "",
+      "title": "การวิเคราะห์ปัจจัยทางภูมิศาสตร์ที่มีต่อการบุกรุกพื้นที่ป่าของรีสอร์ทบริเวณภูทับเบิก จังหวัดเพชรบูรณ์",
       "title_en": "",
+      "author": "ชิษนุชา ธรรมขันแข็ง",
       "abstract": "",
       "abstract_en": "",
       "advisor": "",
       "keywords": "",
-      "abstract_pdf": "2568/68geo/010.ชิษนุชา ธรรมขันแข็ง/010.ชิษนุชา ธรรมขันแข็ง.pdf",
-      "fullpaper_pdf": null
+      "abstract_pdf": "2568/geo_2568_010_Abstract.pdf",
+      "fullpaper_pdf": "2568/geo_2568_010_FullPaper.pdf"
     },
     {
       "num": "011",
       "program": "GEO",
-      "title": "",
+      "title": "การประเมินความรุนแรงแผ่นดินไหวและพื้นทีเสี่ยงภัยด้วยเทคนิคการประมาณค่าแบบความน่าจะเป็น: วิเคราะห์เปรียบเทียบจากศูนย์กลางแผ่นดินไหวระหว่างไทยและเมียนมา",
       "title_en": "",
+      "author": "สมรัก สิทธิ์ผิน",
       "abstract": "",
       "abstract_en": "",
       "advisor": "",
       "keywords": "",
-      "abstract_pdf": "2568/68geo/011.สมรัก สิทธิ์ผิน/011.สมรัก สิทธิ์ผิน.pdf",
-      "fullpaper_pdf": null
+      "abstract_pdf": "2568/geo_2568_011_Abstract.pdf",
+      "fullpaper_pdf": "2568/geo_2568_011_FullPaper.pdf"
     }
   ]
 }

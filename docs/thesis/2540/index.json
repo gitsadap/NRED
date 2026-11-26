@@ -1,0 +1,44 @@
+{
+  "year": 2540,
+  "entries": [
+    {
+      "num": "01",
+      "program": "GEO",
+      "title": "การศึกษาเพื่อวิเคราะห์หาพื้นที่ที่เหมาะสมในการพัฒนาเป็นสวนสาธารณะ เมืองพิษณุโลก",
+      "title_en": "",
+      "author": "จิรวัฒน์ บุญพันธ์ วรายุทธ ปิยะภาณี วิไลพร พาตา",
+      "abstract": "",
+      "abstract_en": "",
+      "advisor": "",
+      "keywords": "",
+      "abstract_pdf": "2540/geo_2540_01_FullPaper.pdf",
+      "fullpaper_pdf": "2540/geo_2540_01_FullPaper.pdf"
+    },
+    {
+      "num": "02",
+      "program": "GEO",
+      "title": "การศึกษาหาที่ตั้งสถานที่กำจัดขยะแบบฝังกลบของเทศบางเมืองพิษณุโลก อำเภอเมือง จังหวัดพิษณุโลก",
+      "title_en": "",
+      "author": "พรทิพย์ ติยานันทิ รพีพงษ์ กันยะมี",
+      "abstract": "",
+      "abstract_en": "",
+      "advisor": "",
+      "keywords": "",
+      "abstract_pdf": "2540/geo_2540_02_FullPaper.pdf",
+      "fullpaper_pdf": "2540/geo_2540_02_FullPaper.pdf"
+    },
+    {
+      "num": "03",
+      "program": "GEO",
+      "title": "การศึกษาหาพื้นที่กำจัดขยะแบบฝังกลบเขตพื้นที่จังหวัดพิษณุโลก",
+      "title_en": "",
+      "author": "มัณฑนา ทิพย์วารีรมย์",
+      "abstract": "",
+      "abstract_en": "",
+      "advisor": "",
+      "keywords": "",
+      "abstract_pdf": "2540/geo_2540_03_FullPaper.pdf",
+      "fullpaper_pdf": "2540/geo_2540_03_FullPaper.pdf"
+    }
+  ]
+}
