@@ -206,6 +206,7 @@ class UndergradThesis(ModelBase):
     program = Column(String, nullable=False, default="NRE")  # NRE or GEO
     keywords = Column(String, nullable=True)
     year = Column(Integer, nullable=True)
-    file_url = Column(String, nullable=True)
+    file_url = Column(String, nullable=True)       # abstract PDF
+    fullpaper_url = Column(String, nullable=True)  # full paper PDF
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

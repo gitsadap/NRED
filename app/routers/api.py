@@ -538,7 +538,8 @@ async def get_public_thesis(db: AsyncSession = Depends(get_db)):
             "id": t.id, "title": t.title, "title_en": t.title_en,
             "abstract": t.abstract, "abstract_en": t.abstract_en,
             "advisor": t.advisor, "program": t.program,
-            "keywords": t.keywords, "year": t.year, "file_url": t.file_url,
+            "keywords": t.keywords, "year": t.year,
+            "file_url": t.file_url, "fullpaper_url": t.fullpaper_url,
         }
         for t in items
     ]

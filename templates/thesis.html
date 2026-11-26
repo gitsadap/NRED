@@ -115,13 +115,17 @@
                         <span>[[ t.advisor ]]</span>
                     </div>
 
-                    <!-- File link -->
-                    <div class="mt-auto pt-3 border-t border-gray-100">
+                    <!-- File links -->
+                    <div class="mt-auto pt-3 border-t border-gray-100 flex flex-wrap gap-2">
                         <a v-if="t.file_url" :href="t.file_url" target="_blank"
-                            class="flex items-center gap-2 text-emerald-600 hover:text-emerald-800 text-sm font-medium transition-colors">
-                            <i class="fas fa-file-pdf text-red-500"></i> ดาวน์โหลด / ดูเอกสาร
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg text-xs font-medium transition-colors">
+                            <i class="fas fa-file-pdf"></i> บทคัดย่อ
                         </a>
-                        <span v-else class="text-xs text-gray-300 italic">ไม่มีไฟล์แนบ</span>
+                        <a v-if="t.fullpaper_url" :href="t.fullpaper_url" target="_blank"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-xs font-medium transition-colors">
+                            <i class="fas fa-file-alt"></i> ฉบับเต็ม
+                        </a>
+                        <span v-if="!t.file_url && !t.fullpaper_url" class="text-xs text-gray-300 italic">ไม่มีไฟล์แนบ</span>
                     </div>
                 </div>
             </div>

@@ -94,6 +94,10 @@ async def run(args):
             # URL served by FastAPI via StaticFiles mounted at /docs
             file_url = f"/docs/thesis/{pdf_path}"
 
+            # fullpaper_url (optional second PDF)
+            fullpaper_pdf = (entry.get("fullpaper_pdf") or "").strip()
+            fullpaper_url = f"/docs/thesis/{fullpaper_pdf}" if fullpaper_pdf else None
+
             if file_url in existing_urls:
                 total_skipped += 1
                 skipped_this_year += 1
@@ -118,8 +122,8 @@ async def run(args):
                     """
                     INSERT INTO api.undergrad_thesis
                         (title, title_en, abstract, abstract_en,
-                         advisor, program, keywords, year, file_url)
-                    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+                         advisor, program, keywords, year, file_url, fullpaper_url)
+                    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
                     """,
                     title,
                     entry.get("title_en") or None,
@@ -130,6 +134,7 @@ async def run(args):
                     entry.get("keywords") or None,
                     year_int,
                     file_url,
+                    fullpaper_url,
                 )
                 existing_urls.add(file_url)
                 total_inserted += 1
