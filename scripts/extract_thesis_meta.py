@@ -218,16 +218,28 @@ def process_year(year: int, force: bool, dry_run: bool) -> dict:
             continue
 
         changed = []
-        for key in ("title", "title_en", "advisor", "keywords", "abstract", "abstract_en"):
-            # Map internal key name → index.json key name
-            json_key = key
+        # title/author come from PHP parsing (most accurate source)
+        # Only fill from PDF if completely empty; never force-overwrite PHP data
+        PHP_PRIMARY = {"title", "author"}
+        for key in ("title", "title_en", "advisor", "keywords",
+                    "keywords_en", "abstract", "abstract_en"):
             val = meta.get(key, "")
-            if val and not entry.get(json_key, "").strip():
-                entry[json_key] = val
-                changed.append(json_key)
-            elif val and force:
-                entry[json_key] = val
-                changed.append(json_key)
+            if not val:
+                continue
+            existing = entry.get(key, "").strip()
+            if key in PHP_PRIMARY:
+                # PHP is source of truth — only fill when completely empty
+                if not existing:
+                    entry[key] = val
+                    changed.append(key)
+            else:
+                # Non-PHP fields: fill if empty; overwrite only with --force
+                if not existing:
+                    entry[key] = val
+                    changed.append(key)
+                elif force:
+                    entry[key] = val
+                    changed.append(key)
 
         if changed:
             stats["updated"] += 1

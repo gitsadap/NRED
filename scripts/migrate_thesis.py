@@ -31,175 +31,197 @@ def clean_html(s):
 
 
 def parse_php(path, program, year):
-    """Parse a PHP file, return list of entry dicts."""
-    with open(path, "rb") as f:
-        content = f.read().decode("cp874", errors="replace")
+    """Parse a PHP file by scanning ALL <td> elements in document order.
     
-    entries = []
+    For each <td> containing a PDF href for the requested year:
+    - Entry number is extracted from the PDF filename
+    - Title comes from the <td> two positions before the PDF cell
+    - Author comes from the <td> one position before the PDF cell
     
-    # Match each <tr>...</tr> block
-    tr_blocks = re.findall(r'<tr\b[^>]*>.*?</tr>', content, re.DOTALL | re.IGNORECASE)
-    
-    for block in tr_blocks:
-        # Must have PDF link
-        pdf_links = re.findall(
-            r'href="[^"]*Document/is-PDF/(\d+)/([^"]+\.pdf)"',
-            block, re.IGNORECASE
-        )
-        if not pdf_links:
-            continue
-        
-        # Get td texts
-        tds = re.findall(r'<td\b[^>]*>(.*?)</td>', block, re.DOTALL | re.IGNORECASE)
-        texts = [clean_html(td) for td in tds]
-        
-        if len(texts) < 2:
-            continue
-        
-        # First td should be a small number (1-150)
-        num_text = texts[0].strip()
-        if not re.match(r'^\d{1,3}$', num_text):
-            continue
-        num_int = int(num_text)
-        if num_int == 0 or num_int > 150:
-            continue
-        
-        title = texts[1].strip() if len(texts) > 1 else ""
-        author = texts[2].strip() if len(texts) > 2 else ""
-        
-        if len(title) < 4:
-            continue
-        
-        # Collect PDF paths from this year only
-        abstract_pdf = None
-        fullpaper_pdf = None
-        for yr, fname in pdf_links:
-            fn_lower = fname.lower()
-            flat = f"{yr}/{fname}"
-            if "abstract" in fn_lower or "-th" in fn_lower:
-                if abstract_pdf is None:
-                    abstract_pdf = flat
-            elif "fullpaper" in fn_lower or "-en" in fn_lower:
-                if fullpaper_pdf is None:
-                    fullpaper_pdf = flat
-            else:
-                # unrecognized: first = abstract, second = fullpaper
-                if abstract_pdf is None:
-                    abstract_pdf = flat
-                elif fullpaper_pdf is None:
-                    fullpaper_pdf = flat
-        
-        entries.append({
-            "num_int": num_int,
-            "program": program.upper(),
-            "title": title,
-            "author": author,
-            "abstract_pdf_raw": abstract_pdf,
-            "fullpaper_pdf_raw": fullpaper_pdf,
-        })
-    
-    # Deduplicate by num_int
-    seen = set()
-    unique = []
-    for e in entries:
-        if e["num_int"] not in seen:
-            seen.add(e["num_int"])
-            unique.append(e)
-    
-    return sorted(unique, key=lambda x: x["num_int"])
-
-
-def parse_geo_old_by_year(path, year):
-    """Parse is-2529-2554bs_geo.php - handles 5-column format (year, num, title, author, link).
-    Tracks current_year as we scan rows so we capture entries even when PDF links reference
-    a different folder name than the logical year.
+    This handles multi-entry rows (where PHP packs several entries into one <tr>)
+    which the old row-by-row parser missed entirely.
     """
     with open(path, "rb") as f:
         content = f.read().decode("cp874", errors="replace")
     
+    # Remove HTML comments (entries commented out with <!-- --> are excluded)
+    content = re.sub(r'<!--.*?-->', '', content, flags=re.DOTALL)
+    
     year_str = str(year)
-    tr_blocks = re.findall(r'<tr\b[^>]*>.*?</tr>', content, re.DOTALL | re.IGNORECASE)
     
-    all_entries = []
-    current_year = None
+    # Get all <td> elements in document order (raw HTML + cleaned text)
+    td_matches = list(re.finditer(r'<td\b[^>]*>(.*?)</td>', content, re.DOTALL | re.IGNORECASE))
+    all_texts = [clean_html(m.group(1)) for m in td_matches]
+    all_raw   = [m.group(0) for m in td_matches]
     
-    for block in tr_blocks:
-        tds = re.findall(r'<td\b[^>]*>(.*?)</td>', block, re.DOTALL | re.IGNORECASE)
-        texts = [clean_html(td) for td in tds]
-        hrefs = re.findall(r'href="([^"]+\.pdf)"', block, re.IGNORECASE)
-        
-        if len(texts) < 3:
+    entries_dict = {}  # num_int -> entry dict
+    
+    for i, raw in enumerate(all_raw):
+        # Find PDF links for this year in this cell
+        pdf_links = re.findall(
+            rf'href="[^"]*Document/is-PDF/{year_str}/([^"]+\.pdf)"',
+            raw, re.IGNORECASE
+        )
+        if not pdf_links:
             continue
         
-        t0 = texts[0].strip()
-        t1 = texts[1].strip() if len(texts) > 1 else ""
+        # Extract entry number from PDF filename
+        num_int = None
+        for fname in pdf_links:
+            m = re.search(r'(?:nre|geo)_\d+_0*(\d+)_', fname, re.I)
+            if m:
+                num_int = int(m.group(1)); break
+            # Old NRE grad format: NN-YYYY-th.pdf
+            m = re.search(r'^0*(\d+)-\d{4}-(?:th|en)\.pdf', fname, re.I)
+            if m:
+                num_int = int(m.group(1)); break
         
-        # Pattern A: [year, num, title, author, ...] — 5-column, year header + entry
-        if re.match(r'^2[5-6]\d\d$', t0) and re.match(r'^\d{1,2}$', t1):
-            current_year = int(t0)
-            num_int = int(t1)
-            title = texts[2].strip() if len(texts) > 2 else ""
-            author = texts[3].strip() if len(texts) > 3 else ""
-        # Pattern B: [empty, num, title, author, ...] — continuation of same year
-        elif (not t0 or not re.search(r'\S', t0)) and re.match(r'^\d{1,2}$', t1):
-            if current_year is None:
-                continue
-            num_int = int(t1)
-            title = texts[2].strip() if len(texts) > 2 else ""
-            author = texts[3].strip() if len(texts) > 3 else ""
-        # Pattern C: [num, title, author, ...] — 4-column format
-        elif re.match(r'^\d{1,2}$', t0) and len(texts) > 1 and len(texts[1]) > 4:
-            if current_year is None:
-                continue
-            num_int = int(t0)
-            title = texts[1].strip()
-            author = texts[2].strip() if len(texts) > 2 else ""
-        else:
-            # Year section header or unrecognised row; update current_year if applicable
-            if re.match(r'^2[5-6]\d\d$', t0):
-                current_year = int(t0)
+        if num_int is None or num_int < 1 or num_int > 300:
             continue
         
-        if num_int < 1 or num_int > 100 or len(title) < 4:
-            continue
+        # Title is 2 cells back, author is 1 cell back
+        title = ""
+        author = ""
+        if i >= 2:
+            # Strip trailing entry number that may bleed from adjacent PDF cell
+            cand_a = re.sub(r'\s+\d{1,3}\s*$', '', all_texts[i-1]).strip()
+            cand_t = re.sub(r'\s+\d{1,3}\s*$', '', all_texts[i-2]).strip()
+            if len(cand_t) > 4 and not re.match(r'^\d+$', cand_t):
+                title  = cand_t
+                author = cand_a
         
-        # Only collect entries for the requested year
-        if current_year != year:
-            continue
-        
-        # Extract PDF paths from href attributes
-        abs_pdf = None
+        # Classify PDF types
+        abs_pdf  = None
         full_pdf = None
-        for href in hrefs:
-            fname = href.split('/')[-1]
-            fn_lower = fname.lower()
-            if 'abstract' in fn_lower or '-th' in fn_lower:
-                if abs_pdf is None: abs_pdf = f"{year_str}/{fname}"
-            elif 'fullpaper' in fn_lower or 'full' in fn_lower or '-en' in fn_lower:
-                if full_pdf is None: full_pdf = f"{year_str}/{fname}"
+        for fname in pdf_links:
+            fn   = fname.lower()
+            flat = f"{year_str}/{fname}"
+            if 'abstract' in fn or '-th' in fn:
+                if abs_pdf  is None: abs_pdf  = flat
+            elif 'fullpaper' in fn or 'full' in fn or '-en' in fn:
+                if full_pdf is None: full_pdf = flat
             else:
-                if abs_pdf is None: abs_pdf = f"{year_str}/{fname}"
-                elif full_pdf is None: full_pdf = f"{year_str}/{fname}"
+                if abs_pdf  is None: abs_pdf  = flat
+                elif full_pdf is None: full_pdf = flat
         
-        all_entries.append({
-            "num_int": num_int,
-            "program": "GEO",
-            "title": title,
-            "author": author,
-            "abstract_pdf_raw": abs_pdf,
-            "fullpaper_pdf_raw": full_pdf,
-        })
+        if num_int in entries_dict:
+            # Already seen this entry — just fill missing PDF path
+            e = entries_dict[num_int]
+            if full_pdf and not e['fullpaper_pdf_raw']: e['fullpaper_pdf_raw'] = full_pdf
+            if abs_pdf  and not e['abstract_pdf_raw']:  e['abstract_pdf_raw']  = abs_pdf
+        else:
+            entries_dict[num_int] = {
+                "num_int":           num_int,
+                "program":           program.upper(),
+                "title":             title,
+                "author":            author,
+                "abstract_pdf_raw":  abs_pdf,
+                "fullpaper_pdf_raw": full_pdf,
+            }
     
-    # Deduplicate by num_int (keep first occurrence)
-    seen = set()
-    unique = []
-    for e in all_entries:
-        if e["num_int"] not in seen:
-            seen.add(e["num_int"])
-            unique.append(e)
-    
-    return sorted(unique, key=lambda x: x["num_int"])
+    return sorted(entries_dict.values(), key=lambda x: x["num_int"])
 
+
+def parse_geo_old_by_year(path, year):
+    """Parse is-2529-2554bs_geo.php using td-sequence scanning.
+    
+    Entry number and year are extracted from PDF filename (geo_YYYY_NN_FullPaper.pdf).
+    Title is 2 cells back from the PDF cell, author is 1 cell back.
+    Handles 5-column format (year header + entry in same row) automatically.
+    """
+    with open(path, "rb") as f:
+        content = f.read().decode("cp874", errors="replace")
+    
+    # Remove HTML comments
+    content = re.sub(r'<!--.*?-->', '', content, flags=re.DOTALL)
+    
+    year_str = str(year)
+    
+    td_matches = list(re.finditer(r'<td\b[^>]*>(.*?)</td>', content, re.DOTALL | re.IGNORECASE))
+    all_texts  = [clean_html(m.group(1)) for m in td_matches]
+    all_raw    = [m.group(0) for m in td_matches]
+    
+    entries_dict = {}
+    
+    for i, raw in enumerate(all_raw):
+        # Look for GEO PDF links for this year
+        pdf_links = re.findall(
+            r'href="[^"]*Document/is-PDF/(\d{4})/([^"]+\.pdf)"',
+            raw, re.IGNORECASE
+        )
+        if not pdf_links:
+            continue
+        
+        # Filter to this year
+        year_links = [(yr, fn) for yr, fn in pdf_links if int(yr) == year]
+        if not year_links:
+            continue
+        
+        # Extract entry number from PDF filename
+        num_int = None
+        for yr, fname in year_links:
+            m = re.search(r'geo_\d+_0*(\d+)_', fname, re.I)
+            if m:
+                num_int = int(m.group(1)); break
+        
+        if num_int is None or num_int < 1 or num_int > 100:
+            continue
+        
+        # Title is 2 cells back, author is 1 cell back
+        # (In 5-column rows the year cell was before that, but it doesn't interfere)
+        title = ""
+        author = ""
+        if i >= 2:
+            cand_a = re.sub(r'\s+\d{1,3}\s*$', '', all_texts[i-1]).strip()
+            cand_t = re.sub(r'\s+\d{1,3}\s*$', '', all_texts[i-2]).strip()
+            # Skip year header cell as title (e.g. "2529")
+            if re.match(r'^2[5-6]\d\d$', cand_t):
+                # 5-column format: year|num|title|author|pdf — author is at i-1, title at i-2 is num
+                # Try going one more back
+                if i >= 3:
+                    cand_a2 = re.sub(r'\s+\d{1,3}\s*$', '', all_texts[i-2]).strip()
+                    cand_t2 = re.sub(r'\s+\d{1,3}\s*$', '', all_texts[i-3]).strip()
+                    if not re.match(r'^2[5-6]\d\d$', cand_t2) and not re.match(r'^\d{1,2}$', cand_t2) and len(cand_t2) > 4:
+                        title  = cand_t2
+                        author = cand_a2
+            elif len(cand_t) > 4 and not re.match(r'^\d+$', cand_t):
+                title  = cand_t
+                author = cand_a
+        
+        # Classify PDFs
+        abs_pdf  = None
+        full_pdf = None
+        for yr, fname in year_links:
+            fn   = fname.lower()
+            flat = f"{yr}/{fname}"
+            if 'abstract' in fn:
+                if abs_pdf  is None: abs_pdf  = flat
+            elif 'fullpaper' in fn or 'full' in fn:
+                if full_pdf is None: full_pdf = flat
+            else:
+                if full_pdf is None: full_pdf = flat  # GEO old = FullPaper
+        
+        if num_int in entries_dict:
+            e = entries_dict[num_int]
+            if full_pdf and not e['fullpaper_pdf_raw']: e['fullpaper_pdf_raw'] = full_pdf
+            if abs_pdf  and not e['abstract_pdf_raw']:  e['abstract_pdf_raw']  = abs_pdf
+        else:
+            entries_dict[num_int] = {
+                "num_int":           num_int,
+                "program":           "GEO",
+                "title":             title,
+                "author":            author,
+                "abstract_pdf_raw":  abs_pdf,
+                "fullpaper_pdf_raw": full_pdf,
+            }
+    
+    return sorted(entries_dict.values(), key=lambda x: x["num_int"])
+
+
+
+# ---------------------------------------------------------------------------
+# PHP file mapping
+# ---------------------------------------------------------------------------
 
 def build_php_map():
     result = {}
@@ -209,19 +231,19 @@ def build_php_map():
             if path.exists():
                 result[(prog, year)] = str(path)
     
-    # 2555: combined
+    # 2555: combined file
     p2555 = WOLD / "is-2555bs.php"
     if p2555.exists():
         result[("geo", 2555)] = str(p2555)
         result[("nre", 2555)] = str(p2555)
     
-    # 2550–2554 NRE grad
+    # 2550-2554 NRE grad
     for year in range(2550, 2555):
         p = WOLD / f"is-{year}.php"
         if p.exists():
             result[("nre", year)] = str(p)
     
-    # GEO 2529–2554 big file
+    # GEO 2529-2554 big file
     pgeo = WOLD / "is-2529-2554bs_geo.php"
     if pgeo.exists():
         for year in [2529,2533,2538,2539,2540,2541,2543,2544,2545,2546,2547,2548,2549,2550,2553,2554]:
