@@ -146,7 +146,7 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', async () => {
+window.initPage = async () => {
     const { createApp } = Vue;
     createApp({
         delimiters: ['[[', ']]'],
@@ -194,6 +194,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             this.loading = false;
         }
     }).mount('#thesis-app');
-});
+};
 </script>
 {% endblock %}
