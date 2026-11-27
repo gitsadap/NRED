@@ -132,14 +132,17 @@
         </div>
 
         <!-- Pagination -->
-        <div v-if="totalPages > 1" class="flex justify-center gap-2 mt-10">
+        <div v-if="totalPages > 1" class="flex justify-center items-center gap-1 mt-10 flex-wrap">
             <button @click="currentPage = Math.max(1, currentPage - 1)" :disabled="currentPage === 1"
-                class="px-4 py-2 rounded-lg border text-sm disabled:opacity-40 hover:bg-gray-100">ก่อนหน้า</button>
-            <button v-for="p in totalPages" :key="p" @click="currentPage = p"
-                :class="currentPage === p ? 'bg-emerald-600 text-white border-emerald-600' : 'hover:bg-gray-100'"
-                class="px-4 py-2 rounded-lg border text-sm">[[ p ]]</button>
+                class="px-3 py-2 rounded-lg border text-sm disabled:opacity-40 hover:bg-gray-100">‹ ก่อนหน้า</button>
+            <template v-for="p in pageNumbers" :key="p">
+                <span v-if="p === '...'" class="px-2 py-2 text-gray-400 text-sm select-none">…</span>
+                <button v-else @click="currentPage = p"
+                    :class="currentPage === p ? 'bg-emerald-600 text-white border-emerald-600 font-bold' : 'hover:bg-gray-100 text-gray-700'"
+                    class="min-w-[36px] px-3 py-2 rounded-lg border text-sm transition-colors">[[ p ]]</button>
+            </template>
             <button @click="currentPage = Math.min(totalPages, currentPage + 1)" :disabled="currentPage === totalPages"
-                class="px-4 py-2 rounded-lg border text-sm disabled:opacity-40 hover:bg-gray-100">ถัดไป</button>
+                class="px-3 py-2 rounded-lg border text-sm disabled:opacity-40 hover:bg-gray-100">ถัดไป ›</button>
         </div>
     </div>
 </div>
@@ -180,6 +183,20 @@ window.initPage = async () => {
             paginatedThesis() {
                 const start = (this.currentPage - 1) * this.perPage;
                 return this.filteredThesis.slice(start, start + this.perPage);
+            },
+            pageNumbers() {
+                const total = this.totalPages;
+                const cur = this.currentPage;
+                const delta = 2;
+                const pages = [];
+                const left = Math.max(2, cur - delta);
+                const right = Math.min(total - 1, cur + delta);
+                pages.push(1);
+                if (left > 2) pages.push('...');
+                for (let i = left; i <= right; i++) pages.push(i);
+                if (right < total - 1) pages.push('...');
+                if (total > 1) pages.push(total);
+                return pages;
             },
         },
         watch: {
